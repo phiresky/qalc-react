@@ -74,19 +74,30 @@ export abstract class Unit {
         }
     }
 	pow(factor: number | Unit): Unit {
-		const b = typeof factor === "number" ? factor : new Quantity(1, factor).convertTo(Unit.getDimensionless()).value;
-		console.log("pow",this, arguments);
+		const b = typeof factor === "number" ? factor : factor.convertToSeparate(Unit.getDimensionless()).value;
 		return DerivedUnit.create([new UnitPart(this, b)]);
 	}
 	minus(minand: Unit): Unit {
 		const thisIs0 = this.getConversionToCoherent().factor === 0;
 		if(thisIs0) return minand.mul(-1);
-		const minandAsThis = new Quantity(1, minand).convertTo(this);
+		const minandAsThis = minand.convertToSeparate(this);
 		return this.mul(1 - minandAsThis.value);
 	}
 	plus(plusand: Unit): Unit {
-		return this.mul(1 + new Quantity(1, plusand).convertTo(this).value);
+		return this.mul(1 + plusand.convertToSeparate(this).value);
 	}
+	convertTo(targetUnit: Unit) {
+		const x = this.convertToSeparate(targetUnit);
+		return x.unit.mul(x.value);
+	}
+	convertToSeparate(targetUnit: Unit): {value: number, unit:Unit} {
+        const t1 = this.getConversionToCoherent();
+        const t2 = targetUnit.getConversionToCoherent();
+        if (!t1.targetUnit.equals(t2.targetUnit))
+            throw Error(t1.targetUnit +" != "+t2.targetUnit);
+        const t3 = t2.inverse().chain(t1);
+        return {value:t3.convert(1), unit: t3.targetUnit};
+    }
 }
 export class BaseUnit extends Unit {
     private static count = 0;
@@ -167,6 +178,8 @@ class DerivedUnit extends Unit {
         this.parts = parts;
     }
     toString(): string {
+		if (this.identifier !== null)
+            return super.toString();
         const first = this.parts.filter(p => p.exponent > 0).map(p => p.toString()).join("*");
         const last = this.parts.filter(p => p.exponent < 0).map(p => p.toString(true)).join("*");
         if (last === "")
@@ -203,10 +216,6 @@ class DerivedUnit extends Unit {
         else
             collection.push(part);
     }
-	convertTo(targetUnit: Unit): Unit {
-		const quan = new Quantity(1, this).convertTo(targetUnit);
-		return quan.unit.mul(quan.value);
-	}
 }
 export class UnitPart {
     public readonly exponent: number;
@@ -223,25 +232,6 @@ export class UnitPart {
         return this.unit.toString() + "^" + exp;
     }
 }
-export class Quantity {
-    public readonly unit: Unit;
-    public readonly value: number;
-    constructor(value: number, unit: Unit) {
-        this.unit = unit;
-        this.value = value;
-    }
-    convertTo(targetUnit: Unit): Quantity {
-        const t1 = this.unit.getConversionToCoherent();
-        const t2 = targetUnit.getConversionToCoherent();
-        if (!t1.targetUnit.equals(t2.targetUnit))
-            throw Error(t1.targetUnit +" != "+t2.targetUnit);
-        const t3 = t2.inverse().chain(t1);
-        return new Quantity(t3.convert(this.value), t3.targetUnit);
-    }
-    toString(): string {
-        return this.value + " " + this.unit.toString();
-    }
-}
 window.onload = () => {
     var meter = new BaseUnit().withId("m", "Meter");
     var second = new BaseUnit().withId("s", "Second");
@@ -253,11 +243,11 @@ window.onload = () => {
     var day = hour.mul(24).withId("day");
     var year = day.mul(365).withId("year");
     var nm = meter.div(1E9).withId("nm");
-    var speed = new Quantity(10, kmh);
+    var speed = kmh.mul(10);
     console.log(speed.toString()); // equals "10 kmh"
     var speedInMps = speed.convertTo(mps);
     console.log(speedInMps.toString()); // equals "2.77777777 m/s"
-    var hubble = new Quantity(67.15, kilometer.div(second.mul(megaparsec)));
+    var hubble = kilometer.div(second.mul(megaparsec)).mul(67.15);
     console.log(hubble.toString());
     var hubble2 = hubble.convertTo(nm.div(year.mul(kilometer)));
     console.log(hubble2.toString());

@@ -22,11 +22,28 @@ module QalcGui {
 		}
 	}
 	let guiInst: GUI;
+	const presetLines = `
+	5600 mA h * 11.7 V to W h
+	100W * 10 days * 0.25€/kWh
+	7MBit/s * 2h to GByte
+	32bit/(0.2bit/s) to s
+	88 mph to km/s|88 * mph = 0.03933952(km / s)
+	sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c to 1|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
+	
+	`;
+	function loadPresetLines() {
+		presetLines.split('\n')
+			.map(line => line.trim())
+			.filter(line => line.length > 0)
+			.map(line => line.split("|")[0])
+			.map(input => QalcLib.qalculate(input).then(output => guiInst.addLine(new GuiLineElement(input, output))));
+	}
 	export class GUI extends React.Component<{}, GuiState> {
 		constructor(props:{}) {
 			super(props);
 			guiInst = this;
-			this.state = {"lines":[new GuiLineElement("88 mph to km/s","88 * mph = 0.03933952(km / s)\n"), new GuiLineElement("sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c","sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711\n"),new GuiLineElement("testing","tonne * e * second * tonne * inch * gram = approx. 2718.2818 kg^3 * in*s\n")]}
+			this.state = {lines: []};
+			loadPresetLines();
 		}
 		addLine(line: GuiLineElement) {
 			const lines = this.state.lines.slice();

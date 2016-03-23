@@ -35,12 +35,30 @@ function unmathjs_hack_unicode(str: string) {
 	return str;
 }
 const unitMap: Map<string, Unit> = new Map();
+const prefixMap: Map<string, Unit> = new Map();
 
-function getUnit(name: string) {
-	if(!unitMap.has(name)) {
+const functions = new Map<string, (arg: Unit) => Unit>([
+	["sqrt", num => num.pow(0.5)]
+]);
+function setUnit(name: string, val: Unit) {
+	name = normalizeUnitName(name);
+	if(unitMap.has(name)) throw Error("duplicate: "+name);
+	unitMap.set(name, val);
+}
+function normalizeUnitName(name: string) {
+	if(name.length > 1) name = name.toLowerCase();
+	return name;
+}
+function getUnit(name: string): Unit {
+	if(!unitMap.has(normalizeUnitName(name))) {
+		for(const prefix of prefixMap.keys()) {
+			if(name.startsWith(prefix)) {
+				return prefixMap.get(prefix).mul(getUnit(name.substr(prefix.length))).withIdentifier(new UnitIdentifier(name,name));
+			}
+		}
 		throw Error("unknown unit: " + name);
 	}
-	return unitMap.get(name);
+	return unitMap.get(normalizeUnitName(name));
 }
 function evaluate(node: mathjs.MathNode): Unit {
 	switch (node.type) {
@@ -72,14 +90,29 @@ function evaluate(node: mathjs.MathNode): Unit {
 			const {index, object, value} = node as any;
 			if(index != null) throw Error("unsupported1");
 			if(object.type !== 'SymbolNode') throw Error('unsupported2');
-			const name = object.name;
-			if(unitMap.has(name)) throw Error("duplicate: "+name);
-			const unit = evaluate(value).withIdentifier(name);
-			unitMap.set(name, unit);
+			const name:string = object.name;
+			let unit: Unit;
+			if(name.endsWith("_")) {
+				const prefixName = name.substr(0, name.length - 1);
+				unit = evaluate(value);
+				prefixMap.set(prefixName, unit);
+			} else {
+				unit = evaluate(value).withIdentifier(new UnitIdentifier(name,name));
+				setUnit(name, unit);
+			}
 			return unit;
 		}
 		case 'ParenthesisNode': {
 			return evaluate((node as any).content);
+		}
+		case 'FunctionNode': {
+			const {fn, args}:{fn:mathjs.MathNode, args: mathjs.MathNode[]} = node as any;
+			if(fn.type !== 'SymbolNode') throw Error("can't call "+fn.type);
+			if(!functions.has(fn.name)) throw Error('unknown function '+fn.name);
+			const fnFunction = functions.get(fn.name);
+			if(args.length !== 1) throw Error('function must have 1 argument');
+			const arg = evaluate(args[0]);
+			return fnFunction(arg);
 		}
 		default: throw Error("dont know about " + node.type);
 	}
@@ -97,8 +130,7 @@ function parseEvaluate(str: string) {
 	if(str.endsWith(".")) {
 		// define new unit for a new dimension
 		const name = unmathjs_hack_unicode(str.substr(0, str.length - 1));
-		if(unitMap.has(name)) throw Error("duplicate: "+name);
-		unitMap.set(name, new BaseUnit(new UnitIdentifier(name, name)));
+		setUnit(name, new BaseUnit(new UnitIdentifier(name, name)));
 	} else {
 		return evaluate(mathjs.parse(str));
 	}

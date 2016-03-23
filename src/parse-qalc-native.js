@@ -56,6 +56,10 @@ function addStuff(stuff) {
 		maybeMultiple(addVariable, stuff.variable);
 		delete stuff.variable;
 	}
+	if(stuff.prefix) {
+		maybeMultiple(addPrefix, stuff.prefix);
+		delete stuff.prefix;
+	}
 
 	delete stuff.unknown;
 	if(stuff.title) delete stuff.title;
@@ -159,12 +163,22 @@ function addVariable(vaiable, priority = 0) {
 	}
 	output(priority, `${parseName(vaiable.names[0])} ${eq} ${vaiable.value[0]}${comment(parseTitle(vaiable.title[0]))}`);
 }
+function addPrefix(prefix) {
+	const base = {decimal:10, binary: 2}[prefix.$.type];
+	if(!base) error("unknown type", prefix);
+	console.log(`${prefix.name[0]}_ = ${base}^${prefix.exponent[0]}`);
+	console.log(`${prefix.abbreviation[0]}_ = ${base}^${prefix.exponent[0]}`);
+}
 xml2js.parseString(fs.readFileSync(dir+"/units.xml"), function(err, result) {
 	if(err) error(err);
 	addStuff(result.QALCULATE);
 	xml2js.parseString(fs.readFileSync(dir+"/variables.xml"), function(err, result) {
 		if(err) error(err);
 		addStuff(result.QALCULATE);
-		_output.sort((a,b) => b.priority - a.priority || a.pos - b.pos).forEach(({str}) => console.log(str));
+		xml2js.parseString(fs.readFileSync(dir+"/prefixes.xml"), function(err, result) {
+			if(err) error(err);
+			addStuff(result.QALCULATE);
+			_output.sort((a,b) => b.priority - a.priority || a.pos - b.pos).forEach(({str}) => console.log(str));
+		});
 	});
 });
