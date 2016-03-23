@@ -3,11 +3,28 @@ import {Unit, BaseUnit, UnitIdentifier} from './henning';
 const parser = mathjs.parser();
 
 declare var fetch: any;
-let loadUnits: Promise<void> = fetch('qalc_data.txt').then((d: any) => d.text()).then((t: string) => t.split("\n")
-.forEach(line => {
-	try {parseEvaluate(line) } catch(e) {console.log(line); console.warn(e);}
-}))
-.then(() => Object.keys(missingUnits).forEach(n => console.warn("Missing unit: "+n)));
+let loadUnits: Promise<void> = fetch('qalc_data.txt').then((d: any) => d.text()).then((t: string) => {
+	let lines = t.split("\n"), linesNew: string[] = [];
+	let errors:any[] = [];
+	while(true) {
+		errors = [];
+		lines.forEach(line => {
+			try {parseEvaluate(line)} catch(error) {
+				linesNew.push(line);
+				errors.push({line, error});
+			}
+		});
+		if(linesNew.length === lines.length) {
+			console.error("Could not resolve all errors, remaining: ");
+			console.log(lines);
+			break;
+		}
+		lines = linesNew;
+		linesNew = [];
+		
+	}
+	errors.forEach(l => console.warn(l));
+});
 
 function mathjs_hack_unicode(str: string) {
 	if(/[a-z0-9]+/i.test(str)) return str;
@@ -18,8 +35,13 @@ function unmathjs_hack_unicode(str: string) {
 	return str;
 }
 const unitMap: Map<string, Unit> = new Map();
-const missingUnits: {[name:string]: boolean} = {};
 
+function getUnit(name: string) {
+	if(!unitMap.has(name)) {
+		throw Error("unknown unit: " + name);
+	}
+	return unitMap.get(name);
+}
 function evaluate(node: mathjs.MathNode): Unit {
 	switch (node.type) {
 		case 'OperatorNode': {
@@ -32,7 +54,7 @@ function evaluate(node: mathjs.MathNode): Unit {
 					throw Error("weird op "+op);
 				}
 			}
-			const funs:{[op:string]:string} = {'*':'mul', '/':'div','^':'pow','+':'plus','-':'minus'};
+			const funs:{[op:string]:string} = {'*':'mul', '/':'div','^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
 			if(op in funs && funs[op] in stuff[0]) return (stuff[0] as any)[funs[op]](stuff[1]);
 			else throw Error("unknown op "+op+" | "+stuff);
 		}
@@ -44,19 +66,14 @@ function evaluate(node: mathjs.MathNode): Unit {
 		case 'SymbolNode': {
 			const name = unmathjs_hack_unicode(node.name);
 			if(!isNaN(parseFloat(name)) || name == "NaN") return Unit.getDimensionless().mul(parseFloat(name));
-			if(!unitMap.has(name)) {
-				missingUnits[name] = true;
-				unitMap.set(name, new BaseUnit(new UnitIdentifier(name, name)));
-			}
-			return unitMap.get(name);
+			return getUnit(name);
 		}
 		case 'AssignmentNode': {
 			const {index, object, value} = node as any;
 			if(index != null) throw Error("unsupported1");
 			if(object.type !== 'SymbolNode') throw Error('unsupported2');
 			const name = object.name;
-			if(!missingUnits[name] && unitMap.has(name)) throw Error("duplicate: "+name);
-			delete missingUnits[name];
+			if(unitMap.has(name)) throw Error("duplicate: "+name);
 			const unit = evaluate(value).withIdentifier(name);
 			unitMap.set(name, unit);
 			return unit;
@@ -67,23 +84,21 @@ function evaluate(node: mathjs.MathNode): Unit {
 		default: throw Error("dont know about " + node.type);
 	}
 }
-function newUnit(name: string) {
-	
-}
 function parseEvaluate(str: string) {
 	str = str.replace(/≈/g, function(x) {
 		console.warn("ignoring approx. equals sign");
 		return "=";
-	})
+	}).replace(/(\W)in(\W)/g, function(all, before, after) {
+		return before + "inch" + after;
+	});
 	const commentStart = str.indexOf("#");
 	if (commentStart >= 0) str = str.substr(0, commentStart);
 	str = str.trim();
 	if(str.endsWith(".")) {
 		// define new unit for a new dimension
 		const name = unmathjs_hack_unicode(str.substr(0, str.length - 1));
-		if(!missingUnits[name] && unitMap.has(name)) throw Error("duplicate: "+name);
+		if(unitMap.has(name)) throw Error("duplicate: "+name);
 		unitMap.set(name, new BaseUnit(new UnitIdentifier(name, name)));
-		delete missingUnits[name];
 	} else {
 		return evaluate(mathjs.parse(str));
 	}
@@ -99,4 +114,4 @@ export async function qalculate(input: string): Promise<string> {
 	}
 }
 
-(window as any).qalc = {unitMap, qalculate, parseEvaluate, missingUnits};
+(window as any).qalc = {unitMap, qalculate, parseEvaluate};

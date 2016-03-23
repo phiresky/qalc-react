@@ -90,9 +90,12 @@ export abstract class Unit {
 		}*/
 
 		const b = typeof factor === "number" ? factor : new Quantity(1, factor).convertTo(Unit.getDimensionless()).getValue();
+		console.log("pow",this, arguments);
 		return DerivedUnit.create([new UnitPart(this, b)]);
 	}
 	minus(minand: Unit): Unit {
+		const thisIs0 = this.getConversionToCoherent().factor === 0;
+		if(thisIs0) return minand.mul(-1);
 		const minandAsThis = new Quantity(1, minand).convertTo(this);
 		return this.mul(1 - minandAsThis.getValue());
 	}
@@ -136,9 +139,9 @@ export class ScaledShiftedUnit extends Unit {
         if (this.identifier !== null)
             return super.toString();
         if (this._offset === 0)
-            return "" + this._factor + this._underlayingUnit.toString();
+            return "" + this._factor + " " + this._underlayingUnit.toString();
         else
-            return "" + this._factor + this._underlayingUnit.toString() + "+" + this._offset + this._underlayingUnit.toString();
+            return "" + this._factor + " "+ this._underlayingUnit.toString() + "+" + this._offset + this._underlayingUnit.toString();
     }
     withIdentifier(identifier: UnitIdentifier): Unit {
         return new ScaledShiftedUnit(this._underlayingUnit, this._factor, this._offset, identifier);
@@ -219,6 +222,10 @@ class DerivedUnit extends Unit {
         else
             collection.push(part);
     }
+	convertTo(targetUnit: Unit): Unit {
+		const quan = new Quantity(1, this).convertTo(targetUnit);
+		return quan.unit.mul(quan.getValue());
+	}
 }
 export class UnitPart {
     private _exponent: number;

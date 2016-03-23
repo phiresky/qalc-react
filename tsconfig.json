@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "module": "system",
+        "target": "es6",
+        "noImplicitAny": true,
+        "sourceMap": true,
+        "jsx": "react"
+    },
+    "files": [
+        "src/gui.tsx",
+        "src/Qalc.ts",
+        "typings/browser.d.ts"
+    ]
+}
