@@ -1,17 +1,20 @@
 import * as mathjs from 'mathjs';
 import {Unit, BaseUnit, UnitIdentifier} from './henning';
+
+import qalcData from '../qalc_data.txt!text';
 const parser = mathjs.parser();
 
 declare var fetch: any;
-let loadUnits: Promise<void> = fetch('qalc_data.txt').then((d: any) => d.text()).then((t: string) => {
-	let lines = t.split("\n"), linesNew: string[] = [];
+let loadUnits: Promise<void> = Promise.resolve(qalcData).then((t: string) => {
+	let lines = t.split("\n").map((line, index) => ({line, index})), linesNew:typeof lines = [];
 	let errors:any[] = [];
+	let iteration = 0;
 	while(true) {
-		errors = [];
 		lines.forEach(line => {
-			try {parseEvaluate(line)} catch(error) {
+			try {parseEvaluate(line.line)} catch(error) {
 				linesNew.push(line);
-				errors.push({line, error});
+				errors[line.index] = errors[line.index] || [];
+				errors[line.index].push({line, error});
 			}
 		});
 		if(linesNew.length === lines.length) {
@@ -21,9 +24,11 @@ let loadUnits: Promise<void> = fetch('qalc_data.txt').then((d: any) => d.text())
 		}
 		lines = linesNew;
 		linesNew = [];
-		
+		iteration++;
 	}
-	errors.forEach(l => console.warn(l));
+	errors.forEach((l,i) => {
+		if(l.length >= iteration) console.warn(i, l);
+	});
 });
 
 function mathjs_hack_unicode(str: string) {
@@ -36,6 +41,7 @@ function unmathjs_hack_unicode(str: string) {
 }
 const unitMap: Map<string, Unit> = new Map();
 const prefixMap: Map<string, Unit> = new Map();
+const caseInsensitives: {[v:string]: boolean} = {};
 
 const functions = new Map<string, (arg: Unit) => Unit>([
 	["sqrt", num => num.pow(0.5)]
@@ -46,7 +52,7 @@ function setUnit(name: string, val: Unit) {
 	unitMap.set(name, val);
 }
 function normalizeUnitName(name: string) {
-	if(name.length > 1) name = name.toLowerCase();
+	//if(name.length > 1 && !caseInsensitives[name]) name = name.toLowerCase();
 	return name;
 }
 function getUnit(name: string): Unit {
@@ -119,15 +125,18 @@ function evaluate(node: mathjs.MathNode): Unit {
 }
 function parseEvaluate(str: string) {
 	str = str.replace(/≈/g, function(x) {
-		console.warn("ignoring approx. equals sign");
+		//TODO: console.warn("ignoring approx. equals sign");
 		return "=";
 	}).replace(/(\W)in(\W)/g, function(all, before, after) {
 		return before + "inch" + after;
+	}).replace(/c:([^ ]+)/g, function(a, variable) {
+		caseInsensitives[variable] = true;
+		return variable;
 	});
 	const commentStart = str.indexOf("#");
 	if (commentStart >= 0) str = str.substr(0, commentStart);
 	str = str.trim();
-	if(str.endsWith(".")) {
+	if(str[str.length-1] === ".") {
 		// define new unit for a new dimension
 		const name = unmathjs_hack_unicode(str.substr(0, str.length - 1));
 		setUnit(name, new BaseUnit(new UnitIdentifier(name, name)));
@@ -138,7 +147,6 @@ function parseEvaluate(str: string) {
 
 export async function qalculate(input: string): Promise<string> {
 	await loadUnits;
-
 	try {
 		return parseEvaluate(input).toString();
 	} catch (e) {
@@ -146,4 +154,4 @@ export async function qalculate(input: string): Promise<string> {
 	}
 }
 
-(window as any).qalc = {unitMap, qalculate, parseEvaluate};
+if(typeof window !== "undefined") (window as any).qalc = {unitMap, qalculate, parseEvaluate, evaluate};

@@ -48,6 +48,7 @@ SystemJS.config({
     "react-dom": "npm:react-dom@0.14.7",
     "stream": "github:jspm/nodelibs-stream@0.2.0-alpha",
     "string_decoder": "github:jspm/nodelibs-string_decoder@0.2.0-alpha",
+    "text": "github:systemjs/plugin-text@0.0.7",
     "timers": "github:jspm/nodelibs-timers@0.2.0-alpha",
     "typescript": "npm:typescript@1.9.0-dev.20160323",
     "url": "github:jspm/nodelibs-url@0.2.0-alpha",

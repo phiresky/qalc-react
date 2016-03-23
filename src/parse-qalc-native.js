@@ -47,7 +47,7 @@ function addStuff(stuff) {
 	if(stuff.builtin_variable) {
 		maybeMultiple(v => {
 			v.value = [builtinValue[parseName(v.names[0], false)[0]]];
-			if(v.value[0] === undefined) throw Error("don't know "+parseName(v.names[0]));
+			if(v.value[0] === undefined) throw Error("don't know "+v.names[0]);
 			addVariable(v, 1);
 		}, stuff.builtin_variable);
 		delete stuff.builtin_variable;
@@ -100,7 +100,12 @@ function parseBase(base) {
 
 function parseName(name, join=true) {
 	const list = name.split(",").map(n => {
-		if(n.indexOf(":") >= 0) return n.split(":")[1];
+		if(n.indexOf(":") >= 0) {
+			let [attributes, name] = n.split(":");
+			attributes = attributes.replace(/[^c]/g, "");
+			if(attributes.length > 0) return attributes + ":" + name;
+			else return name;
+		}
 		else return n;
 	}).map(mathjs_hack_unicode);
 	if(join) return list.join(" = ");
