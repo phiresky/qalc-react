@@ -1,59 +1,52 @@
 export class Conversion {
-    private _sourceUnit: Unit;
-    private _targetUnit: Unit;
-    private _offset: number;
-    private _factor: number;
+    public readonly sourceUnit: Unit;
+    public readonly targetUnit: Unit;
+    public readonly offset: number;
+    public readonly factor: number;
     constructor(sourceUnit: Unit, targetUnit: Unit, factor: number, offset: number) {
-        this._sourceUnit = sourceUnit;
-        this._targetUnit = targetUnit;
-        this._offset = offset;
-        this._factor = factor;
+        this.sourceUnit = sourceUnit;
+        this.targetUnit = targetUnit;
+        this.offset = offset;
+        this.factor = factor;
     }
-    get sourceUnit(): Unit { return this._sourceUnit; }
-    get targetUnit(): Unit { return this._targetUnit; }
-    get offset(): number { return this._offset; }
-    get factor(): number { return this._factor; }
     inverse(): Conversion {
         // r = fx + o
         // r - o = fx => x = r/f - o/f
-        return new Conversion(this._targetUnit, this._sourceUnit, 1 / this._factor, -this._offset / this._factor);
+        return new Conversion(this.targetUnit, this.sourceUnit, 1 / this.factor, -this.offset / this.factor);
     }
     chain(conversion: Conversion) {
         
         // (this o conversion)(x) = this(conversion(x))
         // = this(c.f*x + c.o) = t.f * c.f * x + t.f * c.o + t.o
-        if (!conversion._targetUnit.equals(this._sourceUnit))
+        if (!conversion.targetUnit.equals(this.sourceUnit))
             throw new Error("Invalid conversion!");
-        return new Conversion(conversion._sourceUnit, this._targetUnit,
-            this._factor * conversion._factor,
-            this._factor * conversion.offset + this._offset);
+        return new Conversion(conversion.sourceUnit, this.targetUnit,
+            this.factor * conversion.factor,
+            this.factor * conversion.offset + this.offset);
     }
     convert(value: number): number {
-        return value * this._factor + this._offset;
+        return value * this.factor + this.offset;
     }
 }
 export class UnitIdentifier {
-    private _id: string;
-    private _name: string;
+	public readonly id: string;
+    public readonly name: string;
     constructor(id: string, name: string) {
-        this._id = id;
-        this._name = name;
+        this.id = id;
+        this.name = name;
     }
-    get id(): string { return this._id; }
-    get name(): string { return this._name; }
     toString(): string { return this.id; }
 }
 export abstract class Unit {
     static getDimensionless(): Unit { return DerivedUnit.create([]); }
-    private _identifier: UnitIdentifier;
+    public readonly identifier: UnitIdentifier;
     constructor(identifier: UnitIdentifier = null) {
-        this._identifier = identifier;
+        this.identifier = identifier;
     }
     withId(id: string, name: string = null): Unit {
         return this.withIdentifier(new UnitIdentifier(id, name));
     }
     abstract withIdentifier(identifier: UnitIdentifier): Unit;
-    get identifier(): UnitIdentifier { return this._identifier; }
     getHashCode(): string {
         return this.toString();
     }
@@ -81,15 +74,7 @@ export abstract class Unit {
         }
     }
 	pow(factor: number | Unit): Unit {
-		/*const q = new Quantity(1, this).convertTo(Unit.getDimensionless());
-		if(q !== null) {
-			const b = new Quantity(1, factor).convertTo(Unit.getDimensionless()).getValue();
-			return Unit.getDimensionless().mul(Math.pow(q.getValue(),b));
-		} else {
-			return DerivedUnit.create(new UnitPart(this, b));
-		}*/
-
-		const b = typeof factor === "number" ? factor : new Quantity(1, factor).convertTo(Unit.getDimensionless()).getValue();
+		const b = typeof factor === "number" ? factor : new Quantity(1, factor).convertTo(Unit.getDimensionless()).value;
 		console.log("pow",this, arguments);
 		return DerivedUnit.create([new UnitPart(this, b)]);
 	}
@@ -97,10 +82,10 @@ export abstract class Unit {
 		const thisIs0 = this.getConversionToCoherent().factor === 0;
 		if(thisIs0) return minand.mul(-1);
 		const minandAsThis = new Quantity(1, minand).convertTo(this);
-		return this.mul(1 - minandAsThis.getValue());
+		return this.mul(1 - minandAsThis.value);
 	}
 	plus(plusand: Unit): Unit {
-		return this.mul(1 + new Quantity(1, plusand).convertTo(this).getValue());
+		return this.mul(1 + new Quantity(1, plusand).convertTo(this).value);
 	}
 }
 export class BaseUnit extends Unit {
@@ -123,34 +108,31 @@ export class BaseUnit extends Unit {
     }
 }
 export class ScaledShiftedUnit extends Unit {
-    private _offset: number;
-    private _factor: number;
-    private _underlayingUnit: Unit;
+    public readonly offset: number;
+    public readonly factor: number;
+    public readonly underlayingUnit: Unit;
     constructor(underlayingUnit: Unit, factor: number, offset: number, ident: UnitIdentifier = null) {
         super(ident);
-        this._underlayingUnit = underlayingUnit;
-        this._offset = offset;
-        this._factor = factor;
+        this.underlayingUnit = underlayingUnit;
+        this.offset = offset;
+        this.factor = factor;
     }
-    get underlayingUnit(): Unit { return this._underlayingUnit; }
-    get offset(): number { return this._offset; }
-    get factor(): number { return this._factor; }
     toString(): string {
         if (this.identifier !== null)
             return super.toString();
-        if (this._offset === 0)
-            return "" + this._factor + " " + this._underlayingUnit.toString();
+        if (this.offset === 0)
+            return "" + this.factor + " " + this.underlayingUnit.toString();
         else
-            return "" + this._factor + " "+ this._underlayingUnit.toString() + "+" + this._offset + this._underlayingUnit.toString();
+            return "" + this.factor + " "+ this.underlayingUnit.toString() + "+" + this.offset + this.underlayingUnit.toString();
     }
     withIdentifier(identifier: UnitIdentifier): Unit {
-        return new ScaledShiftedUnit(this._underlayingUnit, this._factor, this._offset, identifier);
+        return new ScaledShiftedUnit(this.underlayingUnit, this.factor, this.offset, identifier);
     }
     getConversionToCoherent(linearConversion?: boolean): Conversion {
-        if (linearConversion && this._offset !== 0)
+        if (linearConversion && this.offset !== 0)
             return new Conversion(this, this, 1, 0);
-        return this._underlayingUnit.getConversionToCoherent().chain(
-            new Conversion(this, this._underlayingUnit, this._factor, this._offset));
+        return this.underlayingUnit.getConversionToCoherent().chain(
+            new Conversion(this, this.underlayingUnit, this.factor, this.offset));
     }
 }
 class DerivedUnit extends Unit {
@@ -176,18 +158,17 @@ class DerivedUnit extends Unit {
             return newParts[0].unit;
         return new DerivedUnit("uiaenrdt", newParts, identifier);
     }
-    private _parts: UnitPart[];
-	get parts() { return this._parts; }
+    public readonly parts: UnitPart[];
     // don't call the constructor from outside
     constructor(password: string, parts: UnitPart[], ident: UnitIdentifier = null) {
         if (password !== "uiaenrdt")
             throw new Error("Invalid password.");
         super(ident);
-        this._parts = parts;
+        this.parts = parts;
     }
     toString(): string {
-        const first = this._parts.filter(p => p.exponent > 0).map(p => p.toString()).join("*");
-        const last = this._parts.filter(p => p.exponent < 0).map(p => p.toString(true)).join("*");
+        const first = this.parts.filter(p => p.exponent > 0).map(p => p.toString()).join("*");
+        const last = this.parts.filter(p => p.exponent < 0).map(p => p.toString(true)).join("*");
         if (last === "")
             return first;
         return first + "/" + last;
@@ -195,17 +176,17 @@ class DerivedUnit extends Unit {
     getHashCode(): string {
         if (this.identifier !== null)
             return super.getHashCode();
-        const sortedParts = this._parts.map(p => `(${p.unit.getHashCode() }^${p.exponent})`)
+        const sortedParts = this.parts.map(p => `(${p.unit.getHashCode() }^${p.exponent})`)
             .sort((x, y) => ((x < y) ? -1 : ((x > y) ? 1 : 0)));
         return sortedParts.join(", ");
     }
     withIdentifier(identifier: UnitIdentifier): Unit {
-        return new DerivedUnit("uiaenrdt", this._parts, identifier);
+        return new DerivedUnit("uiaenrdt", this.parts, identifier);
     }
     getConversionToCoherent(linearConversion?: boolean): Conversion {
         let factor = 1;
         let parts: UnitPart[] = [];
-        this._parts.forEach(p => {
+        this.parts.forEach(p => {
             var t = p.unit.getConversionToCoherent(true);
             factor *= Math.pow(t.factor, p.exponent);
             this.addPartToCollectionAndSimplify(parts, new UnitPart(t.targetUnit, p.exponent));
@@ -215,7 +196,7 @@ class DerivedUnit extends Unit {
     private addPartToCollectionAndSimplify(collection: UnitPart[], part: UnitPart) {
         var unit = part.unit;
         if (unit instanceof DerivedUnit) {
-            unit._parts.forEach(p => {
+            unit.parts.forEach(p => {
                 this.addPartToCollectionAndSimplify(collection, new UnitPart(p.unit, p.exponent * part.exponent));
             });
         }
@@ -224,47 +205,41 @@ class DerivedUnit extends Unit {
     }
 	convertTo(targetUnit: Unit): Unit {
 		const quan = new Quantity(1, this).convertTo(targetUnit);
-		return quan.unit.mul(quan.getValue());
+		return quan.unit.mul(quan.value);
 	}
 }
 export class UnitPart {
-    private _exponent: number;
-    private _unit: Unit;
+    public readonly exponent: number;
+    public readonly unit: Unit;
     constructor(unit: Unit, exponent: number) {
-        this._exponent = exponent;
-        this._unit = unit;
+        this.exponent = exponent;
+        this.unit = unit;
     }
-    get exponent(): number { return this._exponent; }
-    get unit(): Unit { return this._unit; }
     toString(inDenominator: boolean = false): string {
-        const exp = this._exponent * (inDenominator ? -1 : 1);
+        const exp = this.exponent * (inDenominator ? -1 : 1);
         if (exp === 1)
-            return this._unit.toString();
+            return this.unit.toString();
         
-        return this._unit.toString() + "^" + exp;
+        return this.unit.toString() + "^" + exp;
     }
 }
 export class Quantity {
-    private _unit: Unit;
-    private _value: number;
+    public readonly unit: Unit;
+    public readonly value: number;
     constructor(value: number, unit: Unit) {
-        this._unit = unit;
-        this._value = value;
-    }
-    get unit(): Unit { return this._unit; }
-    getValue(): number {
-        return this._value;
+        this.unit = unit;
+        this.value = value;
     }
     convertTo(targetUnit: Unit): Quantity {
-        const t1 = this._unit.getConversionToCoherent();
+        const t1 = this.unit.getConversionToCoherent();
         const t2 = targetUnit.getConversionToCoherent();
         if (!t1.targetUnit.equals(t2.targetUnit))
             throw Error(t1.targetUnit +" != "+t2.targetUnit);
         const t3 = t2.inverse().chain(t1);
-        return new Quantity(t3.convert(this._value), t3.targetUnit);
+        return new Quantity(t3.convert(this.value), t3.targetUnit);
     }
     toString(): string {
-        return this._value + " " + this._unit.toString();
+        return this.value + " " + this.unit.toString();
     }
 }
 window.onload = () => {

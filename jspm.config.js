@@ -44,6 +44,7 @@ SystemJS.config({
     "stream": "github:jspm/nodelibs-stream@0.2.0-alpha",
     "string_decoder": "github:jspm/nodelibs-string_decoder@0.2.0-alpha",
     "timers": "github:jspm/nodelibs-timers@0.2.0-alpha",
+    "typescript": "npm:typescript@1.9.0-dev.20160323",
     "util": "github:jspm/nodelibs-util@0.2.0-alpha",
     "vm": "github:jspm/nodelibs-vm@0.2.0-alpha",
     "xml2js": "npm:xml2js@0.4.16"
@@ -285,7 +286,7 @@ SystemJS.config({
     },
     "github:frankwallis/plugin-typescript@4.0.2": {
       "map": {
-        "typescript": "npm:typescript@1.8.9"
+        "typescript": "npm:typescript@1.9.0-dev.20160323"
       }
     }
   }

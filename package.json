@@ -7,6 +7,7 @@
       "mathjs": "npm:mathjs@^3.1.0",
       "react": "npm:react@^0.14.7",
       "react-dom": "npm:react-dom@^0.14.7",
+      "typescript": "npm:typescript@1.9.0-dev.20160323",
       "xml2js": "npm:xml2js@^0.4.16"
     },
     "devDependencies": {
@@ -97,7 +98,7 @@
           }
         }
       },
-      "npm:typescript@1.8.9": {
+      "npm:typescript@1.9.0-dev.20160323": {
         "browser": {},
         "map": {
           "buffer": "@empty",
