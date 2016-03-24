@@ -7,8 +7,6 @@
         "jsx": "react"
     },
     "files": [
-        "src/gui.tsx",
-        "src/Qalc.ts",
-        "typings/browser.d.ts"
+		"src/gui.tsx"
     ]
 }

@@ -1,5 +1,5 @@
 import * as mathjs from 'mathjs';
-import {Unit, BaseUnit, UnitIdentifier} from './henning';
+import {UnitNumber} from './unitNumber';
 
 import qalcData from '../qalc_data.txt!text';
 const parser = mathjs.parser();
@@ -39,14 +39,14 @@ function unmathjs_hack_unicode(str: string) {
 	if(str.startsWith("_unicode_")) return decodeURIComponent(str.substr(9).replace(/_/g, "%"));
 	return str;
 }
-const unitMap: Map<string, Unit> = new Map();
-const prefixMap: Map<string, Unit> = new Map();
+const unitMap: Map<string, UnitNumber> = new Map();
+const prefixMap: Map<string, UnitNumber> = new Map();
 const caseInsensitives: {[v:string]: boolean} = {};
 
-const functions = new Map<string, (arg: Unit) => Unit>([
+const functions = new Map<string, (arg: UnitNumber) => UnitNumber>([
 	["sqrt", num => num.pow(0.5)]
 ]);
-function setUnit(name: string, val: Unit) {
+function setUnit(name: string, val: UnitNumber) {
 	name = normalizeUnitName(name);
 	if(unitMap.has(name)) throw Error("duplicate: "+name);
 	unitMap.set(name, val);
@@ -55,25 +55,25 @@ function normalizeUnitName(name: string) {
 	//if(name.length > 1 && !caseInsensitives[name]) name = name.toLowerCase();
 	return name;
 }
-function getUnit(name: string): Unit {
+function getUnit(name: string): UnitNumber {
 	if(!unitMap.has(normalizeUnitName(name))) {
 		for(const prefix of prefixMap.keys()) {
 			if(name.startsWith(prefix)) {
-				return prefixMap.get(prefix).mul(getUnit(name.substr(prefix.length))).withIdentifier(new UnitIdentifier(name,name));
+				return prefixMap.get(prefix).mul(getUnit(name.substr(prefix.length))).withIdentifier(name);
 			}
 		}
 		throw Error("unknown unit: " + name);
 	}
 	return unitMap.get(normalizeUnitName(name));
 }
-function evaluate(node: mathjs.MathNode): Unit {
+function evaluate(node: mathjs.MathNode): UnitNumber {
 	switch (node.type) {
 		case 'OperatorNode': {
 			const {op, args}:{op:string, args:mathjs.MathNode[]} = node as any;	
 			const stuff = args.map(a => evaluate(a));
 			if(args.length !== 2) {
 				if(args.length === 1 && op === '-') {
-					stuff.unshift(Unit.getDimensionless().mul(0));
+					stuff.unshift(new UnitNumber(0));
 				} else {
 					throw Error("weird op "+op);
 				}
@@ -85,11 +85,11 @@ function evaluate(node: mathjs.MathNode): Unit {
 		case 'ConstantNode': {
 			const val = node.value;
 			if((node as any).valueType !== "number") throw Error("wat is "+(node as any).valueType);
-			return Unit.getDimensionless().mul(parseFloat(val));
+			return new UnitNumber(parseFloat(val));
 		}
 		case 'SymbolNode': {
 			const name = unmathjs_hack_unicode(node.name);
-			if(!isNaN(parseFloat(name)) || name == "NaN") return Unit.getDimensionless().mul(parseFloat(name));
+			if(!isNaN(parseFloat(name)) || name == "NaN") return new UnitNumber(parseFloat(name));
 			return getUnit(name);
 		}
 		case 'AssignmentNode': {
@@ -97,13 +97,13 @@ function evaluate(node: mathjs.MathNode): Unit {
 			if(index != null) throw Error("unsupported1");
 			if(object.type !== 'SymbolNode') throw Error('unsupported2');
 			const name:string = object.name;
-			let unit: Unit;
+			let unit: UnitNumber;
 			if(name.endsWith("_")) {
 				const prefixName = name.substr(0, name.length - 1);
 				unit = evaluate(value);
 				prefixMap.set(prefixName, unit);
 			} else {
-				unit = evaluate(value).withIdentifier(new UnitIdentifier(name,name));
+				unit = evaluate(value).withIdentifier(name);
 				setUnit(name, unit);
 			}
 			return unit;
@@ -139,7 +139,7 @@ function parseEvaluate(str: string) {
 	if(str[str.length-1] === ".") {
 		// define new unit for a new dimension
 		const name = unmathjs_hack_unicode(str.substr(0, str.length - 1));
-		setUnit(name, new BaseUnit(new UnitIdentifier(name, name)));
+		setUnit(name, UnitNumber.createBaseUnit(name));
 	} else {
 		return evaluate(mathjs.parse(str));
 	}
