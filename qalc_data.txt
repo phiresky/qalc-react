@@ -205,7 +205,7 @@ sqmi = mi^2  # Square Mile
 l_p_km = l 10^3 m^-1  # Liter per Kilometer
 km_p_l = 10^3 m l^-1  # Kilometer per Liter
 mile_p_gal = mi gal^-1  # Miles per Gallon
-mpg = 1 mile_p_gal  # Miles per Gallon
+c:mpg = 1 mile_p_gal  # Miles per Gallon
 teaspoon = teaspoons = 0.005 L  # Teaspoon
 dessertspoon = dessertspoons = 2 teaspoon  # Dessertspoon
 tablespoon = tablespoons = 3 teaspoon  # Tablespoon
@@ -246,7 +246,7 @@ km_p_h = 10^3 m h^-1  # Kilometer per Hour
 nautical_mile_p_h = nautical_mile h^-1  # Nautical Mile per Hour
 knot = knots = 1 nautical_mile_p_h  # Knot
 mile_p_h = mi h^-1  # Miles per Hour
-mph = 1 mile_p_h  # Miles per Hour
+c:mph = 1 mile_p_h  # Miles per Hour
 recm = m^-1  # Reciprocal Meter
 A_p_m = A m^-1  # Ampere per Meter
 Oe = oersted = oersteds = 1000/(4*pi) A_p_m  # Oersted
@@ -260,7 +260,7 @@ N_m = N m  # Newton Meter
 N_p_sqm = N m^-2  # Newton per Meter Squared
 lbf_p_sqin = lbf in^-2  # Pound-force per Square Inch
 Pa = pascal = pascals = 1 N_p_sqm  # Pascal
-psi = 1 lbf_p_sqin  # Pound-force per Square Inch (psi)
+c:psi = 1 lbf_p_sqin  # Pound-force per Square Inch (psi)
 bar = bars = 100000 Pa  # Bar
 atm = atmosphere = atmospheres = 101325 Pa  # Atmosphere
 torr = torrs = 1/760 atm  # Torr
@@ -293,11 +293,11 @@ J_p_mol_K = J mol^-1 K^-1  # Joule per Mole Kelvin
 J = joule = joules = 1 N_m  # Joule
 W_h = W h  # Watt Hour
 W_h = 10^3 W h  # Kilowatt Hour
-cal_IT = cal = calorie = calories = 4.1868 J  # Calorie (international table)
-Calorie = Calories = 1000 cal  # Calorie (capital C)
+cal_IT = cal = c:calorie = c:calories = 4.1868 J  # Calorie (international table)
+c:Calorie = c:Calories = 1000 cal  # Calorie (capital C)
 cal_th = 4.184 J  # Calorie (thermochemical)
-gTNT = gramTNT = 1000 cal_th  # Gram of TNT
-tTNT = tonTNT = 1000000 gTNT  # Ton of TNT
+c:gTNT = gramTNT = 1000 cal_th  # Gram of TNT
+c:tTNT = tonTNT = 1000000 gTNT  # Ton of TNT
 cal_fifteen ≈ 4.185880 J  # Calorie (15 degrees Celcius)
 cal_mean ≈ 4.19002 J  # Calorie (mean)
 Btu = 1055.056 J  # British Thermal Unit (IT)
