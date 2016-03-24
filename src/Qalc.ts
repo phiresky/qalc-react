@@ -10,13 +10,13 @@ let loadUnits: Promise<void> = Promise.resolve(qalcData).then((t: string) => {
 	let errors:any[] = [];
 	let iteration = 0;
 	while(true) {
-		lines.forEach(line => {
+		for(const line of lines) {
 			try {parseEvaluate(line.line)} catch(error) {
 				linesNew.push(line);
 				errors[line.index] = errors[line.index] || [];
 				errors[line.index].push({line, error});
 			}
-		});
+		}
 		if(linesNew.length === lines.length) {
 			console.error("Could not resolve all errors, remaining: ");
 			console.log(lines);

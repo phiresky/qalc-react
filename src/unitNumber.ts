@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 
 // maps from dimension id to exponent
 // e.g.  m/s^2 has dimension map {m => 1, s => -2}
@@ -19,28 +20,30 @@ class DimensionMap extends Map<DimensionId, number> {
 }
 
 export class UnitNumber {
-	readonly value: number;
+	readonly value: decimal.Decimal;
 	readonly dimensions: DimensionMap;
 	readonly id: string;
-	constructor(value: number, dimensions: DimensionMap = new DimensionMap(), id: string = undefined) {
-		this.value = value;
+	constructor(value: decimal.Decimal | number | string, dimensions: DimensionMap = new DimensionMap(), id: string = undefined) {
+		this.value = Decimal(value);
 		this.dimensions = dimensions;
 		this.id = id;
 	}
-	mul(other: number | UnitNumber, exponent = 1) {
-		if (typeof other === 'number') return new UnitNumber(this.value * other ** exponent, this.dimensions);
-		else return new UnitNumber(this.value * other.value ** exponent, DimensionMap.join(
+	mul(other: UnitNumber) {
+		return new UnitNumber(this.value.times(other.value), DimensionMap.join(
 			{ dimensions: this.dimensions, factor: 1 },
-			{ dimensions: other.dimensions, factor: exponent }
+			{ dimensions: other.dimensions, factor: 1 }
 		));
 	}
-	div(other: number | UnitNumber) {
-		return this.mul(other, -1);
+	div(other: UnitNumber) {
+		return new UnitNumber(this.value.div(other.value), DimensionMap.join(
+			{ dimensions: this.dimensions, factor: 1 },
+			{ dimensions: other.dimensions, factor: -1 }
+		));
 	}
 	plus(other: UnitNumber, factor = 1) {
 		const dimensionDifference = this.div(other).dimensions;
 		if (dimensionDifference.size > 0) throw Error("Dimensions don't match: " + dimensionDifference);
-		return new UnitNumber(this.value + other.value * factor, this.dimensions);
+		return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions);
 	}
 	minus(other: UnitNumber) {
 		return this.plus(other, -1);
@@ -52,9 +55,9 @@ export class UnitNumber {
 		if (this.id !== undefined) return this.id;
 		else return `${this.value} ${this.dimensions}`;
 	}
-	pow(factor: number | UnitNumber): UnitNumber {
-		if (typeof factor === 'number')
-			return new UnitNumber(this.value ** factor, DimensionMap.join({ dimensions: this.dimensions, factor }));
+	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
+		if (typeof factor === 'number' || factor instanceof Decimal)
+			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor:typeof factor === 'number'?factor:factor.toNumber() }));
 		else if (factor.dimensions.size > 0) throw Error("power must be dimensionless");
 		else return this.pow(factor.value);
 	}

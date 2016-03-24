@@ -1,5 +1,6 @@
 {
   "ambientDependencies": {
+    "decimal.js": "registry:dt/decimal.js#0.0.0+20160317120654",
     "mathjs": "registry:dt/mathjs#0.0.0+20160317120654",
     "react": "registry:dt/react#0.14.0+20160319053454",
     "react-dom": "registry:dt/react-dom#0.14.0+20160316155526",

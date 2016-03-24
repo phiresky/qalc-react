@@ -4,6 +4,7 @@
     "dependencies": {
       "bootstrap": "github:twbs/bootstrap@^3.3.6",
       "css": "github:systemjs/plugin-css@^0.1.20",
+      "decimal.js": "npm:decimal.js@^5.0.8",
       "mathjs": "npm:mathjs@^3.1.0",
       "react": "npm:react@^0.14.7",
       "react-dom": "npm:react-dom@^0.14.7",
