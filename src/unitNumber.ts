@@ -86,7 +86,7 @@ export class UnitNumber {
 			if (this.id !== undefined) return this.id;
 			else return `${this.value}${this.dimensions.size > 0 ? " ":""}${this.dimensions}`;
 		}
-		return `(${this} = ${this.source.args.map(a => a.toString(depth - 1)).join(this.source.fn)})`; 
+		return `${this} = ${this.source.args.map(a => "("+a.toString(depth - 1)+")").join(" "+this.source.fn+" ")}`; 
 	}
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
@@ -97,6 +97,7 @@ export class UnitNumber {
 	convertTo(unit: UnitNumber): UnitNumber {
 		const d = this.div(unit);
 		if (d.dimensions.size > 0) throw Error("Dimensions don't match: " + d.dimensions.toMismatchString());
+		d.source.fn = 'to';
 		return d;
 	}
 	static createBaseUnit(dimensionName: string) {

@@ -27,11 +27,11 @@ export class GUILine extends React.Component<{ line: GuiLineElement, onClick:(g:
 let guiInst: GUI;
 const presetLines = `
 5600 mA h * 11.7 V to W h
-100W * 10 days * 0.25€/kWh
+100W * 10 days * 0.25€/kWh to €
 7Mbit/s * 2h to Gbyte
 32bit/(0.2bit/s) to s
-88 mph to km/s|88 * mph = 0.03933952(km / s)
-sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c to 1|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
+88 mph to km/h|88 * mph = 0.03933952(km / s)
+sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
 
 `;
 function loadPresetLines() {
