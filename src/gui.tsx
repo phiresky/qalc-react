@@ -5,18 +5,22 @@ import * as QalcLib from './Qalc';
 class GuiLineElement {
 	public id: number;
 	private static idCounter = 0;
-	constructor(public input: string, public output: string) {
+	constructor(public input: string, public output: any) {
 		this.id = GuiLineElement.idCounter++;
 	}
 }
 interface GuiState {
 	lines: GuiLineElement[];
 }
-export class GUILine extends React.Component<{ line: GuiLineElement, onClick:(g:GuiLineElement) => void }, {}> {
+export class GUILine extends React.Component<{ line: GuiLineElement, onClick:(g:GuiLineElement) => void }, {displayDepth: number}> {
+	constructor(props: any) {
+		super(props);
+		this.state = {displayDepth: 0};
+	}
 	render() {
 		return <div className="gui-line" ><hr />
 				<p style={{cursor:"pointer"}} onClick={() => this.props.onClick(this.props.line)}>> {this.props.line.input}</p>
-				<pre><code>{this.props.line.output}</code></pre>
+				<pre onClick={() => this.setState({displayDepth:this.state.displayDepth+1})}><code>{this.props.line.output.toString(this.state.displayDepth)}</code></pre>
 			</div>
 	}
 }
@@ -35,7 +39,10 @@ function loadPresetLines() {
 		.map(line => line.trim())
 		.filter(line => line.length > 0)
 		.map(line => line.split("|")[0])
-		.map(input => QalcLib.qalculate(input).then(output => guiInst.addLine(new GuiLineElement(input, output))));
+		.map(input => QalcLib.qalculate(input)
+			.then(output => guiInst.addLine(new GuiLineElement(input, output)))
+			.catch(error => guiInst.addLine(new GuiLineElement(input, error)))
+		);
 }
 export class GUI extends React.Component<{}, GuiState> {
 	constructor(props:{}) {
@@ -55,7 +62,7 @@ export class GUI extends React.Component<{}, GuiState> {
 			const input = target.value.trim();
 			if(input.length > 0) QalcLib.qalculate(input).then(output => 
 				this.addLine(new GuiLineElement(input, output))
-			);
+			).catch(reason => this.addLine(new GuiLineElement(input, reason)))
 			target.value = "";
 		}
 	}

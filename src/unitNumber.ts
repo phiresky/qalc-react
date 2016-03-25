@@ -45,12 +45,14 @@ class DimensionMap extends Map<DimensionId, number> {
 	}
 }
 
+type NumberSource = {fn: string, args: UnitNumber[]};
+
 export class UnitNumber {
 	readonly value: decimal.Decimal;
 	readonly dimensions: DimensionMap;
 	readonly id: string;
-	readonly source: any;
-	constructor(value: decimal.Decimal | number | string, dimensions: DimensionMap = new DimensionMap(), source: any = undefined, id: string = undefined) {
+	readonly source: NumberSource;
+	constructor(value: decimal.Decimal | number | string, dimensions: DimensionMap = new DimensionMap(), source: NumberSource = undefined, id: string = undefined) {
 		this.value = Decimal(value);
 		this.dimensions = dimensions;
 		this.id = id;
@@ -60,18 +62,18 @@ export class UnitNumber {
 		return new UnitNumber(this.value.times(other.value), DimensionMap.join(
 			{ dimensions: this.dimensions, factor: 1 },
 			{ dimensions: other.dimensions, factor: 1 }
-		), {mul:[this, other]});
+		), {fn:"·", args:[this, other]});
 	}
 	div(other: UnitNumber) {
 		return new UnitNumber(this.value.div(other.value), DimensionMap.join(
 			{ dimensions: this.dimensions, factor: 1 },
 			{ dimensions: other.dimensions, factor: -1 }
-		), {div:[this, other]});
+		), {fn:"/", args:[this, other]});
 	}
 	plus(other: UnitNumber, factor = 1) {
 		const dimensionDifference = this.div(other).dimensions;
 		if (dimensionDifference.size > 0) throw Error("Dimensions don't match: " + dimensionDifference.toMismatchString());
-		return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions, {plus:[this, other], factor});
+		return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions, {fn:factor==1?"+":"-", args:[this, other]});
 	}
 	minus(other: UnitNumber) {
 		return this.plus(other, -1);
@@ -79,13 +81,16 @@ export class UnitNumber {
 	withIdentifier(id: string) {
 		return new UnitNumber(this.value, this.dimensions, this.source, id);
 	}
-	toString() {
-		if (this.id !== undefined) return this.id;
-		else return `${this.value} ${this.dimensions}`;
+	toString(depth = 0): string {
+		if(!this.source || depth == 0) {
+			if (this.id !== undefined) return this.id;
+			else return `${this.value}${this.dimensions.size > 0 ? " ":""}${this.dimensions}`;
+		}
+		return `(${this} = ${this.source.args.map(a => a.toString(depth - 1)).join(this.source.fn)})`; 
 	}
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
-			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor: typeof factor === 'number' ? factor : factor.toNumber() }), {pow:[this, factor]});
+			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor: typeof factor === 'number' ? factor : factor.toNumber() }), {fn:"^", args:[this, new UnitNumber(factor)]});
 		else if (factor.dimensions.size > 0) throw Error("power must be dimensionless");
 		else return this.pow(factor.value);
 	}
@@ -97,7 +102,7 @@ export class UnitNumber {
 	static createBaseUnit(dimensionName: string) {
 		const dimension = new Dimension(dimensionName);
 		const map = new DimensionMap(); map.set(dimension.id, 1);
-		return new UnitNumber(1, map, {});
+		return new UnitNumber(1, map, undefined, dimensionName);
 	}
 }
 

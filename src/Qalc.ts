@@ -102,7 +102,7 @@ export function parseEvaluate(str: string) {
 			else if(op === '=' || op === '≈') {
 				const val = interpretVal(stack.pop()), name = stack.pop() as string;
 				if(typeof name !== 'string') throw Error('invalid left hand side of =');
-				stack.push(setUnitOrPrefix(name, val));
+				stack.push(setUnitOrPrefix(name, val.withIdentifier(name)));
 			}
 			else {
 				const r = interpretVal(stack.pop()), l = interpretVal(stack.pop());
@@ -124,11 +124,7 @@ export function parseEvaluate(str: string) {
 	}
 	return interpretVal(stack[0]);
 }
-export async function qalculate(input: string): Promise<string> {
+export async function qalculate(input: string): Promise<UnitNumber> {
 	await loadUnits;
-	try {
-		return parseEvaluate(input).toString();
-	} catch (e) {
-		return e + "";
-	}
+	return parseEvaluate(input);
 }
