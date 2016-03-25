@@ -35,6 +35,12 @@ export function* tokenize(str: string): IterableIterator<Token> {
 	}
 }
 
+/**
+ * fix some things:
+ * - replace unary minus with operator '#'
+ * - identifier before '(' is function call e.g. "sin(x)"
+ * - implicit multiplication between {), num, identifier} and {(, num, identifier)}
+ */
 export function* tokenFix(tokens: IterableIterator<Token>): IterableIterator<Token> {
 	let lastToken: Token = null;
 	for (const token of tokens) {
@@ -75,15 +81,14 @@ function operator(token: Token) {
 	if (!c) throw Error("unknown operator: '" + op + "'");
 	return c;
 }
-export function toRPN(tokens: Iterable<Token>) {
-	const output: Token[] = [];
+export function* toRPN(tokens: Iterable<Token>) {
 	const stack: Token[] = [];
 	function top<T>(stack: T[]) { return stack[stack.length - 1] };
 	for (const token of tokens) {
 		switch (token.type) {
 			case TokenType.Number:
 			case TokenType.Identifier:
-				output.push(token);
+				yield token;
 				break;
 			case TokenType.Operator:
 				const o1 = operator(token);
@@ -98,7 +103,7 @@ export function toRPN(tokens: Iterable<Token>) {
 							&& o1.precedence > o2.precedence)
 					)
 				) {
-					output.push(stack.pop());
+					yield stack.pop();
 				}
 				stack.push(token);
 				break;
@@ -108,20 +113,19 @@ export function toRPN(tokens: Iterable<Token>) {
 				break;
 			case TokenType.RParen:
 				while (top(stack) && top(stack).type !== TokenType.LParen)
-					output.push(stack.pop());
+					yield stack.pop();
 				if (stack.length === 0) throw Error("mismatched parens 1: " + token.start);
 				stack.pop();
 				if (top(stack) && top(stack).type === TokenType.FunctionCall)
-					output.push(stack.pop());
+					yield stack.pop();
 				break;
 			default: throw Error('what is ' + token);
 		}
 	}
 	while (stack.length > 0) {
-		if (top(stack).type === TokenType.Operator) output.push(stack.pop());
+		if (top(stack).type === TokenType.Operator) yield stack.pop();
 		else throw Error("mismatched parens 2: " + top(stack).start);
 	}
-	return output;
 }
 export function parse(str: string) {
 	return toRPN(tokenFix(tokenize(str)));
