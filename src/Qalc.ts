@@ -55,25 +55,32 @@ function normalizeUnitName(name: string) {
 	//if(name.length > 1 && !caseInsensitives[name]) name = name.toLowerCase();
 	return name;
 }
-function getUnit(name: string, originalName = name, withPrefix = true): UnitNumber {
+export function getUnit(name: string, withPrefix = true): UnitNumber {
 	if(!unitMap.has(normalizeUnitName(name))) {
 		if(withPrefix) for(const prefix of prefixMap.keys()) {
 			if(name.startsWith(prefix)) {
 				let unit = prefixMap.get(prefix);
-				if(prefix.length < name.length) unit = unit.mul(getUnit(name.substr(prefix.length), name, false));
+				if(prefix.length < name.length) {
+					const suffix = getUnit(name.substr(prefix.length), false);
+					if(suffix === null) continue;
+					unit = unit.mul(suffix);
+				}
 				return unit.withIdentifier(name);
 			}
 		}
-		throw Error("unknown unit: " + originalName);
+		if(name[name.length-1] === 's') return getUnit(name.substr(0, name.length - 1), withPrefix);
+		return null;
 	}
 	return unitMap.get(normalizeUnitName(name));
 }
 function interpretVal(v: string|UnitNumber): UnitNumber {
 	if(typeof v === 'string') {
-		return getUnit(v);
+		const u = getUnit(v);
+		if(u === null) throw Error("can't resolve unit: " + v);
+		return u;
 	} else return v;
 }
-function parseEvaluate(str: string) {
+export function parseEvaluate(str: string) {
 	const commentStart = str.indexOf("#");
 	if (commentStart >= 0) str = str.substr(0, commentStart);
 	str = str.trim();
@@ -125,5 +132,3 @@ export async function qalculate(input: string): Promise<string> {
 		return e + "";
 	}
 }
-
-if(typeof window !== "undefined") (window as any).qalc = {unitMap, qalculate, parseEvaluate};
