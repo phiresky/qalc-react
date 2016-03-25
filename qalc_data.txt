@@ -50,20 +50,20 @@ pebi_ = 2^50
 Pi_ = 2^50
 exbi_ = 2^60
 Ei_ = 2^60
-m.  # Meter
-g.  # Gram
-s.  # Second
-A.  # Ampere
-K.  # Kelvin
-mol.  # Mole
-einstein.  # Einstein
-cd.  # Candela
-Np.  # Neper
-bit.  # Bit
-e = 2.718281828459045  # Base of Natural Logarithms (e)
-_unicode__CF_80 = pi = 3.141592653589793  # Archimede's Constant (pi)
-_unicode__CE_B3 = euler = 0.5772156649015329  # Euler's Constant
-catalan = 0.915965594177219  # Catalan's Constant
+m!  # Meter
+g!  # Gram
+s!  # Second
+A!  # Ampere
+K!  # Kelvin
+mol!  # Mole
+einstein!  # Einstein
+cd!  # Candela
+Np!  # Neper
+bit!  # Bit
+e = 2.71828182845904523536028747135266249775724709369995  # Base of Natural Logarithms (e)
+π = pi = 3.14159265358979323846264338327950288419716939937510  # Archimede's Constant (pi)
+γ = euler = 0.57721566490153286060651209008240243104215933593992  # Euler's Constant
+catalan = 0.915965594177219015054603514932384110774  # Catalan's Constant
 i = NaN  # Imaginary i (sqrt -1)
 infinity = Infinity  # Infinity
 plus_infinity = Infinity  # Positive Infinity
@@ -75,7 +75,7 @@ dm_c = 10^-1 m  # Decimeter
 cm_c = 10^-2 m  # Centimeter
 mm_c = 10^-3 m  # Millimeter
 nautical_mile = nautical_miles = 1852 m  # Nautical Mile
-_unicode__C3_85 = ångström = angstrom = 1E-10 m  # Ångström
+Å = ångström = angstrom = 1E-10 m  # Ångström
 US_in = US_inch = US_inches = 100/3937 m  # U.S. Survey Inch
 in = inch = inches = 0.0254 m  # Inch
 hand = hands = 4 in  # Hand
@@ -99,7 +99,7 @@ ligne = 1/12 pouce  # Ligne
 toise = 6 pied_du_roi  # Toise
 m_p_m = m m^-1  # Meter per Meter
 rad = radian = radians = 1 m_p_m  # Radian
-deg = _unicode__C2_B0 = degree = degrees = pi/180 rad  # Degree
+deg = ° = degree = degrees = pi/180 rad  # Degree
 gra = gradian = gradians = gon = gons = pi/200 rad  # Gradian (Gon)
 arcminute = arcminutes = 1/60 deg  # Arcminute
 arcsecond = arcseconds = 1/60 arcminute  # Arcsecond
@@ -158,7 +158,7 @@ abvolt = abvolts = abV = 1E-8 V  # Abvolt
 C_p_V = C V^-1  # Coulomb per Volt
 F = farad = farads = 1 C_p_V  # Farad
 V_p_A = V A^-1  # Volt per Ampere
-_unicode__CE_A9 = ohm = ohms = 1 V_p_A  # Ohm
+Ω = ohm = ohms = 1 V_p_A  # Ohm
 abohm = abohms = abΩ = 1E-9 ohm  # Abohm
 statohm = statohms = statΩ ≈ 8.9875517874E11 ohm  # Statohm
 A_p_V = A V^-1  # Ampere per Volt
@@ -205,7 +205,7 @@ sqmi = mi^2  # Square Mile
 l_p_km = l 10^3 m^-1  # Liter per Kilometer
 km_p_l = 10^3 m l^-1  # Kilometer per Liter
 mile_p_gal = mi gal^-1  # Miles per Gallon
-c:mpg = 1 mile_p_gal  # Miles per Gallon
+mpg = 1 mile_p_gal  # Miles per Gallon
 teaspoon = teaspoons = 0.005 L  # Teaspoon
 dessertspoon = dessertspoons = 2 teaspoon  # Dessertspoon
 tablespoon = tablespoons = 3 teaspoon  # Tablespoon
@@ -246,7 +246,7 @@ km_p_h = 10^3 m h^-1  # Kilometer per Hour
 nautical_mile_p_h = nautical_mile h^-1  # Nautical Mile per Hour
 knot = knots = 1 nautical_mile_p_h  # Knot
 mile_p_h = mi h^-1  # Miles per Hour
-c:mph = 1 mile_p_h  # Miles per Hour
+mph = 1 mile_p_h  # Miles per Hour
 recm = m^-1  # Reciprocal Meter
 A_p_m = A m^-1  # Ampere per Meter
 Oe = oersted = oersteds = 1000/(4*pi) A_p_m  # Oersted
@@ -260,7 +260,7 @@ N_m = N m  # Newton Meter
 N_p_sqm = N m^-2  # Newton per Meter Squared
 lbf_p_sqin = lbf in^-2  # Pound-force per Square Inch
 Pa = pascal = pascals = 1 N_p_sqm  # Pascal
-c:psi = 1 lbf_p_sqin  # Pound-force per Square Inch (psi)
+psi = 1 lbf_p_sqin  # Pound-force per Square Inch (psi)
 bar = bars = 100000 Pa  # Bar
 atm = atmosphere = atmospheres = 101325 Pa  # Atmosphere
 torr = torrs = 1/760 atm  # Torr
@@ -293,11 +293,11 @@ J_p_mol_K = J mol^-1 K^-1  # Joule per Mole Kelvin
 J = joule = joules = 1 N_m  # Joule
 W_h = W h  # Watt Hour
 W_h = 10^3 W h  # Kilowatt Hour
-cal_IT = cal = c:calorie = c:calories = 4.1868 J  # Calorie (international table)
-c:Calorie = c:Calories = 1000 cal  # Calorie (capital C)
+cal_IT = cal = calorie = calories = 4.1868 J  # Calorie (international table)
+Calorie = Calories = 1000 cal  # Calorie (capital C)
 cal_th = 4.184 J  # Calorie (thermochemical)
-c:gTNT = gramTNT = 1000 cal_th  # Gram of TNT
-c:tTNT = tonTNT = 1000000 gTNT  # Ton of TNT
+gTNT = gramTNT = 1000 cal_th  # Gram of TNT
+tTNT = tonTNT = 1000000 gTNT  # Ton of TNT
 cal_fifteen ≈ 4.185880 J  # Calorie (15 degrees Celcius)
 cal_mean ≈ 4.19002 J  # Calorie (mean)
 Btu = 1055.056 J  # British Thermal Unit (IT)
@@ -343,9 +343,9 @@ ata_point = ata_pt = ata_points = 1/12 ata_pica  # ATA Point
 new_didot = 0.000375 m  # New Didot Point
 didot = dd = 1/72 pouce  # Didot Point
 cicero = 12 didot  # Cicero
-permille = _unicode__E2_80_B0 = 1/1000  # Per Mille
-permyriad = _unicode__E2_80_B1 = 1/10000  # Per Myriad
-_unicode__25 = procent = 1/100  # Procent
+permille = ‰ = 1/1000  # Per Mille
+permyriad = ‱ = 1/10000  # Per Myriad
+% = procent = 1/100  # Procent
 googolplex = 10^(10^100)  # Googolplex
 googol = 10^100  # Googol
 centillion = 1E303  # Centillion
@@ -406,7 +406,7 @@ faraday ≈ 96485.3383*C*mol^(-1)  # Faraday Constant
 first_radiation = c_1 ≈ 3.74177138E-16*W*m^2  # First Radiation Constant
 ideal_gas ≈ 8.314472*J*K^(-1)*mol^(-1)  # Ideal Gas Constant
 second_radiation = c_2 ≈ 1.4387752E-2*m*K  # Second Radiation Constant
-golden = _unicode__CF_86 = (1+sqrt(5))/2  # Golden Ratio
+golden = φ = (1+sqrt(5))/2  # Golden Ratio
 omega = lambertw(1)  # Omega Constant
 pythagoras = sqrt(2)  # Pythagora's Constant (sqrt 2)
 apery = zeta(3)  # Apery's Constant
