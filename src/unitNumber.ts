@@ -20,6 +20,13 @@ class DimensionMap extends Map<DimensionId, number> {
 	assertEmpty(str = "") {
 		if (this.size > 0) throw Error(str + " must be dimensionless");
 	}
+	toMismatchString() {
+		const tooMuch = [...this].filter(([id, exp]) => exp > 0);
+		const notEnough = [...this].filter(([id, exp]) => exp < 0);
+		if(tooMuch.length === 0) return "missing "+new DimensionMap(notEnough);
+		if(notEnough.length === 0) return "don't want "+new DimensionMap(tooMuch);
+		return `have ${new DimensionMap(tooMuch)}, want ${new DimensionMap(notEnough)}`;
+	}
 }
 
 export class UnitNumber {
@@ -45,7 +52,7 @@ export class UnitNumber {
 	}
 	plus(other: UnitNumber, factor = 1) {
 		const dimensionDifference = this.div(other).dimensions;
-		if (dimensionDifference.size > 0) throw Error("Dimensions don't match: " + dimensionDifference);
+		if (dimensionDifference.size > 0) throw Error("Dimensions don't match: " + dimensionDifference.toMismatchString());
 		return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions);
 	}
 	minus(other: UnitNumber) {
@@ -66,7 +73,7 @@ export class UnitNumber {
 	}
 	convertTo(unit: UnitNumber): UnitNumber {
 		const d = this.div(unit);
-		if (d.dimensions.size > 0) throw Error("Dimensions don't match: " + d.dimensions);
+		if (d.dimensions.size > 0) throw Error("Dimensions don't match: " + d.dimensions.toMismatchString());
 		return d;
 	}
 	static createBaseUnit(dimensionName: string) {
