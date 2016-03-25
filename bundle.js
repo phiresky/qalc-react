@@ -13790,7 +13790,11 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
       unitMap,
       prefixMap,
       functions,
-      QalcGui;
+      GuiLineElement,
+      GUILine,
+      guiInst,
+      presetLines,
+      GUI;
   function* tokenize(str) {
     let i = 0;
     let it = 0;
@@ -13813,10 +13817,12 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
         throw Error("wtf");
     }
   }
-  function* tokenFix(tokens) {
+  function* preprocess(tokens) {
     let lastToken = null;
     for (const token of tokens) {
-      if (token.type === TokenType.Operator && [null, TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
+      if (token.type === TokenType.Whitespace)
+        continue;
+      if (token.type === TokenType.Operator && (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0)) {
         if (token.str.trim() === '-')
           token.str = token.str.replace('-', '#');
         else
@@ -13890,7 +13896,7 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
     }
   }
   function parse(str) {
-    return toRPN(tokenFix(tokenize(str)));
+    return toRPN(preprocess(tokenize(str)));
   }
   function setUnit(name, val) {
     name = normalizeUnitName(name);
@@ -13997,6 +14003,9 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
       }
     });
   }
+  function loadPresetLines() {
+    presetLines.split('\n').map((line) => line.trim()).filter((line) => line.length > 0).map((line) => line.split("|")[0]).map((input) => qalculate(input).then((output) => guiInst.addLine(new GuiLineElement(input, output))));
+  }
   return {
     setters: [function($__m) {
       React = $__m;
@@ -14030,6 +14039,15 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
           if (this.size > 0)
             throw Error(str + " must be dimensionless");
         }
+        toMismatchString() {
+          const tooMuch = [...this].filter(([id, exp]) => exp > 0);
+          const notEnough = [...this].filter(([id, exp]) => exp < 0);
+          if (tooMuch.length === 0)
+            return "missing " + new DimensionMap(notEnough);
+          if (notEnough.length === 0)
+            return "don't want " + new DimensionMap(tooMuch);
+          return `have ${new DimensionMap(tooMuch)}, want ${new DimensionMap(notEnough)}`;
+        }
       };
       UnitNumber = class UnitNumber {
         constructor(value, dimensions = new DimensionMap(), id = undefined) {
@@ -14058,7 +14076,7 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
         plus(other, factor = 1) {
           const dimensionDifference = this.div(other).dimensions;
           if (dimensionDifference.size > 0)
-            throw Error("Dimensions don't match: " + dimensionDifference);
+            throw Error("Dimensions don't match: " + dimensionDifference.toMismatchString());
           return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions);
         }
         minus(other) {
@@ -14087,7 +14105,7 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
         convertTo(unit) {
           const d = this.div(unit);
           if (d.dimensions.size > 0)
-            throw Error("Dimensions don't match: " + d.dimensions);
+            throw Error("Dimensions don't match: " + d.dimensions.toMismatchString());
           return d;
         }
         static createBaseUnit(dimensionName) {
@@ -14115,9 +14133,10 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
         TokenType[TokenType["RParen"] = 3] = "RParen";
         TokenType[TokenType["Operator"] = 4] = "Operator";
         TokenType[TokenType["FunctionCall"] = 5] = "FunctionCall";
-        TokenType[TokenType["Unknown"] = 6] = "Unknown";
+        TokenType[TokenType["Whitespace"] = 6] = "Whitespace";
+        TokenType[TokenType["Unknown"] = 7] = "Unknown";
       })(TokenType || (TokenType = {}));
-      TokenTypeRegex = [[/^\s*\(\s*/, TokenType.LParen], [/^\s*\)\s*/, TokenType.RParen], [/^\s*([ =≈+*/^-]|to )\s*/, TokenType.Operator], [/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number], [/^[^() =≈+*/^-]+/i, TokenType.Identifier], [/^./, TokenType.Unknown]];
+      TokenTypeRegex = [[/^\s+/, TokenType.Whitespace], [/^\(/, TokenType.LParen], [/^\)/, TokenType.RParen], [/^([ =≈+*/^-]|to )/, TokenType.Operator], [/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number], [/^[^() =≈+*/^-]+/i, TokenType.Identifier], [/^./, TokenType.Unknown]];
       ;
       (function(Associativity) {
         Associativity[Associativity["left"] = 0] = "left";
@@ -14237,65 +14256,58 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
           qalculate,
           parseEvaluate
         };
-      (function(QalcGui) {
-        class GuiLineElement {
-          constructor(input, output) {
-            this.input = input;
-            this.output = output;
-            this.id = GuiLineElement.idCounter++;
+      GuiLineElement = class GuiLineElement {
+        constructor(input, output) {
+          this.input = input;
+          this.output = output;
+          this.id = GuiLineElement.idCounter++;
+        }
+      };
+      GuiLineElement.idCounter = 0;
+      GUILine = class GUILine extends React.Component {
+        render() {
+          return React.createElement("div", {className: "gui-line"}, React.createElement("hr", null), React.createElement("p", null, "> ", this.props.line.input), React.createElement("pre", null, React.createElement("code", null, this.props.line.output)));
+        }
+      };
+      presetLines = `
+5600 mA h * 11.7 V to W h
+100W * 10 days * 0.25€/kWh
+7Mbit/s * 2h to Gbyte
+32bit/(0.2bit/s) to s
+88 mph to km/s|88 * mph = 0.03933952(km / s)
+sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c to 1|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
+
+`;
+      GUI = class GUI extends React.Component {
+        constructor(props) {
+          super(props);
+          guiInst = this;
+          this.state = {lines: []};
+          loadPresetLines();
+        }
+        addLine(line) {
+          const lines = this.state.lines.slice();
+          lines.unshift(line);
+          this.setState({lines: lines});
+        }
+        keyPress(evt) {
+          if (evt.charCode == 13) {
+            const target = evt.target;
+            const input = target.value.trim();
+            if (input.length > 0)
+              qalculate(input).then((output) => this.addLine(new GuiLineElement(input, output)));
+            target.value = "";
           }
         }
-        GuiLineElement.idCounter = 0;
-        class GUILine extends React.Component {
-          render() {
-            return React.createElement("div", {className: "gui-line"}, React.createElement("hr", null), React.createElement("p", null, "> ", this.props.line.input), React.createElement("pre", null, React.createElement("code", null, this.props.line.output)));
-          }
+        render() {
+          return React.createElement("div", null, "> ", React.createElement("input", {onKeyPress: this.keyPress.bind(this)}), this.state.lines.map((line) => React.createElement(GUILine, {
+            key: line.id,
+            line: line
+          })));
         }
-        QalcGui.GUILine = GUILine;
-        let guiInst;
-        const presetLines = `
-	5600 mA h * 11.7 V to W h
-	100W * 10 days * 0.25€/kWh
-	7Mbit/s * 2h to Gbyte
-	32bit/(0.2bit/s) to s
-	88 mph to km/s|88 * mph = 0.03933952(km / s)
-	sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c to 1|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
-	
-	`;
-        function loadPresetLines() {
-          presetLines.split('\n').map((line) => line.trim()).filter((line) => line.length > 0).map((line) => line.split("|")[0]).map((input) => qalculate(input).then((output) => guiInst.addLine(new GuiLineElement(input, output))));
-        }
-        class GUI extends React.Component {
-          constructor(props) {
-            super(props);
-            guiInst = this;
-            this.state = {lines: []};
-            loadPresetLines();
-          }
-          addLine(line) {
-            const lines = this.state.lines.slice();
-            lines.unshift(line);
-            this.setState({lines: lines});
-          }
-          keyPress(evt) {
-            if (evt.charCode == 13) {
-              const target = evt.target;
-              const input = target.value.trim();
-              if (input.length > 0)
-                qalculate(input).then((output) => this.addLine(new GuiLineElement(input, output)));
-              target.value = "";
-            }
-          }
-          render() {
-            return React.createElement("div", null, "> ", React.createElement("input", {onKeyPress: this.keyPress.bind(this)}), this.state.lines.map((line) => React.createElement(GUILine, {
-              key: line.id,
-              line: line
-            })));
-          }
-        }
-        QalcGui.GUI = GUI;
-      })(QalcGui || (QalcGui = {}));
-      ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(QalcGui.GUI, null)), document.getElementById("root"));
+      };
+      ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(GUI, null)), document.getElementById("root"));
+      $__export("GUILine", GUILine), $__export("GUI", GUI);
     }
   };
 });
