@@ -7,7 +7,7 @@ bin/index.html: index.html
 bin/qalc_data.txt: qalc_data.txt
 	cp $< $@
 
-bin/bundle.js:
+bin/bundle.js: $(wildcard src/*)
 	jspm build src/gui.tsx bin/bundle.js --dev
 
 bin/.git:

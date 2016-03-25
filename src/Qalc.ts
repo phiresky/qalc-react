@@ -1,7 +1,7 @@
 import {UnitNumber} from './unitNumber';
 import * as rr from './parser';
 
-import qalcData from '../qalc_data.txt!text';
+import qalcData from '../units_data.txt!text';
 declare var fetch: any;
 let loadUnits: Promise<void> = Promise.resolve(qalcData).then((t: string) => {
 	let lines = t.split("\n").map((line, index) => ({line, index})), linesNew:typeof lines = [];
@@ -55,14 +55,16 @@ function normalizeUnitName(name: string) {
 	//if(name.length > 1 && !caseInsensitives[name]) name = name.toLowerCase();
 	return name;
 }
-function getUnit(name: string): UnitNumber {
+function getUnit(name: string, originalName = name, withPrefix = true): UnitNumber {
 	if(!unitMap.has(normalizeUnitName(name))) {
-		for(const prefix of prefixMap.keys()) {
+		if(withPrefix) for(const prefix of prefixMap.keys()) {
 			if(name.startsWith(prefix)) {
-				return prefixMap.get(prefix).mul(getUnit(name.substr(prefix.length))).withIdentifier(name);
+				let unit = prefixMap.get(prefix);
+				if(prefix.length < name.length) unit = unit.mul(getUnit(name.substr(prefix.length), name, false));
+				return unit.withIdentifier(name);
 			}
 		}
-		throw Error("unknown unit: " + name);
+		throw Error("unknown unit: " + originalName);
 	}
 	return unitMap.get(normalizeUnitName(name));
 }
@@ -88,7 +90,7 @@ function parseEvaluate(str: string) {
 	for(const token of tokens) {
 		if(token.type === rr.TokenType.Operator) {
 			const op = token.str.trim();
-			const map:any = {'*':'mul', '':'mul', '/':'div','^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
+			const map:any = {'*':'mul', '':'mul', '/':'div','|':'div', '^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
 			if(op === '#') stack.push(interpretVal(stack.pop()).mul(new UnitNumber(-1)));
 			else if(op === '=' || op === '≈') {
 				const val = interpretVal(stack.pop()), name = stack.pop() as string;

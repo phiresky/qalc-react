@@ -3,3 +3,4 @@ node_modules/
 typings/
 bin/
 qalc_data.txt
+units_data.txt

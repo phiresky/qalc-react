@@ -12,9 +12,9 @@ const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^\s+/, TokenType.Whitespace],
 	[/^\(/, TokenType.LParen],
 	[/^\)/, TokenType.RParen],
-	[/^([ =≈+*/^-]|to )/, TokenType.Operator],
+	[/^([ =≈+*/^|-]|to )/, TokenType.Operator],
 	[/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number],
-	[/^[^() =≈+*/^-]+/i, TokenType.Identifier],
+	[/^[^() =≈+*/^|-]+/i, TokenType.Identifier],
 	[/^./, TokenType.Unknown]
 ];
 export interface Token { type: TokenType, str: string, start: number };
@@ -40,7 +40,7 @@ export function* tokenize(str: string): IterableIterator<Token> {
 /**
  * fix some things:
  * - remove whitespace
- * - replace unary minus with operator '#'
+ * - replace unary minus with operator '#', "/m" with "1/m"
  * - identifier before '(' is function call e.g. "sin(x)"
  * - implicit multiplication between {), num, identifier} and {(, num, identifier)}
  */
@@ -48,17 +48,19 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 	let lastToken: Token = null;
 	for (const token of tokens) {
 		if(token.type === TokenType.Whitespace) continue;
-		if (token.type === TokenType.Operator && (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0)) {
-			// is an unary operator
-			if (token.str.trim() === '-') token.str = token.str.replace('-', '#');
-			else throw Error("Unary " + token.str + " not allowed");
-		}
-		
 		if (token.type === TokenType.LParen && lastToken && lastToken.type === TokenType.Identifier)
 				lastToken.type = TokenType.FunctionCall;	 
 		if(lastToken) yield lastToken;
 		if (lastToken && [TokenType.Identifier, TokenType.Number, TokenType.LParen].indexOf(token.type) >= 0
 			&& [TokenType.Identifier, TokenType.Number, TokenType.RParen].indexOf(lastToken.type) >= 0) yield { type: TokenType.Operator, str: "", start: token.start };
+
+		
+		if (token.type === TokenType.Operator && (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0)) {
+			// is an unary operator
+			if (token.str === '-') token.str = token.str.replace('-', '#');
+			else if(token.str === '/') yield {type: TokenType.Number, str: '1', start: token.start};
+			else throw Error("Unary " + token.str + " not allowed");
+		}
 		lastToken = token;
 	}
 	if(lastToken) yield lastToken;
@@ -70,10 +72,10 @@ const operators: { [n: string]: OperatorInfo } = {
 	'#': { precedence: 0.5, associativity: Associativity.left }, // unary minus
 	'+': { precedence: 4, associativity: Associativity.left },
 	'-': { precedence: 4, associativity: Associativity.left },
-	// if 1/2 m should be 1/(2m) instead of (1/2) m set '' precedence to 1.5
-	'': { precedence: 2, associativity: Associativity.left },
+	'': { precedence: 1.8, associativity: Associativity.left },
 	'*': { precedence: 2, associativity: Associativity.left },
 	'/': { precedence: 2, associativity: Associativity.left },
+	'|': { precedence: 1.5, associativity: Associativity.left },
 	'^': { precedence: 1, associativity: Associativity.right },
 	'=': { precedence: 10, associativity: Associativity.right },
 	'≈': { precedence: 10, associativity: Associativity.right },

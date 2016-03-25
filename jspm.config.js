@@ -39,7 +39,7 @@ SystemJS.config({
     "fs": "github:jspm/nodelibs-fs@0.2.0-alpha",
     "http": "github:jspm/nodelibs-http@0.2.0-alpha",
     "https": "github:jspm/nodelibs-https@0.2.0-alpha",
-    "mathjs": "npm:mathjs@3.1.0",
+    "mathjs": "npm:mathjs@3.1.3",
     "module": "github:jspm/nodelibs-module@0.2.0-alpha",
     "os": "github:jspm/nodelibs-os@0.2.0-alpha",
     "path": "github:jspm/nodelibs-path@0.2.0-alpha",
@@ -58,6 +58,22 @@ SystemJS.config({
     "xml2js": "npm:xml2js@0.4.16"
   },
   packages: {
+    "npm:buffer@4.5.1": {
+      "map": {
+        "base64-js": "npm:base64-js@1.1.2",
+        "ieee754": "npm:ieee754@1.1.6",
+        "isarray": "npm:isarray@1.0.0"
+      }
+    },
+    "npm:mathjs@3.1.3": {
+      "map": {
+        "complex.js": "npm:complex.js@2.0.1",
+        "decimal.js": "npm:decimal.js@5.0.6",
+        "fraction.js": "npm:fraction.js@3.2.5",
+        "tiny-emitter": "npm:tiny-emitter@1.0.2",
+        "typed-function": "npm:typed-function@0.10.3"
+      }
+    },
     "github:jspm/nodelibs-http@0.2.0-alpha": {
       "map": {
         "http-browserify": "npm:stream-http@2.2.0"
@@ -126,7 +142,7 @@ SystemJS.config({
     },
     "github:jspm/nodelibs-buffer@0.2.0-alpha": {
       "map": {
-        "buffer-browserify": "npm:buffer@4.5.0"
+        "buffer-browserify": "npm:buffer@4.5.1"
       }
     },
     "github:jspm/nodelibs-crypto@0.2.0-alpha": {
@@ -189,13 +205,6 @@ SystemJS.config({
         "elliptic": "npm:elliptic@6.2.3",
         "inherits": "npm:inherits@2.0.1",
         "parse-asn1": "npm:parse-asn1@5.0.0"
-      }
-    },
-    "npm:buffer@4.5.0": {
-      "map": {
-        "base64-js": "npm:base64-js@1.1.1",
-        "ieee754": "npm:ieee754@1.1.6",
-        "isarray": "npm:isarray@1.0.0"
       }
     },
     "npm:cipher-base@1.0.2": {
@@ -266,15 +275,6 @@ SystemJS.config({
     "npm:hash.js@1.0.3": {
       "map": {
         "inherits": "npm:inherits@2.0.1"
-      }
-    },
-    "npm:mathjs@3.1.0": {
-      "map": {
-        "complex.js": "npm:complex.js@2.0.1",
-        "decimal.js": "npm:decimal.js@5.0.6",
-        "fraction.js": "npm:fraction.js@3.2.5",
-        "tiny-emitter": "npm:tiny-emitter@1.0.2",
-        "typed-function": "npm:typed-function@0.10.3"
       }
     },
     "npm:miller-rabin@4.0.0": {

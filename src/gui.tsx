@@ -12,10 +12,10 @@ class GuiLineElement {
 interface GuiState {
 	lines: GuiLineElement[];
 }
-export class GUILine extends React.Component<{ line: GuiLineElement }, {}> {
+export class GUILine extends React.Component<{ line: GuiLineElement, onClick:(g:GuiLineElement) => void }, {}> {
 	render() {
-		return <div className="gui-line"><hr />
-				<p>> {this.props.line.input}</p>
+		return <div className="gui-line" ><hr />
+				<p style={{cursor:"pointer"}} onClick={() => this.props.onClick(this.props.line)}>> {this.props.line.input}</p>
 				<pre><code>{this.props.line.output}</code></pre>
 			</div>
 	}
@@ -61,8 +61,8 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	render() {
 		return <div>
-			> <input onKeyPress={this.keyPress.bind(this) } />
-			{this.state.lines.map(line => <GUILine key={line.id} line={line} />) }
+			> <input onKeyPress={this.keyPress.bind(this) } ref="inp" class="form-input" />
+			{this.state.lines.map(line => <GUILine key={line.id} line={line} onClick={(line) => (this.refs["inp"] as HTMLInputElement).value = line.input } />) }
 			</div>;
 	}
 }
