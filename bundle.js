@@ -14266,7 +14266,10 @@ $__System.register("1", ["28", "9f", "a1", "a0"], function($__export) {
       GuiLineElement.idCounter = 0;
       GUILine = class GUILine extends React.Component {
         render() {
-          return React.createElement("div", {className: "gui-line"}, React.createElement("hr", null), React.createElement("p", null, "> ", this.props.line.input), React.createElement("pre", null, React.createElement("code", null, this.props.line.output)));
+          return React.createElement("div", {className: "gui-line"}, React.createElement("hr", null), React.createElement("p", {
+            style: {cursor: "pointer"},
+            onClick: () => this.props.onClick(this.props.line)
+          }, "> ", this.props.line.input), React.createElement("pre", null, React.createElement("code", null, this.props.line.output)));
         }
       };
       presetLines = `
@@ -14300,9 +14303,14 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c to 1|sqrt((2 * ((6
           }
         }
         render() {
-          return React.createElement("div", null, "> ", React.createElement("input", {onKeyPress: this.keyPress.bind(this)}), this.state.lines.map((line) => React.createElement(GUILine, {
+          return React.createElement("div", null, "> ", React.createElement("input", {
+            onKeyPress: this.keyPress.bind(this),
+            ref: "inp",
+            class: "form-input"
+          }), this.state.lines.map((line) => React.createElement(GUILine, {
             key: line.id,
-            line: line
+            line: line,
+            onClick: (line) => this.refs["inp"].value = line.input
           })));
         }
       };
