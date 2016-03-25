@@ -4,13 +4,15 @@ export enum TokenType {
 	LParen, RParen,
 	Operator,
 	FunctionCall,
+	Whitespace,
 	Unknown
 }
 
 const TokenTypeRegex: [RegExp, TokenType][] = [
-	[/^\s*\(\s*/, TokenType.LParen],
-	[/^\s*\)\s*/, TokenType.RParen],
-	[/^\s*([ =≈+*/^-]|to )\s*/, TokenType.Operator],
+	[/^\s+/, TokenType.Whitespace],
+	[/^\(/, TokenType.LParen],
+	[/^\)/, TokenType.RParen],
+	[/^([ =≈+*/^-]|to )/, TokenType.Operator],
 	[/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number],
 	[/^[^() =≈+*/^-]+/i, TokenType.Identifier],
 	[/^./, TokenType.Unknown]
@@ -37,14 +39,16 @@ export function* tokenize(str: string): IterableIterator<Token> {
 
 /**
  * fix some things:
+ * - remove whitespace
  * - replace unary minus with operator '#'
  * - identifier before '(' is function call e.g. "sin(x)"
  * - implicit multiplication between {), num, identifier} and {(, num, identifier)}
  */
-export function* tokenFix(tokens: IterableIterator<Token>): IterableIterator<Token> {
+export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<Token> {
 	let lastToken: Token = null;
 	for (const token of tokens) {
-		if (token.type === TokenType.Operator && [null, TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
+		if(token.type === TokenType.Whitespace) continue;
+		if (token.type === TokenType.Operator && (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0)) {
 			// is an unary operator
 			if (token.str.trim() === '-') token.str = token.str.replace('-', '#');
 			else throw Error("Unary " + token.str + " not allowed");
@@ -128,5 +132,5 @@ export function* toRPN(tokens: Iterable<Token>) {
 	}
 }
 export function parse(str: string) {
-	return toRPN(tokenFix(tokenize(str)));
+	return toRPN(preprocess(tokenize(str)));
 }
