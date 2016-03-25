@@ -17,6 +17,9 @@ class DimensionMap extends Map<DimensionId, number> {
 		}
 		return map;
 	}
+	assertEmpty(str = "") {
+		if (this.size > 0) throw Error(str + " must be dimensionless");
+	}
 }
 
 export class UnitNumber {
@@ -57,7 +60,7 @@ export class UnitNumber {
 	}
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
-			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor:typeof factor === 'number'?factor:factor.toNumber() }));
+			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor: typeof factor === 'number' ? factor : factor.toNumber() }));
 		else if (factor.dimensions.size > 0) throw Error("power must be dimensionless");
 		else return this.pow(factor.value);
 	}

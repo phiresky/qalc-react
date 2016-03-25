@@ -8,10 +8,10 @@ function output(priority, str) {
 	_output.push({priority, str, pos: _output.length});
 }
 const builtinValue = {
-	e: Math.E,
-	_unicode__CF_80: Math.PI,
-	_unicode__CE_B3: 0.577215664901532860606512090082402431042159335,
-	catalan: 0.915965594177219015054603514932384110774,
+	e: "2.71828182845904523536028747135266249775724709369995",
+	π: "3.14159265358979323846264338327950288419716939937510",
+	γ: "0.57721566490153286060651209008240243104215933593992",
+	catalan: "0.915965594177219015054603514932384110774",
 	i: Math.sqrt(-1),
 	infinity: +Infinity,
 	plus_infinity: +Infinity,
@@ -24,15 +24,6 @@ function comment(str) {
 }
 function assertEmpty(obj) {
 	if(Object.keys(obj).length > 0) throw error("nonempty", obj);
-}
-
-function mathjs_hack_unicode(str) {
-	if(/[a-z0-9]+/i.test(str)) return str;
-	else return "_unicode_"+encodeURIComponent(str).replace(/%/g, "_");
-}
-function unmathjs_hack_unicode(str) {
-	if(str.startsWith("_unicode_")) return decodeURIComponent(str.substr(9).replace(/_/g, "%"));
-	return str;
 }
 
 function addStuff(stuff) {
@@ -102,12 +93,12 @@ function parseName(name, join=true) {
 	const list = name.split(",").map(n => {
 		if(n.indexOf(":") >= 0) {
 			let [attributes, name] = n.split(":");
-			attributes = attributes.replace(/[^c]/g, "");
+			attributes = attributes.replace(/[^Ä]/g, ""); // (/[^c]/g, "");
 			if(attributes.length > 0) return attributes + ":" + name;
 			else return name;
 		}
 		else return n;
-	}).map(mathjs_hack_unicode);
+	});
 	if(join) return list.join(" = ");
 	else return list;
 }
@@ -148,7 +139,7 @@ function addUnit(unit) {
 	} case 'base': {
 		const list = parseName(unit.names[0], false);
 		const firstName = list.shift();
-		output(1, `${firstName}.${comment(parseTitle(unit.title[0]))}`);
+		output(1, `${firstName}!${comment(parseTitle(unit.title[0]))}`);
 		output(0, `${list.join(" = ")} = ${firstName}`);
 		break;
 	} case 'composite': {

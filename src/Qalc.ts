@@ -1,5 +1,6 @@
 import * as mathjs from 'mathjs';
 import {UnitNumber} from './unitNumber';
+import * as rr from './parser';
 
 import qalcData from '../qalc_data.txt!text';
 const parser = mathjs.parser();
@@ -44,12 +45,24 @@ const prefixMap: Map<string, UnitNumber> = new Map();
 const caseInsensitives: {[v:string]: boolean} = {};
 
 const functions = new Map<string, (arg: UnitNumber) => UnitNumber>([
-	["sqrt", num => num.pow(0.5)]
+	["sqrt", num => num.pow(0.5)],
+	["ln", num => {num.dimensions.assertEmpty("argument of ln()"); return new UnitNumber(num.value.ln())}],
 ]);
 function setUnit(name: string, val: UnitNumber) {
 	name = normalizeUnitName(name);
 	if(unitMap.has(name)) throw Error("duplicate: "+name);
 	unitMap.set(name, val);
+}
+function setUnitOrPrefix(name: string, val:UnitNumber) {
+	let unit = val;
+	if(name.endsWith("_")) {
+		const prefixName = name.substr(0, name.length - 1);
+		prefixMap.set(prefixName, unit);
+	} else {
+		val = val.withIdentifier(name);
+		setUnit(name, unit);
+	}
+	return unit;
 }
 function normalizeUnitName(name: string) {
 	//if(name.length > 1 && !caseInsensitives[name]) name = name.toLowerCase();
@@ -97,15 +110,7 @@ function evaluate(node: mathjs.MathNode): UnitNumber {
 			if(index != null) throw Error("unsupported1");
 			if(object.type !== 'SymbolNode') throw Error('unsupported2');
 			const name:string = object.name;
-			let unit: UnitNumber;
-			if(name.endsWith("_")) {
-				const prefixName = name.substr(0, name.length - 1);
-				unit = evaluate(value);
-				prefixMap.set(prefixName, unit);
-			} else {
-				unit = evaluate(value).withIdentifier(name);
-				setUnit(name, unit);
-			}
+			let unit = setUnitOrPrefix(name, evaluate(value));
 			return unit;
 		}
 		case 'ParenthesisNode': {
@@ -123,7 +128,57 @@ function evaluate(node: mathjs.MathNode): UnitNumber {
 		default: throw Error("dont know about " + node.type);
 	}
 }
+function interpretVal(v: string|UnitNumber): UnitNumber {
+	if(typeof v === 'string') {
+		return getUnit(v);
+	} else return v;
+}
 function parseEvaluate(str: string) {
+	const commentStart = str.indexOf("#");
+	if (commentStart >= 0) str = str.substr(0, commentStart);
+	str = str.trim();
+	if(str[str.length-1] === "!") {
+		// define new unit for a new dimension
+		const name = str.substr(0, str.length - 1);
+		const unit = UnitNumber.createBaseUnit(name);
+		setUnit(name, unit);
+		return unit;
+	}	
+	if(str.length === 0) return new UnitNumber(NaN);
+	const stack: (string|UnitNumber)[] = [];
+	const tokens = rr.parse(str);
+	for(const token of tokens) {
+		if(token.type === rr.TokenType.Operator) {
+			const op = token.str.trim();
+			const map:any = {'*':'mul', '':'mul', '/':'div','^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
+			if(op === '#') stack.push(interpretVal(stack.pop()).mul(new UnitNumber(-1)));
+			else if(op === '=' || op === '≈') {
+				const val = interpretVal(stack.pop()), name = stack.pop() as string;
+				if(typeof name !== 'string') throw Error('invalid left hand side of =');
+				stack.push(setUnitOrPrefix(name, val));
+				
+			}
+			else {
+				const r = interpretVal(stack.pop()), l = interpretVal(stack.pop());
+				stack.push((l as any)[map[op]](r));
+			}
+		}
+		else if(token.type === rr.TokenType.Number) stack.push(new UnitNumber(token.str));
+		else if(token.type === rr.TokenType.Identifier) stack.push(token.str);
+		else if(token.type === rr.TokenType.FunctionCall) {
+			if(!functions.has(token.str)) throw Error('unknown function '+token.str);
+			const fnFunction = functions.get(token.str);
+			stack.push(fnFunction(interpretVal(stack.pop())));
+		}
+		else throw Error("unknown token type "+token.type);
+	}
+	if(stack.length !== 1) {
+		console.warn(stack);
+		throw Error("Stack error");
+	}
+	return interpretVal(stack[0]);
+}
+function parseEvaluateOld(str: string) {
 	str = str.replace(/≈/g, function(x) {
 		//TODO: console.warn("ignoring approx. equals sign");
 		return "=";
