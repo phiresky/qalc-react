@@ -1,6 +1,6 @@
-#planck_constant = h
-#delete(h)
-#h = hour 
+planck_constant = h
+delete(h)
+h = hour 
 
 
 #

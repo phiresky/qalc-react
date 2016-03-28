@@ -27,7 +27,7 @@ let loadUnits = (t: string) => {
 		iteration++;
 	}
 	errors.forEach((l,i) => {
-		if(l.length >= iteration) console.warn(i, l);
+		if(l.length >= iteration) console.warn(i, l[0].error, l);
 	});
 };
 export const unitMap: Map<string, UnitNumber> = new Map();
@@ -38,7 +38,11 @@ export const aliasMap: Map<UnitNumber, Set<UnitNumber>> = new Map();
 const functions = new Map<string, (arg: UnitNumber) => UnitNumber>([
 	["sqrt", num => num.pow(0.5)],
 	["ln", num => {num.dimensions.assertEmpty("argument of ln()"); return new UnitNumber(num.value.ln())}],
-	["delete", num => {return unitMap.delete(num.id)? new UnitNumber(1):new UnitNumber(0)}]
+	["delete", num => {return unitMap.delete(num.id)? new UnitNumber(1):new UnitNumber(0)}],
+	["log2", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(2))}],
+	["exp", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.exp())}],
+	["tan", num => {num.dimensions.assertEmpty(); return new UnitNumber(Math.tan(num.value.toNumber()))}],
+	["log", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(10))}]
 ]);
 function setUnit(name: string, val: UnitNumber) {
 	name = normalizeUnitName(name);
@@ -123,7 +127,7 @@ function interpretVal(v: string|UnitNumber): UnitNumber {
 	} else return v;
 }
 export function parseEvaluate(str: string) {
-	if(str.indexOf("=") >= 0 && str.split("=")[0].search(/\(/) >= 0) return null;
+	if(str.indexOf("=") >= 0 && str.split("=")[0].search(/[\(\[]/) >= 0) return null;
 	const commentStart = str.indexOf("#");
 	if (commentStart >= 0) str = str.substr(0, commentStart);
 	str = str.trim();
