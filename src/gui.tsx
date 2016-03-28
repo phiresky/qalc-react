@@ -3,18 +3,18 @@ import * as ReactDOM from 'react-dom';
 import * as QalcLib from './Qalc';
 import {TaggedString, UnitNumber} from './unitNumber';
 
-class UnitNumberDisplay extends React.Component<{text: TaggedString, onClickUnit: (u:UnitNumber) => void}, {}> {
-	constructor(props: {text: TaggedString, onClickUnit:any}) {
+class UnitNumberDisplay extends React.Component<{ text: TaggedString, onClickUnit: (u: UnitNumber) => void }, {}> {
+	constructor(props: { text: TaggedString, onClickUnit: any }) {
 		super(props);
 		props.text.flatten();
 	}
 	render() {
 		return <pre>
 			{this.props.text.vals.map(x => {
-				if(typeof x === 'string') return x;
-				else if(x instanceof UnitNumber) return <a href="#" onClick={(e) => {this.props.onClickUnit(x as any);e.preventDefault()}} >{x.toString()}</a>;
-				else throw Error("cant be "+x);
-			})}
+				if (typeof x === 'string') return x;
+				else if (x instanceof UnitNumber) return <a href="#" onClick={(e) => { this.props.onClickUnit(x as any); e.preventDefault() } } >{x.toString() }</a>;
+				else throw Error("cant be " + x);
+			}) }
 		</pre>;
 	}
 }
@@ -28,17 +28,17 @@ class GuiLineElement {
 interface GuiState {
 	lines: GuiLineElement[];
 }
-export class GUILine extends React.Component<{ line: GuiLineElement, onClickInput:(g:GuiLineElement) => void, onClickUnit: (u:UnitNumber) => void}, {}> {
+export class GUILine extends React.Component<{ line: GuiLineElement, onClickInput: (g: GuiLineElement) => void, onClickUnit: (u: UnitNumber) => void }, {}> {
 	constructor(props: any) {
 		super(props);
-		this.state = {displayDepth: 0};
+		this.state = { displayDepth: 0 };
 	}
 	render() {
 		return <div className="gui-line" >
-				<p style={{cursor:"pointer"}} onClick={() => this.props.onClickInput(this.props.line)}>> {this.props.line.input}</p>
-				<UnitNumberDisplay text={this.props.line.output} onClickUnit={this.props.onClickUnit}/>
-				<hr />
-			</div>
+			<p style={{ cursor: "pointer" }} onClick={() => this.props.onClickInput(this.props.line) }>> {this.props.line.input}</p>
+			<UnitNumberDisplay text={this.props.line.output} onClickUnit={this.props.onClickUnit}/>
+			<hr />
+		</div>
 	}
 }
 let guiInst: GUI;
@@ -58,14 +58,14 @@ function loadPresetLines() {
 		.map(line => line.split("|")[0])
 		.map(input => QalcLib.qalculate(input)
 			.then(output => guiInst.addLine(new GuiLineElement(input, output)))
-			.catch(error => guiInst.addLine(new GuiLineElement(input, new TaggedString(""+error))))
+			.catch(error => guiInst.addLine(new GuiLineElement(input, new TaggedString("" + error))))
 		);
 }
 export class GUI extends React.Component<{}, GuiState> {
-	constructor(props:{}) {
+	constructor(props: {}) {
 		super(props);
 		guiInst = this;
-		this.state = {lines: []};
+		this.state = { lines: [] };
 		loadPresetLines();
 	}
 	addLine(line: GuiLineElement) {
@@ -77,9 +77,9 @@ export class GUI extends React.Component<{}, GuiState> {
 		if (evt.charCode == 13) {// enter
 			const target = evt.target as HTMLInputElement;
 			const input = target.value.trim();
-			if(input.length > 0) QalcLib.qalculate(input).then(output => 
+			if (input.length > 0) QalcLib.qalculate(input).then(output =>
 				this.addLine(new GuiLineElement(input, output))
-			).catch(reason => this.addLine(new GuiLineElement(input, new TaggedString(""+reason))))
+			).catch(reason => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))))
 			target.value = "";
 		}
 	}
@@ -91,13 +91,13 @@ export class GUI extends React.Component<{}, GuiState> {
 		return <div>
 			{this.state.lines.map(line => <GUILine key={line.id} line={line}
 				onClickInput={(line) => (this.refs["inp"] as HTMLInputElement).value = line.input }
-				onClickUnit={unit => this.showUnit(unit)}
+				onClickUnit={unit => this.showUnit(unit) }
 				/>) }
 			<div className="gui-line" >
 				<p>> <input onKeyPress={this.keyPress.bind(this) } ref="inp" className="form-input" /></p>
 				<hr />
 			</div>
-			</div>;
+		</div>;
 	}
 	componentDidUpdate() {
 		window.scrollTo(0, 1e10);
@@ -105,9 +105,9 @@ export class GUI extends React.Component<{}, GuiState> {
 }
 
 ReactDOM.render(
-<div className="container">
-	<div className="page-header">
-		<h1>Qalc</h1>
-	</div>
-	<GUI />
-</div>, document.getElementById("root"));
+	<div className="container">
+		<div className="page-header">
+			<h1>Qalc</h1>
+		</div>
+		<GUI />
+	</div>, document.getElementById("root"));

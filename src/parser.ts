@@ -48,25 +48,25 @@ export function* tokenize(str: string): IterableIterator<Token> {
 export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<Token> {
 	let lastToken: Token = null;
 	for (const token of tokens) {
-		if(token.type === TokenType.Whitespace) continue;
+		if (token.type === TokenType.Whitespace) continue;
 		if (token.type === TokenType.LParen && lastToken && lastToken.type === TokenType.Identifier)
-				lastToken.type = TokenType.FunctionCall;	 
-		if(lastToken) yield lastToken;
+			lastToken.type = TokenType.FunctionCall;
+		if (lastToken) yield lastToken;
 		if (lastToken && [TokenType.Identifier, TokenType.Number, TokenType.LParen].indexOf(token.type) >= 0
 			&& [TokenType.Identifier, TokenType.Number, TokenType.RParen].indexOf(lastToken.type) >= 0) yield { type: TokenType.Operator, str: "", start: token.start };
 
-		if(token.type === TokenType.Operator) {
-			if(token.str === '·') token.str = '*';
+		if (token.type === TokenType.Operator) {
+			if (token.str === '·') token.str = '*';
 			if (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
 				// is an unary operator
 				if (token.str === '-') token.str = token.str.replace('-', '#');
-				else if(token.str === '/') yield {type: TokenType.Number, str: '1', start: token.start};
+				else if (token.str === '/') yield { type: TokenType.Number, str: '1', start: token.start };
 				else throw Error("Unary " + token.str + " not allowed");
 			}
 		}
 		lastToken = token;
 	}
-	if(lastToken) yield lastToken;
+	if (lastToken) yield lastToken;
 }
 
 enum Associativity { left, right }
@@ -144,23 +144,23 @@ export function parse(str: string) {
 export module Tree {
 
 	export abstract class Node {
-		constructor() {}
-		toString(parentPrecedence = Infinity): string {throw Error("abstract")}
+		constructor() { }
+		toString(parentPrecedence = Infinity): string { throw Error("abstract") }
 	}
 	export class NumberNode {
-		constructor(public number: string) {}
+		constructor(public number: string) { }
 		toString(parentPrecedence = Infinity) {
 			return this.number;
 		}
 	}
 	export class IdentifierNode {
-		constructor(public identifier: string) {}
+		constructor(public identifier: string) { }
 		toString(parentPrecedence = Infinity) {
 			return this.identifier;
 		}
 	}
 	export class FunctionCallNode extends Node {
-		constructor(public fnname: string, public operands: Node[]) {super();}
+		constructor(public fnname: string, public operands: Node[]) { super(); }
 		toString(parentPrecedence = Infinity) {
 			return `${this.fnname}(${this.operands.join(", ")})`;
 		}
@@ -169,11 +169,11 @@ export module Tree {
 		toString(parentPrecedence = Infinity) {
 			const op = operators[this.fnname];
 			let leftAdd = 0, rightAdd = 0;
-			if(!op.associative) {
+			if (!op.associative) {
 				leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
 				rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
 			}
-			const result = `${this.operands[0].toString(op.precedence+leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence+rightAdd)}`;
+			const result = `${this.operands[0].toString(op.precedence + leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence + rightAdd)}`;
 
 			if (parentPrecedence < op.precedence)
 				return `(${result})`;
@@ -182,23 +182,23 @@ export module Tree {
 	}
 	export function rpnToTree(tokens: Iterable<Token>): Node {
 		const stack: Node[] = [];
-		for(const token of tokens) {
-			if(token.type === TokenType.Operator) {
+		for (const token of tokens) {
+			if (token.type === TokenType.Operator) {
 				const op = operators[token.str.trim()];
-				if(stack.length < op.arity) throw Error("stack error");
+				if (stack.length < op.arity) throw Error("stack error");
 				const args = stack.splice(stack.length - op.arity);
 				stack.push(new InfixFunctionCallNode(token.str.trim(), args));
-			} else if(token.type === TokenType.Identifier) {
+			} else if (token.type === TokenType.Identifier) {
 				stack.push(new IdentifierNode(token.str));
-			} else if(token.type === TokenType.Number) {
+			} else if (token.type === TokenType.Number) {
 				stack.push(new NumberNode(token.str));
-			} else if(token.type === TokenType.FunctionCall) {
-				if(stack.length < 1) throw Error("fn stack error");
+			} else if (token.type === TokenType.FunctionCall) {
+				if (stack.length < 1) throw Error("fn stack error");
 				const arg = stack.pop();
 				stack.push(new FunctionCallNode(token.str, [arg]));
-			} else throw Error("to tree: don't know token type "+token.type);
+			} else throw Error("to tree: don't know token type " + token.type);
 		}
-		if(stack.length !== 1) throw Error("stack error "+stack);
+		if (stack.length !== 1) throw Error("stack error " + stack);
 		return stack[0];
 	}
 }
