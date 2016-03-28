@@ -5,33 +5,36 @@ import gnuUnitsData from '../units_data.txt!text';
 import customData from '../custom_data.txt!text';
 
 declare var fetch: any;
-let loadUnits = (t: string) => {
-	let lines = t.split("\n").map((line, index) => ({line, index})), linesNew:typeof lines = [];
-	let errors:any[] = [];
-	let iteration = 0;
-	while(true) {
-		for(const line of lines) {
-			try {parseEvaluate(line.line)} catch(error) {
-				linesNew.push(line);
-				errors[line.index] = errors[line.index] || [];
-				errors[line.index].push({line, error});
-			}
+const loadUnits = (t: string) => {
+	const lines = t.split("\n");
+	for(let i = 0; i < lines.length; i++) {
+		try {
+			const line = stripCommentsTrim(lines[i]);
+			if(line.length === 0) continue;
+			if(checkDefineBaseUnit(line)) continue;
+			if(line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0) continue;
+			const tokens = [...rr.parse(line)];
+			const lastOp = tokens[tokens.length - 1];
+			if(lastOp.type === rr.TokenType.Operator && lastOp.str === '=' && tokens[0].type==rr.TokenType.Identifier) {
+				const name = tokens[0].str;
+				if(name.endsWith("_")) {
+					const prefixName = name.substr(0, name.length - 1);
+					prefixMap.set(prefixName, () => evaluate(tokens));
+				} else {
+					setUnit(name, () => evaluate(tokens));
+				}
+			} else evaluate(tokens);
+		} catch(e) {
+			console.error(lines[i], e);
 		}
-		if(linesNew.length === lines.length) {
-			console.error("Could not resolve all errors, remaining: ");
-			console.log(lines);
-			break;
-		}
-		lines = linesNew;
-		linesNew = [];
-		iteration++;
 	}
-	errors.forEach((l,i) => {
-		if(l.length >= iteration) console.warn(i, l[0].error, l);
-	});
+	// force evaluate all units
+	for(const name of unitMap.keys()) {
+		try {getUnit(name);}catch(e) {console.error(e);}
+	}
 };
-export const unitMap: Map<string, UnitNumber> = new Map();
-export const prefixMap: Map<string, UnitNumber> = new Map();
+export const unitMap: Map<string, UnitNumber|(() => UnitNumber)> = new Map();
+export const prefixMap: Map<string, UnitNumber|(() => UnitNumber)> = new Map();
 export const canonicalMap: Map<UnitNumber, UnitNumber> = new Map();
 export const aliasMap: Map<UnitNumber, Set<UnitNumber>> = new Map();
 
@@ -44,8 +47,7 @@ const functions = new Map<string, (arg: UnitNumber) => UnitNumber>([
 	["tan", num => {num.dimensions.assertEmpty(); return new UnitNumber(Math.tan(num.value.toNumber()))}],
 	["log", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(10))}]
 ]);
-function setUnit(name: string, val: UnitNumber) {
-	name = normalizeUnitName(name);
+function setUnit(name: string, val: (UnitNumber|(()=>UnitNumber))) {
 	if(unitMap.has(name)) throw Error("duplicate: "+name);
 	unitMap.set(name, val);
 }
@@ -80,10 +82,6 @@ function unifyAliases(unit1: UnitNumber, unit2: UnitNumber) {
 	if(!can1) {canonicalMap.set(unit1, can2);aliasMap.get(can2).add(unit1); return}
 	throw Error("unity error, can. form ex. for both "+unit1+" and "+unit2+":"+can1+" and "+can2);
 }
-function normalizeUnitName(name: string) {
-	//if(name.length > 1 && !caseInsensitives[name]) name = name.toLowerCase();
-	return name;
-}
 export function getCanonical(u: UnitNumber) {
 	while(true) {
 		let u2 = canonicalMap.get(u);
@@ -95,14 +93,19 @@ export function getCanonical(u: UnitNumber) {
 export function getAliases(u: UnitNumber) {
 	return [...(aliasMap.get(getCanonical(u))||[])].filter(x => !!x.id);
 }
+export function getPrefix(name: string) {
+	let pref = prefixMap.get(name) as any;
+	if(typeof pref === "function") pref = pref();
+	return pref;
+}
 export function getUnit(name: string, {withPrefix = true, canonical = false} = {}): UnitNumber {
 	if(name.endsWith("_")) {
-		return prefixMap.get(name.substr(0, name.length - 1));
+		return getPrefix(name.substr(0, name.length - 1));
 	}
-	if(!unitMap.has(normalizeUnitName(name))) {
+	if(!unitMap.has(name)) {
 		if(withPrefix) for(const prefix of prefixMap.keys()) {
 			if(name.startsWith(prefix)) {
-				let unit = prefixMap.get(prefix);
+				let unit = getPrefix(prefix);
 				if(canonical) unit = getCanonical(unit);
 				if(prefix.length < name.length) {
 					const suffix = getUnit(name.substr(prefix.length), {withPrefix: false, canonical});
@@ -115,7 +118,11 @@ export function getUnit(name: string, {withPrefix = true, canonical = false} = {
 		if(name[name.length-1] === 's') return getUnit(name.substr(0, name.length - 1), {canonical, withPrefix});
 		return null;
 	}
-	let res = unitMap.get(normalizeUnitName(name));
+	let res = unitMap.get(name) as any;
+	if(typeof res === "function") {
+		unitMap.delete(name);
+		res = res();
+	}
 	if(res && canonical) res = getCanonical(res);
 	return res;
 }
@@ -126,11 +133,12 @@ function interpretVal(v: string|UnitNumber): UnitNumber {
 		return u;
 	} else return v;
 }
-export function parseEvaluate(str: string) {
-	if(str.indexOf("=") >= 0 && str.split("=")[0].search(/[\(\[]/) >= 0) return null;
+function stripCommentsTrim(str: string) {
 	const commentStart = str.indexOf("#");
 	if (commentStart >= 0) str = str.substr(0, commentStart);
-	str = str.trim();
+	return str.trim();
+}
+function checkDefineBaseUnit(str: string) {
 	if(str[str.length-1] === "!") {
 		// define new unit for a new dimension
 		const name = str.substr(0, str.length - 1);
@@ -138,9 +146,17 @@ export function parseEvaluate(str: string) {
 		setUnit(name, unit);
 		return unit;
 	}	
+	return null;
+}
+export function parseEvaluate(str: string) {
+	str = stripCommentsTrim(str);
+	if(checkDefineBaseUnit(str)) return;
 	if(str.length === 0) return new UnitNumber(NaN);
+	return evaluate(rr.parse(str));
+}
+function evaluate(reversePolishNotation: Iterable<rr.Token>) {
 	const stack: (string|UnitNumber)[] = [];
-	const tokens = rr.parse(str);
+	const tokens = reversePolishNotation;
 	for(const token of tokens) {
 		if(token.type === rr.TokenType.Operator) {
 			const op = token.str.trim();

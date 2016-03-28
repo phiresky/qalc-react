@@ -12,7 +12,7 @@ class UnitNumberDisplay extends React.Component<{text: TaggedString, onClickUnit
 		return <pre>
 			{this.props.text.vals.map(x => {
 				if(typeof x === 'string') return x;
-				else if(x instanceof UnitNumber) return <a href="#" onClick={this.props.onClickUnit.bind(null, x)} >{x.toString()}</a>;
+				else if(x instanceof UnitNumber) return <a href="#" onClick={(e) => {this.props.onClickUnit(x as any);e.preventDefault()}} >{x.toString()}</a>;
 				else throw Error("cant be "+x);
 			})}
 		</pre>;
@@ -43,7 +43,7 @@ export class GUILine extends React.Component<{ line: GuiLineElement, onClickInpu
 }
 let guiInst: GUI;
 const presetLines = `
-5600 mA h * 11.7 V to W h
+5600 mAh * 11.7 V to Wh
 100W * 10 days * 0.25€/kWh to €
 7Mbit/s * 2h to Gbyte
 32bit/(0.2bit/s) to s
@@ -99,8 +99,8 @@ export class GUI extends React.Component<{}, GuiState> {
 			</div>
 			</div>;
 	}
-	compomentDidUpdate() {
-		window.scrollTo(0, document.body.scrollHeight);
+	componentDidUpdate() {
+		window.scrollTo(0, 1e10);
 	}
 }
 

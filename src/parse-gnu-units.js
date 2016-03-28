@@ -50,7 +50,7 @@ function parseLine(line) {
 		return;
 	}
 	if(variable.endsWith("-")) variable = variable.replace(/-$/, "_");
-	value = value.replace(/\bper\b/g, "/").replace(/([a-z]+)([2-9])\b([^(]|$)/g, "$1^$2$3");
+	value = value.replace(/\bper\b/g, "/").replace(/([^0-9])([a-z]+)([2-9])\b([^(]|$)/g, "$1$2^$3$4");
 	console.log(variable + " = " + value);
 }
 
@@ -58,5 +58,5 @@ function parseFile(file) {
 	const lines = fs.readFileSync(file, "utf8").split("\n");
 	for(const line of lines) parseLine(line);
 }
-
+console.log("# source: GNU Units");
 parseFile(dir+"/definitions.units");
