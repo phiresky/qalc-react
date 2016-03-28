@@ -4,7 +4,8 @@
         "target": "es6",
         "noImplicitAny": true,
         "sourceMap": true,
-        "jsx": "react"
+        "jsx": "react",
+		"allowSyntheticDefaultImports": true
     },
     "files": [
 		"typings/browser.d.ts",
