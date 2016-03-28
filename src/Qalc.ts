@@ -32,12 +32,11 @@ const loadUnits = (t: string) => {
 		try { getUnit(name); } catch (e) { console.error(e); }
 	}
 };
-export const unitMap: Map<string, UnitNumber | (() => UnitNumber)> = new Map();
-export const prefixMap: Map<string, UnitNumber | (() => UnitNumber)> = new Map();
-export const canonicalMap: Map<UnitNumber, UnitNumber> = new Map();
-export const aliasMap: Map<UnitNumber, Set<UnitNumber>> = new Map();
-
-const functionMap = new Map<string, (...arg: UnitNumber[]) => UnitNumber>([
+export const unitMap = new Map<string, UnitNumber | (() => UnitNumber)>();
+export const prefixMap = new Map<string, UnitNumber | (() => UnitNumber)>();
+export const canonicalMap = new Map<UnitNumber, UnitNumber>();
+export const aliasMap = new Map<UnitNumber, Set<UnitNumber>>();
+export const functionMap = new Map<string, (...arg: UnitNumber[]) => UnitNumber>([
 	["sqrt", num => num.pow(0.5)],
 	["ln", num => { num.dimensions.assertEmpty("argument of ln()"); return new UnitNumber(num.value.ln()) }],
 	["delete", num => { return unitMap.delete(num.id) ? new UnitNumber(1) : new UnitNumber(0) }],
@@ -133,13 +132,6 @@ export function getUnit(name: string, {withPrefix = true, canonical = false} = {
 	}
 	if (res && canonical) res = getCanonical(res);
 	return res;
-}
-function interpretVal(v: string | UnitNumber): UnitNumber {
-	if (typeof v === 'string') {
-		const u = getUnit(v);
-		if (u === null) throw Error("can't resolve unit: " + v);
-		return u;
-	} else return v;
 }
 function stripCommentsTrim(str: string) {
 	const commentStart = str.indexOf("#");

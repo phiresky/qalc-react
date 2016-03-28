@@ -69,14 +69,14 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 	if (lastToken) yield lastToken;
 }
 
-enum Associativity { left, right }
-interface OperatorInfo { precedence: number, associativity: Associativity, arity: number, associative?: boolean };
+enum Associativity { left, right, both }
+interface OperatorInfo { precedence: number, associativity: Associativity, arity: number };
 const operators: { [n: string]: OperatorInfo } = {
-	'#': { precedence: 0.5, associativity: Associativity.left, arity: 1 }, // unary minus
-	'+': { precedence: 4, associativity: Associativity.left, arity: 2, associative: true },
+	'#': { precedence: 0.5, associativity: Associativity.right, arity: 1 }, // unary minus
+	'+': { precedence: 4, associativity: Associativity.both, arity: 2 },
 	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
 	'': { precedence: 1.8, associativity: Associativity.left, arity: 2 },
-	'*': { precedence: 2, associativity: Associativity.left, arity: 2, associative: true },
+	'*': { precedence: 2, associativity: Associativity.both, arity: 2 },
 	'/': { precedence: 2, associativity: Associativity.left, arity: 2 },
 	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
 	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },
@@ -106,7 +106,7 @@ export function* toRPN(tokens: Iterable<Token>) {
 					&& token2.type === TokenType.Operator
 					&& (o2 = operator(token2))
 					&& (
-						(o1.associativity == Associativity.left
+						((o1.associativity == Associativity.left || o1.associativity == Associativity.both)
 							&& o1.precedence >= o2.precedence)
 						|| (o1.associativity == Associativity.right
 							&& o1.precedence > o2.precedence)
@@ -168,12 +168,12 @@ export module Tree {
 	export class InfixFunctionCallNode extends FunctionCallNode {
 		toString(parentPrecedence = Infinity) {
 			const op = operators[this.fnname];
-			let leftAdd = 0, rightAdd = 0;
-			if (!op.associative) {
-				leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
-				rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
-			}
-			const result = `${this.operands[0].toString(op.precedence + leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence + rightAdd)}`;
+			const leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
+			const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
+			let result : string;
+			if(this.operands.length === 1) result = `${this.fnname}${this.operands[0].toString(op.precedence+rightAdd)}`;
+			else if(this.operands.length === 2) result = `${this.operands[0].toString(op.precedence + leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence + rightAdd)}`;
+			else throw Error("invalid operand count");
 
 			if (parentPrecedence < op.precedence)
 				return `(${result})`;
