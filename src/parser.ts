@@ -136,60 +136,69 @@ export function* toRPN(tokens: Iterable<Token>) {
 		else throw Error("mismatched parens 2: " + top(stack).start);
 	}
 }
+
 export function parse(str: string) {
-	return toRPN(preprocess(tokenize(str)));
+	return Tree.rpnToTree(toRPN(preprocess(tokenize(str))));
 }
 
+export module Tree {
 
-
-
-
-class Node {
-	constructor(public text = "") {}
-	toString(parentPrecedence = Infinity) {
-		return this.text;
+	export abstract class Node {
+		constructor() {}
+		toString(parentPrecedence = Infinity): string {throw Error("abstract")}
 	}
-}
-class FunctionCallNode extends Node {
-	constructor(public fnname: string, public operand: Node) {super();}
-	toString(parentPrecedence = Infinity) {
-		return `${this.fnname}(${this.operand})`;
-	}
-}
-class OperatorNode extends Node {
-	constructor(public operator: string, public operands: Node[]) {super();}
-	toString(parentPrecedence = Infinity) {
-		//return this.operands.map(x => `(${x})`).join(this.operator);
-		const op = operators[this.operator];
-		let leftAdd = 0, rightAdd = 0;
-		if(!op.associative) {
-			leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
-			rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
+	export class NumberNode {
+		constructor(public number: string) {}
+		toString(parentPrecedence = Infinity) {
+			return this.number;
 		}
-		const result = `${this.operands[0].toString(op.precedence+leftAdd)} ${this.operator} ${this.operands[1].toString(op.precedence+rightAdd)}`;
-
-		if (parentPrecedence < op.precedence)
-			return `(${result})`;
-		else return result;
 	}
-}
-
-export function rpnToTree(tokens: Iterable<Token>): Node {
-	const stack: Node[] = [];
-	for(const token of tokens) {
-		if(token.type === TokenType.Operator) {
-			const op = operators[token.str];
-			if(stack.length < op.arity) throw Error("stack error");
-			const args = stack.splice(stack.length - op.arity);
-			stack.push(new OperatorNode(token.str, args));
-		} else if(token.type === TokenType.Identifier || token.type === TokenType.Number) {
-			stack.push(new Node(token.str));
-		} else if(token.type === TokenType.FunctionCall) {
-			if(stack.length < 1) throw Error("fn stack error");
-			const arg = stack.pop();
-			stack.push(new FunctionCallNode(token.str, arg));
-		} else throw Error("to tree: don't know token type "+token.type);
+	export class IdentifierNode {
+		constructor(public identifier: string) {}
+		toString(parentPrecedence = Infinity) {
+			return this.identifier;
+		}
 	}
-	if(stack.length !== 1) throw Error("stack error "+stack);
-	return stack[0];
+	export class FunctionCallNode extends Node {
+		constructor(public fnname: string, public operands: Node[]) {super();}
+		toString(parentPrecedence = Infinity) {
+			return `${this.fnname}(${this.operands.join(", ")})`;
+		}
+	}
+	export class InfixFunctionCallNode extends FunctionCallNode {
+		toString(parentPrecedence = Infinity) {
+			const op = operators[this.fnname];
+			let leftAdd = 0, rightAdd = 0;
+			if(!op.associative) {
+				leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
+				rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
+			}
+			const result = `${this.operands[0].toString(op.precedence+leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence+rightAdd)}`;
+
+			if (parentPrecedence < op.precedence)
+				return `(${result})`;
+			else return result;
+		}
+	}
+	export function rpnToTree(tokens: Iterable<Token>): Node {
+		const stack: Node[] = [];
+		for(const token of tokens) {
+			if(token.type === TokenType.Operator) {
+				const op = operators[token.str.trim()];
+				if(stack.length < op.arity) throw Error("stack error");
+				const args = stack.splice(stack.length - op.arity);
+				stack.push(new InfixFunctionCallNode(token.str.trim(), args));
+			} else if(token.type === TokenType.Identifier) {
+				stack.push(new IdentifierNode(token.str));
+			} else if(token.type === TokenType.Number) {
+				stack.push(new NumberNode(token.str));
+			} else if(token.type === TokenType.FunctionCall) {
+				if(stack.length < 1) throw Error("fn stack error");
+				const arg = stack.pop();
+				stack.push(new FunctionCallNode(token.str, [arg]));
+			} else throw Error("to tree: don't know token type "+token.type);
+		}
+		if(stack.length !== 1) throw Error("stack error "+stack);
+		return stack[0];
+	}
 }

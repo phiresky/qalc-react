@@ -1,5 +1,5 @@
 import {UnitNumber, TaggedString} from './unitNumber';
-import {parse, Token, TokenType} from './parser';
+import {parse, Token, TokenType, Tree} from './parser';
 
 import gnuUnitsData from '../units_data.txt!text';
 import customData from '../custom_data.txt!text';
@@ -13,24 +13,23 @@ const loadUnits = (t: string) => {
 			if(line.length === 0) continue;
 			if(checkDefineBaseUnit(line)) continue;
 			if(line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0) continue;
-			const tokens = [...parse(line)];
-			const lastOp = tokens[tokens.length - 1];
-			if(lastOp.type === TokenType.Operator && lastOp.str === '=' && tokens[0].type==TokenType.Identifier) {
-				const name = tokens[0].str;
+			const tree = parse(line);
+			if(tree instanceof Tree.FunctionCallNode && tree.fnname === '=' && tree.operands[0] instanceof Tree.IdentifierNode) {
+				const name = tree.operands[0].toString();
 				if(name.endsWith("_")) {
 					const prefixName = name.substr(0, name.length - 1);
-					prefixMap.set(prefixName, () => evaluate(tokens));
+					prefixMap.set(prefixName, () => evaluate(tree));
 				} else {
-					setUnit(name, () => evaluate(tokens));
+					setUnit(name, () => evaluate(tree));
 				}
-			} else evaluate(tokens);
+			} else evaluate(tree);
 		} catch(e) {
 			console.error(lines[i], e);
 		}
 	}
 	// force evaluate all units
 	for(const name of unitMap.keys()) {
-		try {getUnit(name);}catch(e) {console.error(e);}
+		try {getUnit(name);} catch(e) {console.error(e);}
 	}
 };
 export const unitMap: Map<string, UnitNumber|(() => UnitNumber)> = new Map();
@@ -38,15 +37,24 @@ export const prefixMap: Map<string, UnitNumber|(() => UnitNumber)> = new Map();
 export const canonicalMap: Map<UnitNumber, UnitNumber> = new Map();
 export const aliasMap: Map<UnitNumber, Set<UnitNumber>> = new Map();
 
-const functions = new Map<string, (arg: UnitNumber) => UnitNumber>([
+const functionMap = new Map<string, (...arg: UnitNumber[]) => UnitNumber>([
 	["sqrt", num => num.pow(0.5)],
 	["ln", num => {num.dimensions.assertEmpty("argument of ln()"); return new UnitNumber(num.value.ln())}],
 	["delete", num => {return unitMap.delete(num.id)? new UnitNumber(1):new UnitNumber(0)}],
 	["log2", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(2))}],
 	["exp", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.exp())}],
 	["tan", num => {num.dimensions.assertEmpty(); return new UnitNumber(Math.tan(num.value.toNumber()))}],
-	["log", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(10))}]
+	["log", num => {num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(10))}],
+	["#", num => num.mul(new UnitNumber(-1))] // unary minus
 ]);
+export function getFunction(name: string): (...args: UnitNumber[]) => UnitNumber {
+	const memberAliases:{[name:string]: string} = {'*':'mul', '':'mul', '/':'div','|':'div', '^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
+	if(name in memberAliases) {
+		return (l, r) => (l as any)[memberAliases[name]](r);
+	} else if(functionMap.has(name)) {
+		return functionMap.get(name);
+	} else throw Error("unknown function: "+name);
+} 
 function setUnit(name: string, val: (UnitNumber|(()=>UnitNumber))) {
 	if(unitMap.has(name)) throw Error("duplicate: "+name);
 	unitMap.set(name, val);
@@ -154,39 +162,23 @@ export function parseEvaluate(str: string) {
 	if(str.length === 0) return new UnitNumber(NaN);
 	return evaluate(parse(str));
 }
-function evaluate(reversePolishNotation: Iterable<Token>) {
-	const stack: (string|UnitNumber)[] = [];
-	const tokens = reversePolishNotation;
-	for(const token of tokens) {
-		if(token.type === TokenType.Operator) {
-			const op = token.str.trim();
-			const map:any = {'*':'mul', '':'mul', '/':'div','|':'div', '^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
-			if(op === '#') stack.push(interpretVal(stack.pop()).mul(new UnitNumber(-1)));
-			else if(op === '=' || op === '≈') {
-				const val = interpretVal(stack.pop()), name = stack.pop() as string;
-				if(typeof name !== 'string') throw Error('invalid left hand side of =');
-				stack.push(setUnitOrPrefix(name, val));
-			}
-			else {
-				const r = interpretVal(stack.pop()), l = interpretVal(stack.pop());
-				stack.push((l as any)[map[op]](r));
-			}
-		}
-		else if(token.type === TokenType.Number) stack.push(new UnitNumber(token.str));
-		else if(token.type === TokenType.Identifier) stack.push(token.str);
-		else if(token.type === TokenType.FunctionCall) {
-			if(!functions.has(token.str)) throw Error('unknown function '+token.str);
-			const fnFunction = functions.get(token.str);
-			stack.push(fnFunction(interpretVal(stack.pop())));
-		}
-		else throw Error("unknown token type "+token.type);
-	}
-	if(stack.length !== 1) {
-		console.warn(stack);
-		throw Error("Stack error");
-	}
-	return interpretVal(stack[0]);
+function evaluate(node: Tree.Node): UnitNumber {
+	if(node instanceof Tree.NumberNode) {
+		return new UnitNumber(node.number);
+	} else if(node instanceof Tree.IdentifierNode) {
+		return getUnit(node.identifier);
+	} else if(node instanceof Tree.FunctionCallNode) {
+		const op = node.fnname;
+		if(op === '=' || op === '≈') {
+			const [name, val] = node.operands;
+			if(name instanceof Tree.IdentifierNode)
+				return setUnitOrPrefix(name.identifier, evaluate(val));
+			else throw Error('invalid left hand side of =');
+		} 
+		return getFunction(op)(...node.operands.map(evaluate));
+	} else throw Error("what is "+node);
 }
+
 export function define(unit: UnitNumber): TaggedString {
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit);
