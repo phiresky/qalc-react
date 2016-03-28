@@ -50,11 +50,6 @@ function parseLine(line) {
 		return;
 	}
 	if(variable.endsWith("-")) variable = variable.replace(/-$/, "_");
-	if(variable === 'h') {
-		// replace h=planck_constant with h=hour
-		console.log("h = hour");
-		variable = 'planck_constant';
-	}
 	console.log(variable + " = " + value);
 }
 

@@ -1,7 +1,9 @@
 import {UnitNumber, TaggedString} from './unitNumber';
 import * as rr from './parser';
 
-import qalcData from '../units_data.txt!text';
+import gnuUnitsData from '../units_data.txt!text';
+import customData from '../custom_data.txt!text';
+
 declare var fetch: any;
 let loadUnits = (t: string) => {
 	let lines = t.split("\n").map((line, index) => ({line, index})), linesNew:typeof lines = [];
@@ -36,11 +38,18 @@ export const aliasMap: Map<UnitNumber, Set<UnitNumber>> = new Map();
 const functions = new Map<string, (arg: UnitNumber) => UnitNumber>([
 	["sqrt", num => num.pow(0.5)],
 	["ln", num => {num.dimensions.assertEmpty("argument of ln()"); return new UnitNumber(num.value.ln())}],
+	["delete", num => {return unitMap.delete(num.id)? new UnitNumber(1):new UnitNumber(0)}]
 ]);
 function setUnit(name: string, val: UnitNumber) {
 	name = normalizeUnitName(name);
 	if(unitMap.has(name)) throw Error("duplicate: "+name);
 	unitMap.set(name, val);
+}
+function deleteUnit(name: string) {
+	const unit = getUnit(name);
+	const aliases = aliasMap.get(getCanonical(unit));
+	if(aliases) aliases.delete(unit);
+	return unitMap.delete(name);
 }
 function setUnitOrPrefix(name: string, unit:UnitNumber) {
 	let oldUnit: UnitNumber;
@@ -175,4 +184,5 @@ export async function qalculate(input: string): Promise<TaggedString> {
 	return ret.toTaggedDefinition().append(" = ").append(ret.toTaggedString());
 }
 
-loadUnits(qalcData);
+loadUnits(gnuUnitsData);
+loadUnits(customData);
