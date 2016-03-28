@@ -159,12 +159,12 @@ export function parseEvaluate(str: string) {
 	return interpretVal(stack[0]);
 }
 export function define(unit: UnitNumber): TaggedString {
+	const t = TaggedString.t;
 	const canonical = getCanonical(unit);
-	const pc = canonical && canonical !== unit;
 	const aliases = getAliases(unit);
-	return (TaggedString.t
-`Definition: ${unit.toString()} = ${unit.toTaggedStringDefinition()}${pc?" = ":""}${pc?canonical:""}.
-
+	return (t
+`Definition: ${unit.toTaggedDefinition()}.
+${canonical?canonical==unit?"(Canonical form)":t`Canonical Form: ${canonical}`:""} 
 
 ${aliases&&aliases.length>0?TaggedString.t`Aliases: ${TaggedString.join(aliases, ", ")}`:""}`
 	);
@@ -172,7 +172,7 @@ ${aliases&&aliases.length>0?TaggedString.t`Aliases: ${TaggedString.join(aliases,
 export async function qalculate(input: string): Promise<TaggedString> {
 	const ret = parseEvaluate(input);
 	if(ret.id) return define(ret);
-	return ret.toTaggedStringDefinition();
+	return ret.toTaggedDefinition().append(" = ").append(ret.toTaggedString());
 }
 
 loadUnits(qalcData);

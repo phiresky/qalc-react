@@ -116,10 +116,12 @@ export class UnitNumber {
 		), {fn:"·", args:[this, other]});
 	}
 	div(other: UnitNumber) {
+		let name:string = undefined;
+		if(this.dimensions.size == 0 && other.dimensions.size == 0) name = this.value.toString()+"|"+other.value.toString();
 		return new UnitNumber(this.value.div(other.value), DimensionMap.join(
 			{ dimensions: this.dimensions, factor: 1 },
 			{ dimensions: other.dimensions, factor: -1 }
-		), {fn:"/", args:[this, other]});
+		), {fn:"/", args:[this, other]}, name);
 	}
 	plus(other: UnitNumber, factor = 1) {
 		const dimensionDifference = this.div(other).dimensions;
@@ -150,15 +152,31 @@ export class UnitNumber {
 			return TaggedString.t`${v}${v&&d.vals.length>0?" ":""}${d}`;
 		}
 	}
-	toTaggedStringDefinition(): TaggedString {
+	toTaggedDefinitionOld(): TaggedString {
 		if(!this.source) {
 			if(this.dimensions.size === 0) return this.toTaggedString().append(" (dimensionless)");
-			return new TaggedString("(base unit)");//[this]);
+			return new TaggedString(this);
 		} else {
 			if(this.source.fn == '==')
-				return this.source.args[0].toTaggedStringDefinition();
+				return this.source.args[0].toTaggedDefinitionOld();
 			else return TaggedString.t`${this.source.args[0].toTaggedString()} ${this.source.fn} ${this.source.args[1].toTaggedString()}`;
 		}
+	}
+	toTaggedTilNamed(): TaggedString {
+		if(this.id || !this.source) return this.toTaggedString();
+		else {
+			if(this.source.fn == '==')
+				return this.source.args[0].toTaggedTilNamed();
+			else return TaggedString.t`${this.source.args[0].toTaggedTilNamed()} ${this.source.fn} ${this.source.args[1].toTaggedTilNamed()}`;
+		}
+	}
+	toTaggedDefinition(): TaggedString {
+		if(!this.source) return this.toTaggedString();
+		if(this.source.fn == '==')
+			return TaggedString.t`${this} = ${this.source.args[0].toTaggedDefinition()}`;
+		if(this.source.fn == 'to')
+			return TaggedString.t`${new UnitNumber(this.source.args[0].value).mul(this.source.args[1]).toTaggedDefinition()}`;
+		else return TaggedString.t`${this.source.args[0].toTaggedTilNamed()} ${this.source.fn} ${this.source.args[1].toTaggedTilNamed()}`;
 	}
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
@@ -169,8 +187,10 @@ export class UnitNumber {
 	convertTo(unit: UnitNumber): UnitNumber {
 		const d = this.div(unit);
 		if (d.dimensions.size > 0) throw Error("Dimensions don't match: " + d.dimensions.toMismatchString());
-		d.source.fn = 'to';
-		return d.mul(unit);
+		const d2 = d.mul(unit);
+		d2.source.fn = "to";
+		d2.source.args = [d, unit];
+		return d2;
 	}
 	static createBaseUnit(dimensionName: string) {
 		return new Dimension(dimensionName).baseUnit;
