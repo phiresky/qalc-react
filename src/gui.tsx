@@ -1,26 +1,42 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as QalcLib from './Qalc';
+import {TaggedString, UnitNumber} from './unitNumber';
 
+class UnitNumberDisplay extends React.Component<{text: TaggedString, onClickUnit: (u:UnitNumber) => void}, {}> {
+	constructor(props: {text: TaggedString, onClickUnit:any}) {
+		super(props);
+		props.text.flatten();
+	}
+	render() {
+		return <pre>
+			{this.props.text.vals.map(x => {
+				if(typeof x === 'string') return x;
+				else if(x instanceof UnitNumber) return <a href="#" onClick={this.props.onClickUnit.bind(null, x)} >{x.toString()}</a>;
+				else throw Error("cant be "+x);
+			})}
+		</pre>;
+	}
+}
 class GuiLineElement {
 	public id: number;
 	private static idCounter = 0;
-	constructor(public input: string, public output: any) {
+	constructor(public input: string, public output: TaggedString) {
 		this.id = GuiLineElement.idCounter++;
 	}
 }
 interface GuiState {
 	lines: GuiLineElement[];
 }
-export class GUILine extends React.Component<{ line: GuiLineElement, onClick:(g:GuiLineElement) => void }, {displayDepth: number}> {
+export class GUILine extends React.Component<{ line: GuiLineElement, onClickInput:(g:GuiLineElement) => void, onClickUnit: (u:UnitNumber) => void}, {}> {
 	constructor(props: any) {
 		super(props);
 		this.state = {displayDepth: 0};
 	}
 	render() {
 		return <div className="gui-line" ><hr />
-				<p style={{cursor:"pointer"}} onClick={() => this.props.onClick(this.props.line)}>> {this.props.line.input}</p>
-				<pre onClick={() => this.setState({displayDepth:this.state.displayDepth+1})}><code>{this.props.line.output.toString(this.state.displayDepth)}</code></pre>
+				<p style={{cursor:"pointer"}} onClick={() => this.props.onClickInput(this.props.line)}>> {this.props.line.input}</p>
+				<UnitNumberDisplay text={this.props.line.output} onClickUnit={this.props.onClickUnit}/>
 			</div>
 	}
 }
@@ -41,7 +57,7 @@ function loadPresetLines() {
 		.map(line => line.split("|")[0])
 		.map(input => QalcLib.qalculate(input)
 			.then(output => guiInst.addLine(new GuiLineElement(input, output)))
-			.catch(error => guiInst.addLine(new GuiLineElement(input, error)))
+			.catch(error => guiInst.addLine(new GuiLineElement(input, new TaggedString(""+error))))
 		);
 }
 export class GUI extends React.Component<{}, GuiState> {
@@ -62,14 +78,21 @@ export class GUI extends React.Component<{}, GuiState> {
 			const input = target.value.trim();
 			if(input.length > 0) QalcLib.qalculate(input).then(output => 
 				this.addLine(new GuiLineElement(input, output))
-			).catch(reason => this.addLine(new GuiLineElement(input, reason)))
+			).catch(reason => this.addLine(new GuiLineElement(input, new TaggedString(""+reason))))
 			target.value = "";
 		}
+	}
+	showUnit(unit: UnitNumber) {
+		console.log("showing", unit);
+		this.addLine(new GuiLineElement(unit.toString(), QalcLib.define(unit)));
 	}
 	render() {
 		return <div>
 			> <input onKeyPress={this.keyPress.bind(this) } ref="inp" class="form-input" />
-			{this.state.lines.map(line => <GUILine key={line.id} line={line} onClick={(line) => (this.refs["inp"] as HTMLInputElement).value = line.input } />) }
+			{this.state.lines.map(line => <GUILine key={line.id} line={line}
+				onClickInput={(line) => (this.refs["inp"] as HTMLInputElement).value = line.input }
+				onClickUnit={unit => this.showUnit(unit)}
+				/>) }
 			</div>;
 	}
 }

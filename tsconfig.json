@@ -8,6 +8,7 @@
     },
     "files": [
 		"typings/browser.d.ts",
-		"src/gui.tsx"
+		"src/gui.tsx",
+		"src/unitNumber.ts"
     ]
 }

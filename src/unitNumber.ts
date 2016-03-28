@@ -1,5 +1,51 @@
 import Decimal from 'decimal.js';
 
+export class TaggedString {
+	readonly vals: TaggedStringEle[];
+	constructor(...vals: TaggedStringEle[]) {
+		this.vals = vals;
+	}
+	append(t: TaggedStringEle) {
+		if(t instanceof TaggedString) this.vals.push(...t.vals);
+		else this.vals.push(t);
+		return this;
+	}
+	toString() {
+		return this.vals.join("");
+	}
+	flatten() {
+		for(let i = 0; i < this.vals.length; i++) {
+			const v = this.vals[i];
+			if(v instanceof TaggedString) {
+				v.flatten();
+				this.vals.splice(i, 1, ...(this.vals[i] as TaggedString).vals);
+			}
+		}
+	}
+	// template function creating an array containing strings and UnitNumbers for linking to definitions in the gui
+	static t(literals: string[], ...placeholders:(UnitNumber|string|TaggedString)[]): TaggedString {
+		let result:(UnitNumber|string)[] = [];
+		for (let i = 0; i < placeholders.length; i++) {
+			if(literals[i].length > 0) result.push(literals[i]);
+			if(placeholders[i] instanceof Array) result.push(...(placeholders[i] as any));
+			else result.push(placeholders[i] as any);
+		}
+		const last = literals[literals.length - 1];
+		if(last.length > 0) result.push(last);
+		return new TaggedString(...result);
+	}
+	static join(str: TaggedStringEle[], joinEle: TaggedStringEle) {
+		if(str.length === 0) return new TaggedString();
+		const out:TaggedStringEle[] = [str[0]];
+		for(let i = 1; i < str.length; i++) {
+			out.push(joinEle, str[i]);
+		}
+		return new TaggedString(...out);
+	}
+}
+
+type TaggedStringEle = (UnitNumber|string|TaggedString);
+
 // maps from dimension id to exponent
 // e.g.  m/s^2 has dimension map {m => 1, s => -2}
 class DimensionMap extends Map<DimensionId, number> {
@@ -8,20 +54,25 @@ class DimensionMap extends Map<DimensionId, number> {
 		if(x === 1) return "";
 		return x.toString().split("").map(x => DimensionMap.unicodePow[+x]).join("");
 	}
-	toString() {
-		//return [...this].map(([id, exp]) => `${Dimension.get(id).name}^${exp}`).join(" ");
+	static listToUnicodePow(entries: [DimensionId, number][]): TaggedString {
+		return TaggedString.join(entries.map(([id, exp]) => TaggedString.t`${Dimension.get(id).baseUnit}${DimensionMap.toUnicodePow(exp)}`), " ");
+	}
+	toString(): string {
+		return this.toTaggedString()+"";
+	}
+	toTaggedString(): TaggedString {
 		const {pos, neg} = this.splitPosNeg();
-		let str = pos.map(([id, exp]) => Dimension.get(id).name+DimensionMap.toUnicodePow(exp)).join(" ");
+		let str = DimensionMap.listToUnicodePow(pos);
 		if(neg.length > 0) {
-			str += " / "+neg.map(([id, exp]) => Dimension.get(id).name+DimensionMap.toUnicodePow(-exp)).join(" ");
+			str.vals.push(" / ");
+			str.append(DimensionMap.listToUnicodePow(neg));
 		}
 		return str;
 	}
 	splitPosNeg() {
-		return {
-			pos:[...this].filter(([id, exp]) => exp > 0),
-			neg:[...this].filter(([id, exp]) => exp < 0)
-		};
+		const pos = [...this].filter(([id, exp]) => exp > 0);
+		const neg = [...this].filter(([id, exp]) => exp < 0); neg.forEach(x => x[1]*=-1);
+		return {pos, neg};
 	}
 	static join(...list: { dimensions: DimensionMap, factor: number }[]) {
 		const map: DimensionMap = new DimensionMap();
@@ -79,14 +130,35 @@ export class UnitNumber {
 		return this.plus(other, -1);
 	}
 	withIdentifier(id: string) {
-		return new UnitNumber(this.value, this.dimensions, this.source, id);
+		return new UnitNumber(this.value, this.dimensions, {fn:"==", args:[this]}, id);
 	}
 	toString(depth = 0): string {
-		if(!this.source || depth == 0) {
-			if (this.id !== undefined) return this.id;
-			else return `${this.value}${this.dimensions.size > 0 ? " ":""}${this.dimensions}`;
+		if(this.id) return this.id;
+		else {
+			const v = this.value.equals(1)?"":this.value.toString();
+			const d = this.dimensions.toString();
+			if(!v&&!d) return "1";
+			return `${v}${v&&d?" ":""}${d}`;
 		}
-		return `${this} = ${this.source.args.map(a => "("+a.toString(depth - 1)+")").join(" "+this.source.fn+" ")}`; 
+	}
+	toTaggedString(): TaggedString {
+		if(this.id) return new TaggedString(this);
+		else {
+			const v = this.value.equals(1)?"":this.value.toString();
+			const d = this.dimensions.toTaggedString();
+			if(!v && d.vals.length == 0) return TaggedString.t`1`;
+			return TaggedString.t`${v}${v&&d.vals.length>0?" ":""}${d}`;
+		}
+	}
+	toTaggedStringDefinition(): TaggedString {
+		if(!this.source) {
+			if(this.dimensions.size === 0) return this.toTaggedString().append(" (dimensionless)");
+			return new TaggedString("(base unit)");//[this]);
+		} else {
+			if(this.source.fn == '==')
+				return this.source.args[0].toTaggedStringDefinition();
+			else return TaggedString.t`${this.source.args[0].toTaggedString()} ${this.source.fn} ${this.source.args[1].toTaggedString()}`;
+		}
 	}
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
@@ -98,12 +170,10 @@ export class UnitNumber {
 		const d = this.div(unit);
 		if (d.dimensions.size > 0) throw Error("Dimensions don't match: " + d.dimensions.toMismatchString());
 		d.source.fn = 'to';
-		return d;
+		return d.mul(unit);
 	}
 	static createBaseUnit(dimensionName: string) {
-		const dimension = new Dimension(dimensionName);
-		const map = new DimensionMap(); map.set(dimension.id, 1);
-		return new UnitNumber(1, map, undefined, dimensionName);
+		return new Dimension(dimensionName).baseUnit;
 	}
 }
 
@@ -118,9 +188,11 @@ class Dimension {
 	static get(id: DimensionId) { return Dimension.dimensions.get(id); }
 	readonly id: DimensionId;
 	readonly name: string;
+	readonly baseUnit: UnitNumber;
 	constructor(name: string) {
 		this.id = Dimension.dimensions.size as DimensionId;
 		this.name = name;
 		Dimension.dimensions.set(this.id, this);
+		this.baseUnit = new UnitNumber(1, new DimensionMap([[this.id, 1]]), undefined, this.name);
 	}
 }
