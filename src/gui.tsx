@@ -94,7 +94,7 @@ export class GUI extends React.Component<{}, GuiState> {
 				onClickUnit={unit => this.showUnit(unit)}
 				/>) }
 			<div className="gui-line" >
-				<p>> <input onKeyPress={this.keyPress.bind(this) } ref="inp" class="form-input" /></p>
+				<p>> <input onKeyPress={this.keyPress.bind(this) } ref="inp" className="form-input" /></p>
 				<hr />
 			</div>
 			</div>;

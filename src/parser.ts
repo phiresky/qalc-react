@@ -70,19 +70,19 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 }
 
 enum Associativity { left, right }
-interface OperatorInfo { precedence: number, associativity: Associativity };
+interface OperatorInfo { precedence: number, associativity: Associativity, arity: number, associative?: boolean };
 const operators: { [n: string]: OperatorInfo } = {
-	'#': { precedence: 0.5, associativity: Associativity.left }, // unary minus
-	'+': { precedence: 4, associativity: Associativity.left },
-	'-': { precedence: 4, associativity: Associativity.left },
-	'': { precedence: 1.8, associativity: Associativity.left },
-	'*': { precedence: 2, associativity: Associativity.left },
-	'/': { precedence: 2, associativity: Associativity.left },
-	'|': { precedence: 1.5, associativity: Associativity.left },
-	'^': { precedence: 1, associativity: Associativity.right },
-	'=': { precedence: 10, associativity: Associativity.right },
-	'≈': { precedence: 10, associativity: Associativity.right },
-	'to': { precedence: 12, associativity: Associativity.left }
+	'#': { precedence: 0.5, associativity: Associativity.left, arity: 1 }, // unary minus
+	'+': { precedence: 4, associativity: Associativity.left, arity: 2, associative: true },
+	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
+	'': { precedence: 1.8, associativity: Associativity.left, arity: 2 },
+	'*': { precedence: 2, associativity: Associativity.left, arity: 2, associative: true },
+	'/': { precedence: 2, associativity: Associativity.left, arity: 2 },
+	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
+	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },
+	'=': { precedence: 10, associativity: Associativity.right, arity: 2 },
+	'≈': { precedence: 10, associativity: Associativity.right, arity: 2 },
+	'to': { precedence: 12, associativity: Associativity.left, arity: 2 }
 }
 function operator(token: Token) {
 	const op = token.str.trim();
@@ -138,4 +138,58 @@ export function* toRPN(tokens: Iterable<Token>) {
 }
 export function parse(str: string) {
 	return toRPN(preprocess(tokenize(str)));
+}
+
+
+
+
+
+class Node {
+	constructor(public text = "") {}
+	toString(parentPrecedence = Infinity) {
+		return this.text;
+	}
+}
+class FunctionCallNode extends Node {
+	constructor(public fnname: string, public operand: Node) {super();}
+	toString(parentPrecedence = Infinity) {
+		return `${this.fnname}(${this.operand})`;
+	}
+}
+class OperatorNode extends Node {
+	constructor(public operator: string, public operands: Node[]) {super();}
+	toString(parentPrecedence = Infinity) {
+		//return this.operands.map(x => `(${x})`).join(this.operator);
+		const op = operators[this.operator];
+		let leftAdd = 0, rightAdd = 0;
+		if(!op.associative) {
+			leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
+			rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
+		}
+		const result = `${this.operands[0].toString(op.precedence+leftAdd)} ${this.operator} ${this.operands[1].toString(op.precedence+rightAdd)}`;
+
+		if (parentPrecedence < op.precedence)
+			return `(${result})`;
+		else return result;
+	}
+}
+
+export function rpnToTree(tokens: Iterable<Token>): Node {
+	const stack: Node[] = [];
+	for(const token of tokens) {
+		if(token.type === TokenType.Operator) {
+			const op = operators[token.str];
+			if(stack.length < op.arity) throw Error("stack error");
+			const args = stack.splice(stack.length - op.arity);
+			stack.push(new OperatorNode(token.str, args));
+		} else if(token.type === TokenType.Identifier || token.type === TokenType.Number) {
+			stack.push(new Node(token.str));
+		} else if(token.type === TokenType.FunctionCall) {
+			if(stack.length < 1) throw Error("fn stack error");
+			const arg = stack.pop();
+			stack.push(new FunctionCallNode(token.str, arg));
+		} else throw Error("to tree: don't know token type "+token.type);
+	}
+	if(stack.length !== 1) throw Error("stack error "+stack);
+	return stack[0];
 }
