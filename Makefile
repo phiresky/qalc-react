@@ -1,4 +1,4 @@
-all: bin/.git bin/index.html bin/bundle.js bin/qalc_data.txt
+all: bin/.git bin/index.html bin/bundle.js
 
 bin/index.html: index.html
 	cp $< $@

@@ -1,5 +1,5 @@
 import {UnitNumber, TaggedString} from './unitNumber';
-import * as rr from './parser';
+import {parse, Token, TokenType} from './parser';
 
 import gnuUnitsData from '../units_data.txt!text';
 import customData from '../custom_data.txt!text';
@@ -13,9 +13,9 @@ const loadUnits = (t: string) => {
 			if(line.length === 0) continue;
 			if(checkDefineBaseUnit(line)) continue;
 			if(line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0) continue;
-			const tokens = [...rr.parse(line)];
+			const tokens = [...parse(line)];
 			const lastOp = tokens[tokens.length - 1];
-			if(lastOp.type === rr.TokenType.Operator && lastOp.str === '=' && tokens[0].type==rr.TokenType.Identifier) {
+			if(lastOp.type === TokenType.Operator && lastOp.str === '=' && tokens[0].type==TokenType.Identifier) {
 				const name = tokens[0].str;
 				if(name.endsWith("_")) {
 					const prefixName = name.substr(0, name.length - 1);
@@ -152,13 +152,13 @@ export function parseEvaluate(str: string) {
 	str = stripCommentsTrim(str);
 	if(checkDefineBaseUnit(str)) return;
 	if(str.length === 0) return new UnitNumber(NaN);
-	return evaluate(rr.parse(str));
+	return evaluate(parse(str));
 }
-function evaluate(reversePolishNotation: Iterable<rr.Token>) {
+function evaluate(reversePolishNotation: Iterable<Token>) {
 	const stack: (string|UnitNumber)[] = [];
 	const tokens = reversePolishNotation;
 	for(const token of tokens) {
-		if(token.type === rr.TokenType.Operator) {
+		if(token.type === TokenType.Operator) {
 			const op = token.str.trim();
 			const map:any = {'*':'mul', '':'mul', '/':'div','|':'div', '^':'pow','+':'plus','-':'minus', 'to':'convertTo'};
 			if(op === '#') stack.push(interpretVal(stack.pop()).mul(new UnitNumber(-1)));
@@ -172,9 +172,9 @@ function evaluate(reversePolishNotation: Iterable<rr.Token>) {
 				stack.push((l as any)[map[op]](r));
 			}
 		}
-		else if(token.type === rr.TokenType.Number) stack.push(new UnitNumber(token.str));
-		else if(token.type === rr.TokenType.Identifier) stack.push(token.str);
-		else if(token.type === rr.TokenType.FunctionCall) {
+		else if(token.type === TokenType.Number) stack.push(new UnitNumber(token.str));
+		else if(token.type === TokenType.Identifier) stack.push(token.str);
+		else if(token.type === TokenType.FunctionCall) {
 			if(!functions.has(token.str)) throw Error('unknown function '+token.str);
 			const fnFunction = functions.get(token.str);
 			stack.push(fnFunction(interpretVal(stack.pop())));
