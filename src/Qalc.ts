@@ -181,7 +181,7 @@ ${aliases&&aliases.length>0?TaggedString.t`Aliases: ${TaggedString.join(aliases,
 export async function qalculate(input: string): Promise<TaggedString> {
 	const ret = parseEvaluate(input);
 	if(ret.id) return define(ret);
-	return ret.toTaggedDefinition().append(" = ").append(ret.toTaggedString());
+	return TaggedString.t`= ${ret.toTaggedDefinition()} = ${ret.toTaggedString()}`;
 }
 
 loadUnits(gnuUnitsData);

@@ -34,9 +34,10 @@ export class GUILine extends React.Component<{ line: GuiLineElement, onClickInpu
 		this.state = {displayDepth: 0};
 	}
 	render() {
-		return <div className="gui-line" ><hr />
+		return <div className="gui-line" >
 				<p style={{cursor:"pointer"}} onClick={() => this.props.onClickInput(this.props.line)}>> {this.props.line.input}</p>
 				<UnitNumberDisplay text={this.props.line.output} onClickUnit={this.props.onClickUnit}/>
+				<hr />
 			</div>
 	}
 }
@@ -69,7 +70,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	addLine(line: GuiLineElement) {
 		const lines = this.state.lines.slice();
-		lines.unshift(line);
+		lines.push(line);
 		this.setState({ lines: lines });
 	}
 	keyPress(evt: KeyboardEvent) {
@@ -88,12 +89,18 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	render() {
 		return <div>
-			> <input onKeyPress={this.keyPress.bind(this) } ref="inp" class="form-input" />
 			{this.state.lines.map(line => <GUILine key={line.id} line={line}
 				onClickInput={(line) => (this.refs["inp"] as HTMLInputElement).value = line.input }
 				onClickUnit={unit => this.showUnit(unit)}
 				/>) }
+			<div className="gui-line" >
+				<p>> <input onKeyPress={this.keyPress.bind(this) } ref="inp" class="form-input" /></p>
+				<hr />
+			</div>
 			</div>;
+	}
+	compomentDidUpdate() {
+		window.scrollTo(0, document.body.scrollHeight);
 	}
 }
 
