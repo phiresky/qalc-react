@@ -1,7 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as QalcLib from './Qalc';
-import {TaggedString, UnitNumber} from './unitNumber';
+import {UnitNumber} from './unitNumber';
+import {TaggedString} from './output';
 
 class UnitNumberDisplay extends React.Component<{ text: TaggedString, onClickUnit: (u: UnitNumber) => void }, {}> {
 	constructor(props: { text: TaggedString, onClickUnit: any }) {
@@ -10,9 +11,9 @@ class UnitNumberDisplay extends React.Component<{ text: TaggedString, onClickUni
 	}
 	render() {
 		return <pre>
-			{this.props.text.vals.map(x => {
-				if (typeof x === 'string') return x;
-				else if (x instanceof UnitNumber) return <a href="#" onClick={(e) => { this.props.onClickUnit(x as any); e.preventDefault() } } >{x.toString() }</a>;
+			{this.props.text.vals.map((x,i) => {
+				if (typeof x === 'string') return <span key={i}>{x}</span>;
+				else if (x instanceof UnitNumber) return <a key={i} href="#" onClick={(e) => { this.props.onClickUnit(x as any); e.preventDefault() } } >{x.toString() }</a>;
 				else throw Error("cant be " + x);
 			}) }
 		</pre>;
@@ -85,7 +86,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	showUnit(unit: UnitNumber) {
 		console.log("showing", unit);
-		this.addLine(new GuiLineElement(unit.toString(), QalcLib.define(unit)));
+		this.addLine(new GuiLineElement(unit.toString(), QalcLib.define(unit.id)));
 	}
 	render() {
 		return <div>

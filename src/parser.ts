@@ -1,3 +1,5 @@
+import {isEvaluated} from './Qalc';
+import {TaggedString} from './output';
 export enum TokenType {
 	Identifier,
 	Number,
@@ -12,9 +14,9 @@ const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^\s+/, TokenType.Whitespace],
 	[/^\(/, TokenType.LParen],
 	[/^\)/, TokenType.RParen],
-	[/^([ =≈+*/^|·-]|to )/, TokenType.Operator],
+	[/^([ =≈+*/^|·!-]|to )/, TokenType.Operator],
 	[/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number],
-	[/^[^() =≈+*/^|·-]+/i, TokenType.Identifier],
+	[/^[^() =≈+*/^|·!-]+/i, TokenType.Identifier],
 	[/^./, TokenType.Unknown]
 ];
 export interface Token { type: TokenType, str: string, start: number };
@@ -79,6 +81,7 @@ enum Associativity {
 }
 interface OperatorInfo { precedence: number, associativity: Associativity, arity: number };
 const operators: { [n: string]: OperatorInfo } = {
+	'!': {precedence: 0.5, associativity: Associativity.left, arity: 1},
 	'#': { precedence: 0.5, associativity: Associativity.right, arity: 1 }, // unary minus
 	'+': { precedence: 4, associativity: Associativity.both, arity: 2 },
 	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
@@ -150,40 +153,42 @@ export function parse(str: string) {
 
 export module Tree {
 
-	export abstract class Node {
-		constructor() { }
-		toString(parentPrecedence = Infinity): string { throw Error("abstract") }
-	}
+	export type Node = NumberNode | IdentifierNode | FunctionCallNode;
+	
 	export class NumberNode {
 		constructor(public number: string) { }
-		toString(parentPrecedence = Infinity) {
-			return this.number;
+		toTaggedString(parentPrecedence = Infinity) {
+			return new TaggedString(this.number);
 		}
 	}
 	export class IdentifierNode {
 		constructor(public identifier: string) { }
-		toString(parentPrecedence = Infinity) {
-			return this.identifier;
+		toTaggedString(parentPrecedence = Infinity) {
+			if(isEvaluated(this)) return new TaggedString((this as any).value); // todo: remove cast
+			return new TaggedString(this.identifier);
 		}
 	}
-	export class FunctionCallNode extends Node {
-		constructor(public fnname: string, public operands: Node[]) { super(); }
-		toString(parentPrecedence = Infinity) {
-			return `${this.fnname}(${this.operands.join(", ")})`;
+	export class FunctionCallNode {
+		constructor(public fnname: string, public operands: Node[]) { }
+		toTaggedString(parentPrecedence = Infinity):TaggedString {
+			return TaggedString.t`${this.fnname}(${TaggedString.join(this.operands.map(x => x.toTaggedString(parentPrecedence)), ", ")})`;
 		}
 	}
 	export class InfixFunctionCallNode extends FunctionCallNode {
-		toString(parentPrecedence = Infinity) {
+		toTaggedString(parentPrecedence = Infinity): TaggedString {
 			const op = operators[this.fnname];
 			const leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
 			const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
-			let result : string;
-			if(this.operands.length === 1) result = `${this.fnname}${this.operands[0].toString(op.precedence+rightAdd)}`;
-			else if(this.operands.length === 2) result = `${this.operands[0].toString(op.precedence + leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence + rightAdd)}`;
+			let result : TaggedString;
+			if(this.operands.length === 1) result = TaggedString.t`${this.fnname}${this.operands[0].toTaggedString(op.precedence+rightAdd)}`;
+			else if(this.operands.length === 2)
+				result = TaggedString.t`${this.operands[0].toTaggedString(op.precedence + leftAdd)} `
+					.append(this.fnname===""?"":this.fnname+" ")
+					.append(this.operands[1].toTaggedString(op.precedence + rightAdd));
 			else throw Error("invalid operand count");
 
 			if (parentPrecedence < op.precedence)
-				return `(${result})`;
+				return TaggedString.t`(${result})`;
 			else return result;
 		}
 	}

@@ -1,9 +1,13 @@
-import {UnitNumber, TaggedString} from './unitNumber';
+import {UnitNumber, EvaluatedNode} from './unitNumber';
+import {TaggedString} from './output';
 import {parse, Token, TokenType, Tree} from './parser';
 
 import gnuUnitsData from '../units_data.txt!text';
 import customData from '../custom_data.txt!text';
 
+export function isEvaluated(node: Tree.Node): node is EvaluatedNode {
+	return !!(node as any).value;
+}
 declare var fetch: any;
 const loadUnits = (t: string) => {
 	const lines = t.split("\n");
@@ -11,16 +15,16 @@ const loadUnits = (t: string) => {
 		try {
 			const line = stripCommentsTrim(lines[i]);
 			if (line.length === 0) continue;
-			if (checkDefineBaseUnit(line)) continue;
 			if (line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0) continue;
 			const tree = parse(line);
-			if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=' && tree.operands[0] instanceof Tree.IdentifierNode) {
-				const name = tree.operands[0].toString();
+			if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=') {
+				const nameNode = tree.operands[0];
+				const name = nameNode instanceof Tree.IdentifierNode && nameNode.identifier;
 				if (name.endsWith("_")) {
 					const prefixName = name.substr(0, name.length - 1);
-					prefixMap.set(prefixName, () => evaluate(tree));
+					prefixMap.set(prefixName, tree);
 				} else {
-					setUnit(name, () => evaluate(tree));
+					setUnit(name, tree);
 				}
 			} else evaluate(tree);
 		} catch (e) {
@@ -32,8 +36,8 @@ const loadUnits = (t: string) => {
 		try { getUnit(name); } catch (e) { console.error(e); }
 	}
 };
-export const unitMap = new Map<string, UnitNumber | (() => UnitNumber)>();
-export const prefixMap = new Map<string, UnitNumber | (() => UnitNumber)>();
+export const unitMap = new Map<string, Tree.Node>();
+export const prefixMap = new Map<string, Tree.Node>();
 export const canonicalMap = new Map<UnitNumber, UnitNumber>();
 export const aliasMap = new Map<UnitNumber, Set<UnitNumber>>();
 export const functionMap = new Map<string, (...arg: UnitNumber[]) => UnitNumber>([
@@ -54,20 +58,20 @@ export function getFunction(name: string): (...args: UnitNumber[]) => UnitNumber
 		return functionMap.get(name);
 	} else throw Error("unknown function: " + name);
 }
-function setUnit(name: string, val: (UnitNumber | (() => UnitNumber))) {
+function setUnit(name: string, val: Tree.Node) {
 	if (unitMap.has(name)) throw Error("duplicate: " + name);
 	unitMap.set(name, val);
 }
 function deleteUnit(name: string) {
 	const unit = getUnit(name);
-	const aliases = aliasMap.get(getCanonical(unit));
-	if (aliases) aliases.delete(unit);
+	const aliases = aliasMap.get(getCanonical(unit.value));
+	if (aliases) aliases.delete(unit.value);
 	return unitMap.delete(name);
 }
-function setUnitOrPrefix(name: string, unit: UnitNumber) {
-	let oldUnit: UnitNumber;
-	[unit, oldUnit] = [unit.withIdentifier(name), unit];
-	unifyAliases(unit, oldUnit);
+function setUnitOrPrefix(name: string, unit: EvaluatedNode) {
+	const oldUnit = unit.value;
+	unit.value = unit.value.withIdentifier(name);
+	unifyAliases(unit.value, oldUnit);
 	if (name.endsWith("_")) {
 		const prefixName = name.substr(0, name.length - 1);
 		prefixMap.set(prefixName, unit);
@@ -100,12 +104,15 @@ export function getCanonical(u: UnitNumber) {
 export function getAliases(u: UnitNumber) {
 	return [...(aliasMap.get(getCanonical(u)) || [])].filter(x => !!x.id);
 }
-export function getPrefix(name: string) {
-	let pref = prefixMap.get(name) as any;
-	if (typeof pref === "function") pref = pref();
-	return pref;
+export function getPrefix(name: string): EvaluatedNode {
+	let res = prefixMap.get(name);
+	if(!res) return undefined;
+	if(!isEvaluated(res)) {
+		prefixMap.delete(name);
+		return evaluate(res);
+	} else return res;
 }
-export function getUnit(name: string, {withPrefix = true, canonical = false} = {}): UnitNumber {
+export function getUnit(name: string, {withPrefix = true} = {}): EvaluatedNode {
 	if (name.endsWith("_")) {
 		return getPrefix(name.substr(0, name.length - 1));
 	}
@@ -113,79 +120,77 @@ export function getUnit(name: string, {withPrefix = true, canonical = false} = {
 		if (withPrefix) for (const prefix of prefixMap.keys()) {
 			if (name.startsWith(prefix)) {
 				let unit = getPrefix(prefix);
-				if (canonical) unit = getCanonical(unit);
 				if (prefix.length < name.length) {
-					const suffix = getUnit(name.substr(prefix.length), { withPrefix: false, canonical });
+					const suffix = getUnit(name.substr(prefix.length), { withPrefix: false });
 					if (suffix === null) continue;
-					unit = unit.mul(suffix).withIdentifier(name);
+					unit = evaluate(new Tree.FunctionCallNode("", [unit, suffix]));
+					unit.value = unit.value.withIdentifier(name);
 				}
 				return unit;
 			}
 		}
-		if (name[name.length - 1] === 's') return getUnit(name.substr(0, name.length - 1), { canonical, withPrefix });
+		if (name[name.length - 1] === 's') return getUnit(name.substr(0, name.length - 1), { withPrefix });
 		return null;
 	}
-	let res = unitMap.get(name) as any;
-	if (typeof res === "function") {
+	let res = unitMap.get(name);
+	if(!res) return undefined;
+	if(!isEvaluated(res)) {
 		unitMap.delete(name);
-		res = res();
+		return evaluate(res);
 	}
-	if (res && canonical) res = getCanonical(res);
-	return res;
+	else return res;
 }
 function stripCommentsTrim(str: string) {
 	const commentStart = str.indexOf("#");
 	if (commentStart >= 0) str = str.substr(0, commentStart);
 	return str.trim();
 }
-function checkDefineBaseUnit(str: string) {
-	if (str[str.length - 1] === "!") {
-		// define new unit for a new dimension
-		const name = str.substr(0, str.length - 1);
-		const unit = UnitNumber.createBaseUnit(name);
-		setUnit(name, unit);
-		return unit;
-	}
-	return null;
-}
 export function parseEvaluate(str: string) {
-	str = stripCommentsTrim(str);
-	if (checkDefineBaseUnit(str)) return;
-	if (str.length === 0) return new UnitNumber(NaN);
-	return evaluate(parse(str));
+	return evaluate(parse(stripCommentsTrim(str)));
 }
-function evaluate(node: Tree.Node): UnitNumber {
+function evaluate(node: Tree.Node): EvaluatedNode {
+	if(isEvaluated(node)) return node;
+	const evNode = node as EvaluatedNode;
 	if (node instanceof Tree.NumberNode) {
-		return new UnitNumber(node.number);
+		evNode.value = new UnitNumber(node.number);
 	} else if (node instanceof Tree.IdentifierNode) {
-		return getUnit(node.identifier);
+		evNode.value = getUnit(node.identifier).value;
+		if(!evNode.value) throw Error("can't resolve "+node.identifier);
 	} else if (node instanceof Tree.FunctionCallNode) {
 		const op = node.fnname;
-		if (op === '=' || op === '≈') {
+		if(op === '!') {
+			const name = node.operands[0];
+			if(name instanceof Tree.IdentifierNode) {
+				evNode.value = UnitNumber.createBaseUnit(name.identifier);
+				setUnit(name.identifier, evNode);
+			} else throw Error("invalid definition");
+		} else if (op === '=' || op === '≈') {
 			const [name, val] = node.operands;
-			if (name instanceof Tree.IdentifierNode)
-				return setUnitOrPrefix(name.identifier, evaluate(val));
+			if (name instanceof Tree.IdentifierNode) {
+				evNode.value = setUnitOrPrefix(name.identifier, evaluate(val)).value;
+			}
 			else throw Error('invalid left hand side of =');
-		}
-		return getFunction(op)(...node.operands.map(evaluate));
+		} else evNode.value = getFunction(op)(...node.operands.map(evaluate).map(x => x.value));
 	} else throw Error("what is " + node);
+	return evNode;
 }
 
-export function define(unit: UnitNumber): TaggedString {
+export function define(name: string): TaggedString {
+	const unit = getUnit(name);
 	const t = TaggedString.t;
-	const canonical = getCanonical(unit);
-	const aliases = getAliases(unit);
+	const canonical = getCanonical(unit.value);
+	const aliases = getAliases(unit.value);
 	return (t
-		`Definition: ${unit.toTaggedDefinition()}.
-${canonical ? canonical == unit ? "(Canonical form)" : t`Canonical Form: ${canonical}` : ""} 
+		`Definition: ${unit.toTaggedString()}.
+${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical}` : ""} 
 
 ${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases, ", ")}` : ""}`
 	);
 }
 export async function qalculate(input: string): Promise<TaggedString> {
 	const ret = parseEvaluate(input);
-	if (ret.id) return define(ret);
-	return TaggedString.t`= ${ret.toTaggedDefinition()} = ${ret.toTaggedString()}`;
+	if (ret.value.id) return define(ret.value.id);
+	return TaggedString.t`= ${ret.toTaggedString()} = ${ret.value}`;
 }
 
 loadUnits(gnuUnitsData);
