@@ -86,18 +86,20 @@ export class GUI extends React.Component<{}, GuiState> {
 			this.setState({currentInput: "", currentOutput: new TaggedString()} as any);
 		}
 	}
-	onChange(evt: Event) {
-		const target = evt.target as HTMLInputElement;
-		const input = target.value;
+	setInput(input: string) {
 		this.setState({currentInput: input} as any);
 		if(/[=≈]/.test(input)) this.setState({currentOutput: new TaggedString("press enter to execute")} as any);
 		else QalcLib.qalculate(input)
 		.then(output => this.setState({currentOutput: output} as any))
 		.catch(reason => this.setState({currentOutput: new TaggedString("" + reason)} as any));
 	}
+	onChange(evt: Event) {
+		const target = evt.target as HTMLInputElement;
+		this.setInput(target.value);
+	}
 	showUnit(unit: UnitNumber) {
 		console.log("showing", unit);
-		this.addLine(new GuiLineElement(unit.toString(), QalcLib.define(QalcLib.getUnit(unit.id, [QalcLib.unitMap]))));
+		this.setInput(unit.toString());
 	}
 	render() {
 		return <div>
@@ -107,7 +109,7 @@ export class GUI extends React.Component<{}, GuiState> {
 				<hr />
 			</div>
 			{this.state.lines.map(line => <GUILine key={line.id} line={line}
-				onClickInput={(line) => (this.refs["inp"] as HTMLInputElement).value = line.input }
+				onClickInput={(line) => this.setInput(line.input) }
 				onClickUnit={unit => this.showUnit(unit) }
 				/>) }
 		</div>;
