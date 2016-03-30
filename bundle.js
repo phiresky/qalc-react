@@ -14574,7 +14574,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
             if (token.type === TokenType.Operator) {
               const op = operators[token.str.trim()];
               if (stack.length < op.arity)
-                throw Error("stack error");
+                throw Error(`Operator '${token.str.trim()}' needs ${op.arity} arguments, only got ${stack.length}`);
               const args = stack.splice(stack.length - op.arity);
               stack.push(new InfixFunctionCallNode(token.str.trim(), args));
             } else if (token.type === TokenType.Identifier) {
