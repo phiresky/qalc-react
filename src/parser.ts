@@ -13,9 +13,9 @@ const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^\s+/, TokenType.Whitespace],
 	[/^\(/, TokenType.LParen],
 	[/^\)/, TokenType.RParen],
-	[/^([ =≈+*/^|·!-]|to )/, TokenType.Operator],
+	[/^(=>|[ =≈+*/^|·!-]|to )/, TokenType.Operator],
 	[/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number],
-	[/^[^() =≈+*/^|·!-]+/i, TokenType.Identifier],
+	[/^[^() =≈+*/^|·!>-]+/i, TokenType.Identifier],
 	[/^./, TokenType.Unknown]
 ];
 export interface Token { type: TokenType, str: string, start: number };
@@ -87,6 +87,7 @@ const operators: { [n: string]: OperatorInfo } = {
 	'/': { precedence: 2, associativity: Associativity.left, arity: 2 },
 	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
 	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },
+	'=>': { precedence: 8, associativity: Associativity.right, arity: 2 }, 
 	'=': { precedence: 10, associativity: Associativity.right, arity: 2 },
 	'≈': { precedence: 10, associativity: Associativity.right, arity: 2 },
 	'to': { precedence: 12, associativity: Associativity.left, arity: 2 }

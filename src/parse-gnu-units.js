@@ -50,6 +50,7 @@ function parseLine(line) {
 		return;
 	}
 	if (variable.endsWith("-")) variable = variable.replace(/-$/, "_");
+	if (variable === 'to') return;
 	value = value.replace(/\bper\b/g, "/").replace(/([^0-9])([a-z]+)([2-9])\b([^(]|$)/g, "$1$2^$3$4");
 	console.log(variable + " = " + value);
 }
