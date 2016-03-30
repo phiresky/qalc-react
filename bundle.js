@@ -14767,18 +14767,20 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
             });
           }
         }
-        onChange(evt) {
-          const target = evt.target;
-          const input = target.value;
+        setInput(input) {
           this.setState({currentInput: input});
           if (/[=≈]/.test(input))
             this.setState({currentOutput: new TaggedString("press enter to execute")});
           else
             qalculate(input).then((output) => this.setState({currentOutput: output})).catch((reason) => this.setState({currentOutput: new TaggedString("" + reason)}));
         }
+        onChange(evt) {
+          const target = evt.target;
+          this.setInput(target.value);
+        }
         showUnit(unit) {
           console.log("showing", unit);
-          this.addLine(new GuiLineElement(unit.toString(), define(getUnit(unit.id, [unitMap]))));
+          this.setInput(unit.toString());
         }
         render() {
           return React.createElement("div", null, React.createElement("div", {className: "gui-line"}, React.createElement("p", null, "> ", React.createElement("input", {
@@ -14792,7 +14794,7 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
           }) : "", React.createElement("hr", null)), this.state.lines.map((line) => React.createElement(GUILine, {
             key: line.id,
             line: line,
-            onClickInput: (line) => this.refs["inp"].value = line.input,
+            onClickInput: (line) => this.setInput(line.input),
             onClickUnit: (unit) => this.showUnit(unit)
           })));
         }
