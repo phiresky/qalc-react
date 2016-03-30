@@ -13794,13 +13794,14 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       TokenTypeRegex,
       Associativity,
       operators,
+      Tree,
       __awaiter,
       loadUnits,
       unitMap,
       prefixMap,
       canonicalMap,
       aliasMap,
-      functions,
+      functionMap,
       UnitNumberDisplay,
       GuiLineElement,
       GUILine,
@@ -13888,7 +13889,7 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
           const o1 = operator(token);
           let token2,
               o2;
-          while ((token2 = top(stack)) && token2.type === TokenType.Operator && (o2 = operator(token2)) && ((o1.associativity == Associativity.left && o1.precedence >= o2.precedence) || (o1.associativity == Associativity.right && o1.precedence > o2.precedence))) {
+          while ((token2 = top(stack)) && token2.type === TokenType.Operator && (o2 = operator(token2)) && (((o1.associativity == Associativity.left || o1.associativity == Associativity.both) && o1.precedence >= o2.precedence) || (o1.associativity == Associativity.right && o1.precedence > o2.precedence))) {
             yield stack.pop();
           }
           stack.push(token);
@@ -13918,7 +13919,25 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
     }
   }
   function parse(str) {
-    return toRPN(preprocess(tokenize(str)));
+    return Tree.rpnToTree(toRPN(preprocess(tokenize(str))));
+  }
+  function getFunction(name) {
+    const memberAliases = {
+      '*': 'mul',
+      '': 'mul',
+      '/': 'div',
+      '|': 'div',
+      '^': 'pow',
+      '+': 'plus',
+      '-': 'minus',
+      'to': 'convertTo'
+    };
+    if (name in memberAliases) {
+      return (l, r) => l[memberAliases[name]](r);
+    } else if (functionMap.has(name)) {
+      return functionMap.get(name);
+    } else
+      throw Error("unknown function: " + name);
   }
   function setUnit(name, val) {
     if (unitMap.has(name))
@@ -14018,15 +14037,6 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       res = getCanonical(res);
     return res;
   }
-  function interpretVal(v) {
-    if (typeof v === 'string') {
-      const u = getUnit(v);
-      if (u === null)
-        throw Error("can't resolve unit: " + v);
-      return u;
-    } else
-      return v;
-  }
   function stripCommentsTrim(str) {
     const commentStart = str.indexOf("#");
     if (commentStart >= 0)
@@ -14050,52 +14060,23 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       return new UnitNumber(NaN);
     return evaluate(parse(str));
   }
-  function evaluate(reversePolishNotation) {
-    const stack = [];
-    const tokens = reversePolishNotation;
-    for (const token of tokens) {
-      if (token.type === TokenType.Operator) {
-        const op = token.str.trim();
-        const map = {
-          '*': 'mul',
-          '': 'mul',
-          '/': 'div',
-          '|': 'div',
-          '^': 'pow',
-          '+': 'plus',
-          '-': 'minus',
-          'to': 'convertTo'
-        };
-        if (op === '#')
-          stack.push(interpretVal(stack.pop()).mul(new UnitNumber(-1)));
-        else if (op === '=' || op === '≈') {
-          const val = interpretVal(stack.pop()),
-              name = stack.pop();
-          if (typeof name !== 'string')
-            throw Error('invalid left hand side of =');
-          stack.push(setUnitOrPrefix(name, val));
-        } else {
-          const r = interpretVal(stack.pop()),
-              l = interpretVal(stack.pop());
-          stack.push(l[map[op]](r));
-        }
-      } else if (token.type === TokenType.Number)
-        stack.push(new UnitNumber(token.str));
-      else if (token.type === TokenType.Identifier)
-        stack.push(token.str);
-      else if (token.type === TokenType.FunctionCall) {
-        if (!functions.has(token.str))
-          throw Error('unknown function ' + token.str);
-        const fnFunction = functions.get(token.str);
-        stack.push(fnFunction(interpretVal(stack.pop())));
-      } else
-        throw Error("unknown token type " + token.type);
-    }
-    if (stack.length !== 1) {
-      console.warn(stack);
-      throw Error("Stack error");
-    }
-    return interpretVal(stack[0]);
+  function evaluate(node) {
+    if (node instanceof Tree.NumberNode) {
+      return new UnitNumber(node.number);
+    } else if (node instanceof Tree.IdentifierNode) {
+      return getUnit(node.identifier);
+    } else if (node instanceof Tree.FunctionCallNode) {
+      const op = node.fnname;
+      if (op === '=' || op === '≈') {
+        const [name, val] = node.operands;
+        if (name instanceof Tree.IdentifierNode)
+          return setUnitOrPrefix(name.identifier, evaluate(val));
+        else
+          throw Error('invalid left hand side of =');
+      }
+      return getFunction(op)(...node.operands.map(evaluate));
+    } else
+      throw Error("what is " + node);
   }
   function define(unit) {
     const t = TaggedString.t;
@@ -14398,54 +14379,149 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       (function(Associativity) {
         Associativity[Associativity["left"] = 0] = "left";
         Associativity[Associativity["right"] = 1] = "right";
+        Associativity[Associativity["both"] = 2] = "both";
       })(Associativity || (Associativity = {}));
       ;
       operators = {
         '#': {
           precedence: 0.5,
-          associativity: Associativity.left
+          associativity: Associativity.right,
+          arity: 1
         },
         '+': {
           precedence: 4,
-          associativity: Associativity.left
+          associativity: Associativity.both,
+          arity: 2
         },
         '-': {
           precedence: 4,
-          associativity: Associativity.left
+          associativity: Associativity.left,
+          arity: 2
         },
         '': {
           precedence: 1.8,
-          associativity: Associativity.left
+          associativity: Associativity.left,
+          arity: 2
         },
         '*': {
           precedence: 2,
-          associativity: Associativity.left
+          associativity: Associativity.both,
+          arity: 2
         },
         '/': {
           precedence: 2,
-          associativity: Associativity.left
+          associativity: Associativity.left,
+          arity: 2
         },
         '|': {
           precedence: 1.5,
-          associativity: Associativity.left
+          associativity: Associativity.left,
+          arity: 2
         },
         '^': {
           precedence: 1,
-          associativity: Associativity.right
+          associativity: Associativity.right,
+          arity: 2
         },
         '=': {
           precedence: 10,
-          associativity: Associativity.right
+          associativity: Associativity.right,
+          arity: 2
         },
         '≈': {
           precedence: 10,
-          associativity: Associativity.right
+          associativity: Associativity.right,
+          arity: 2
         },
         'to': {
           precedence: 12,
-          associativity: Associativity.left
+          associativity: Associativity.left,
+          arity: 2
         }
       };
+      (function(Tree) {
+        class Node {
+          constructor() {}
+          toString(parentPrecedence = Infinity) {
+            throw Error("abstract");
+          }
+        }
+        Tree.Node = Node;
+        class NumberNode {
+          constructor(number) {
+            this.number = number;
+          }
+          toString(parentPrecedence = Infinity) {
+            return this.number;
+          }
+        }
+        Tree.NumberNode = NumberNode;
+        class IdentifierNode {
+          constructor(identifier) {
+            this.identifier = identifier;
+          }
+          toString(parentPrecedence = Infinity) {
+            return this.identifier;
+          }
+        }
+        Tree.IdentifierNode = IdentifierNode;
+        class FunctionCallNode extends Node {
+          constructor(fnname, operands) {
+            super();
+            this.fnname = fnname;
+            this.operands = operands;
+          }
+          toString(parentPrecedence = Infinity) {
+            return `${this.fnname}(${this.operands.join(", ")})`;
+          }
+        }
+        Tree.FunctionCallNode = FunctionCallNode;
+        class InfixFunctionCallNode extends FunctionCallNode {
+          toString(parentPrecedence = Infinity) {
+            const op = operators[this.fnname];
+            const leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
+            const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
+            let result;
+            if (this.operands.length === 1)
+              result = `${this.fnname}${this.operands[0].toString(op.precedence + rightAdd)}`;
+            else if (this.operands.length === 2)
+              result = `${this.operands[0].toString(op.precedence + leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence + rightAdd)}`;
+            else
+              throw Error("invalid operand count");
+            if (parentPrecedence < op.precedence)
+              return `(${result})`;
+            else
+              return result;
+          }
+        }
+        Tree.InfixFunctionCallNode = InfixFunctionCallNode;
+        function rpnToTree(tokens) {
+          const stack = [];
+          for (const token of tokens) {
+            if (token.type === TokenType.Operator) {
+              const op = operators[token.str.trim()];
+              if (stack.length < op.arity)
+                throw Error("stack error");
+              const args = stack.splice(stack.length - op.arity);
+              stack.push(new InfixFunctionCallNode(token.str.trim(), args));
+            } else if (token.type === TokenType.Identifier) {
+              stack.push(new IdentifierNode(token.str));
+            } else if (token.type === TokenType.Number) {
+              stack.push(new NumberNode(token.str));
+            } else if (token.type === TokenType.FunctionCall) {
+              if (stack.length < 1)
+                throw Error("fn stack error");
+              const arg = stack.pop();
+              stack.push(new FunctionCallNode(token.str, [arg]));
+            } else
+              throw Error("to tree: don't know token type " + token.type);
+          }
+          if (stack.length !== 1)
+            throw Error("stack error " + stack);
+          return stack[0];
+        }
+        Tree.rpnToTree = rpnToTree;
+      })(Tree || (Tree = {}));
       __awaiter = (this && this.__awaiter) || function(thisArg, _arguments, P, generator) {
         return new (P || (P = Promise))(function(resolve, reject) {
           function fulfilled(value) {
@@ -14481,18 +14557,17 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
               continue;
             if (line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0)
               continue;
-            const tokens = [...parse(line)];
-            const lastOp = tokens[tokens.length - 1];
-            if (lastOp.type === TokenType.Operator && lastOp.str === '=' && tokens[0].type == TokenType.Identifier) {
-              const name = tokens[0].str;
+            const tree = parse(line);
+            if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=' && tree.operands[0] instanceof Tree.IdentifierNode) {
+              const name = tree.operands[0].toString();
               if (name.endsWith("_")) {
                 const prefixName = name.substr(0, name.length - 1);
-                prefixMap.set(prefixName, () => evaluate(tokens));
+                prefixMap.set(prefixName, () => evaluate(tree));
               } else {
-                setUnit(name, () => evaluate(tokens));
+                setUnit(name, () => evaluate(tree));
               }
             } else
-              evaluate(tokens);
+              evaluate(tree);
           } catch (e) {
             console.error(lines[i], e);
           }
@@ -14509,7 +14584,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       prefixMap = new Map();
       canonicalMap = new Map();
       aliasMap = new Map();
-      functions = new Map([["sqrt", (num) => num.pow(0.5)], ["ln", (num) => {
+      functionMap = new Map([["sqrt", (num) => num.pow(0.5)], ["ln", (num) => {
         num.dimensions.assertEmpty("argument of ln()");
         return new UnitNumber(num.value.ln());
       }], ["delete", (num) => {
@@ -14526,7 +14601,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       }], ["log", (num) => {
         num.dimensions.assertEmpty();
         return new UnitNumber(num.value.logarithm(10));
-      }]]);
+      }], ["#", (num) => num.mul(new UnitNumber(-1))]]);
       loadUnits(gnuUnitsData);
       loadUnits(customData);
       UnitNumberDisplay = class UnitNumberDisplay extends React.Component {
@@ -14617,7 +14692,7 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
           })), React.createElement("div", {className: "gui-line"}, React.createElement("p", null, "> ", React.createElement("input", {
             onKeyPress: this.keyPress.bind(this),
             ref: "inp",
-            class: "form-input"
+            className: "form-input"
           })), React.createElement("hr", null)));
         }
         componentDidUpdate() {
