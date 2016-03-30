@@ -185,6 +185,7 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 			else {
 				const leftVal = evaluate(name, scope);
 				if(leftVal.value.id) leftVal.value.assign(evaluate(val, scope).value);
+				else throw Error("invalid left hand side of assignment");
 				evNode.value = leftVal.value;
 			}
 		} else if (op === '=>') {

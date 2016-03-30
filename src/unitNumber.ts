@@ -3,7 +3,6 @@ import {Tree} from './parser';
 import {TaggedString} from './output';
 export type EvaluatedNode = Tree.Node & { value: UnitNumber };
 
-
 // maps from dimension id to exponent
 // e.g.  m/s^2 has dimension map {m => 1, s => -2}
 class DimensionMap extends Map<DimensionId, number> {
