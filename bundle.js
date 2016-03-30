@@ -14131,6 +14131,8 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
   }
   function qalculate(input) {
     return __awaiter(this, void 0, void 0, function*() {
+      if (input.trim().length === 0)
+        return new TaggedString();
       const ret = parseEvaluate(input);
       if (ret.value.id)
         return define(ret);
@@ -14682,10 +14684,9 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       UnitNumberDisplay = class UnitNumberDisplay extends React.Component {
         constructor(props) {
           super(props);
-          props.text.flatten();
         }
-        render() {
-          return React.createElement("pre", null, this.props.text.vals.map((x, i) => {
+        taggedStringToHtml(str) {
+          return str.vals.map((x, i) => {
             if (typeof x === 'string')
               return React.createElement("span", {key: i}, x);
             else if (x instanceof UnitNumber)
@@ -14697,9 +14698,12 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
                   e.preventDefault();
                 }
               }, x.toString());
-            else
-              throw Error("cant be " + x);
-          }));
+            else if (x instanceof TaggedString)
+              return this.taggedStringToHtml(x);
+          });
+        }
+        render() {
+          return React.createElement("pre", null, this.taggedStringToHtml(this.props.text));
         }
       };
       GuiLineElement = class GuiLineElement {
@@ -14739,42 +14743,60 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
         constructor(props) {
           super(props);
           guiInst = this;
-          this.state = {lines: []};
+          this.state = {
+            lines: [],
+            currentInput: "",
+            currentOutput: new TaggedString()
+          };
           loadPresetLines();
         }
         addLine(line) {
           const lines = this.state.lines.slice();
-          lines.push(line);
-          this.setState({lines: lines});
+          lines.unshift(line);
+          this.setState({lines});
         }
         keyPress(evt) {
+          const target = evt.target;
+          const input = target.value;
           if (evt.charCode == 13) {
-            const target = evt.target;
-            const input = target.value.trim();
-            if (input.length > 0)
+            if (input.trim().length > 0)
               qalculate(input).then((output) => this.addLine(new GuiLineElement(input, output))).catch((reason) => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))));
-            target.value = "";
+            this.setState({
+              currentInput: "",
+              currentOutput: new TaggedString()
+            });
           }
+        }
+        onChange(evt) {
+          const target = evt.target;
+          const input = target.value;
+          this.setState({currentInput: input});
+          if (/[=≈]/.test(input))
+            this.setState({currentOutput: new TaggedString("press enter to execute")});
+          else
+            qalculate(input).then((output) => this.setState({currentOutput: output})).catch((reason) => this.setState({currentOutput: new TaggedString("" + reason)}));
         }
         showUnit(unit) {
           console.log("showing", unit);
           this.addLine(new GuiLineElement(unit.toString(), define(getUnit(unit.id, [unitMap]))));
         }
         render() {
-          return React.createElement("div", null, this.state.lines.map((line) => React.createElement(GUILine, {
+          return React.createElement("div", null, React.createElement("div", {className: "gui-line"}, React.createElement("p", null, "> ", React.createElement("input", {
+            onChange: this.onChange.bind(this),
+            onKeyPress: this.keyPress.bind(this),
+            value: this.state.currentInput,
+            className: "form-input"
+          })), this.state.currentOutput.vals.length > 0 ? React.createElement(UnitNumberDisplay, {
+            text: this.state.currentOutput,
+            onClickUnit: (unit) => this.showUnit(unit)
+          }) : "", React.createElement("hr", null)), this.state.lines.map((line) => React.createElement(GUILine, {
             key: line.id,
             line: line,
             onClickInput: (line) => this.refs["inp"].value = line.input,
             onClickUnit: (unit) => this.showUnit(unit)
-          })), React.createElement("div", {className: "gui-line"}, React.createElement("p", null, "> ", React.createElement("input", {
-            onKeyPress: this.keyPress.bind(this),
-            ref: "inp",
-            className: "form-input"
-          })), React.createElement("hr", null)));
+          })));
         }
-        componentDidUpdate() {
-          window.scrollTo(0, 1e10);
-        }
+        componentDidUpdate() {}
       };
       ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(GUI, null)), document.getElementById("root"));
       $__export("GUILine", GUILine), $__export("GUI", GUI);
