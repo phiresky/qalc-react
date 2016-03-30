@@ -104,7 +104,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	render() {
 		return <div>
 			<div className="gui-line" >
-				<p>> <input onChange={this.onChange.bind(this) } onKeyPress={this.keyPress.bind(this)} value={this.state.currentInput} className="form-input" /></p>
+				<p>> <input onChange={this.onChange.bind(this) } onKeyPress={this.keyPress.bind(this)} value={this.state.currentInput} style={{width:"90%"}} /></p>
 				{this.state.currentOutput.vals.length>0?<UnitNumberDisplay text={this.state.currentOutput} onClickUnit={unit => this.showUnit(unit)}/>:""}
 				<hr />
 			</div>

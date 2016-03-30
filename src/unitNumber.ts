@@ -45,6 +45,13 @@ class DimensionMap extends Map<DimensionId, number> {
 	assertEmpty(str = "") {
 		if (this.size > 0) throw Error(str + " must be dimensionless");
 	}
+	equals(d: DimensionMap) {
+		const diff = DimensionMap.join({dimensions:this, factor:1}, {dimensions:d, factor:-1});
+		return diff.size === 0; 
+	}
+	assertEqual(d: DimensionMap) {
+		if(!this.equals(d)) throw Error("dimensions must be the same");
+	}
 	toMismatchString() {
 		const {pos: tooMuch, neg: notEnough} = this.splitPosNeg();
 		if (tooMuch.length === 0) return "missing " + new DimensionMap(notEnough);

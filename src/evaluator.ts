@@ -1,7 +1,7 @@
 import {UnitNumber, SpecialUnitNumber, EvaluatedNode} from './unitNumber';
 import {TaggedString} from './output';
 import {parse, Token, TokenType, Tree} from './parser';
-
+import Decimal from 'decimal.js';
 import gnuUnitsData from '../units_data.txt!text';
 import customData from '../custom_data.txt!text';
 
@@ -61,17 +61,30 @@ addFunctions(
 	["sqrt", num => num.pow(0.5)],
 	["ln", num => { num.dimensions.assertEmpty("argument of ln()"); return new UnitNumber(num.value.ln()) }],
 	["delete", num => { return unitMap.delete(num.id) ? new UnitNumber(1) : new UnitNumber(0) }],
-	["log2", num => { num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(2)) }],
-	["exp", num => { num.dimensions.assertEmpty(); return new UnitNumber(num.value.exp()) }],
-	["tan", num => { num.dimensions.assertEmpty(); return new UnitNumber(Math.tan(num.value.toNumber())) }],
-	["log", num => { num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(10)) }]
+	["log2", num => ( num.dimensions.assertEmpty(), new UnitNumber(num.value.logarithm(2)))],
+	["exp", num => ( num.dimensions.assertEmpty(), new UnitNumber(num.value.exp()))],
+	["tan", num => ( num.dimensions.assertEmpty(), new UnitNumber(Math.tan(num.value.toNumber())))],
+	["log", num => ( num.dimensions.assertEmpty(), new UnitNumber(num.value.logarithm(10)))]
 );
 export function getFunction({name, throwOnError = true}: {name: string, throwOnError?: boolean}): (...args: UnitNumber[]) => UnitNumber {
-	const memberAliases: { [name: string]: string } = { '·': 'mul', '': 'mul', '/': 'div', '|': 'div', '^': 'pow', '+': 'plus', '-': 'minus', 'to': 'convertTo' };
+	const memberAliases: { [name: string]: string } = { '·': 'mul', '': 'mul', '/': 'div', '|': 'div', 
+		'^': 'pow', '+': 'plus', '-': 'minus', 'to': 'convertTo',
+	 };
+	 const yes = new UnitNumber(1); const no = new UnitNumber(0);
+	 const staticAliases:{[name:string]: (a: UnitNumber, b: UnitNumber) => UnitNumber} = {
+		 '>': (a,b) => (a.dimensions.assertEqual(b.dimensions),a.value.greaterThan(b.value) ? yes:no),
+		 '<': (a,b) => (a.dimensions.assertEqual(b.dimensions),a.value.lessThan(b.value) ?yes:no),
+		 '>=': (a,b) => (a.dimensions.assertEqual(b.dimensions),a.value.greaterThanOrEqualTo(b.value) ? yes:no),
+		 '<=': (a,b) => (a.dimensions.assertEqual(b.dimensions),a.value.lessThanOrEqualTo(b.value) ?yes:no),
+		 '==': (a,b) => (a.value.equals(b.value) && a.dimensions.equals(b.dimensions)? yes:no),
+		 '!=': (a,b) => (a.dimensions.assertEqual(b.dimensions),a.value.equals(b.value)?no:yes),
+	 };
 	if(name === '#') return l => l.mul(new UnitNumber(-1));
 	else if (name in memberAliases) {
 		return (l, r) => (l as any)[memberAliases[name]](r);
-	} else if(throwOnError) throw Error("unknown function: " + name);
+	} else if (name in staticAliases)
+		return staticAliases[name]; 
+	else if(throwOnError) throw Error("unknown function: " + name);
 	else return null;
 }
 function setUnit(name: string, val: Tree.Node) {
@@ -126,7 +139,7 @@ export function getPrefix(name: string): EvaluatedNode {
 		return evaluate(res, [unitMap]);
 	} else return res;
 }
-export function getUnit(name: string, scope: Scope, {withPrefix = true, withPluralSuffix = true, throwOnError = true} = {}): EvaluatedNode {
+export function getUnit(name: string, scope: Scope = [unitMap], {withPrefix = true, withPluralSuffix = true, throwOnError = true} = {}): EvaluatedNode {
 	if (name.endsWith("_")) return getPrefix(name.substr(0, name.length - 1));
 	const foundScope = scope.find(map => map.has(name));
 	if (!foundScope) {
@@ -199,12 +212,19 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 				}, undefined, undefined);
 			}
 			else throw Error('invalid lambda definition');	
+		} else if(op === '||' || op === '&&') {
+			const [a, b] = node.operands;
+			const aEv = evaluate(a, scope).value;
+			if(op === '||') 
+				evNode.value = aEv.value.isZero()?evaluate(b, scope).value: aEv;
+			 else if(op ==='&&') evNode.value = !aEv.value.isZero()?evaluate(b, scope).value:aEv;
 		} else evNode.value = getFunction({name:op})(...node.operands.map(x => evaluate(x, scope)).map(x => x.value));
 	} else throw Error("what is " + node);
 	return evNode;
 }
 
 export function define(unit: EvaluatedNode): TaggedString {
+	if(unit instanceof Tree.IdentifierNode) unit = getUnit(unit.value.id);
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit.value);
 	const aliases = getAliases(unit.value);

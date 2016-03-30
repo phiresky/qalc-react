@@ -8,6 +8,10 @@ E = energy
 °C = tempC
 °F = tempF
 
+fibonacci = x => x >= 2 && fibonacci(x-1) + fibonacci(x-2) || x
+
+delete(in) # to avoid confusion
+
 #
 # computing power
 #

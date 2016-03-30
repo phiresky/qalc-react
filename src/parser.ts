@@ -13,9 +13,9 @@ const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^\s+/, TokenType.Whitespace],
 	[/^\(/, TokenType.LParen],
 	[/^\)/, TokenType.RParen],
-	[/^(=>|[ =≈+*/^|·!-]|to )/, TokenType.Operator],
+	[/^(=>|<=|>=|\|\||&&|==|!=|[ =≈+*/^|·!<>-]|to )/, TokenType.Operator],
 	[/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number],
-	[/^[^() =≈+*/^|·!>-]+/i, TokenType.Identifier],
+	[/^[^() =<>≈+*/^&|·!>-]+/i, TokenType.Identifier],
 	[/^./, TokenType.Unknown]
 ];
 export interface Token { type: TokenType, str: string, start: number };
@@ -56,6 +56,7 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 
 		if (token.type === TokenType.Operator) {
 			if (token.str === '*') token.str = '·';
+			if(token.str === 'in') token.str = 'to';
 			if (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
 				// is an unary operator
 				if (token.str === '-') token.str = token.str.replace('-', '#');
@@ -80,13 +81,24 @@ interface OperatorInfo { precedence: number, associativity: Associativity, arity
 const operators: { [n: string]: OperatorInfo } = {
 	'!': { precedence: 0.5, associativity: Associativity.left, arity: 1 },
 	'#': { precedence: 0.5, associativity: Associativity.right, arity: 1, displayString: '-' }, // unary minus
-	'+': { precedence: 4, associativity: Associativity.both, arity: 2 },
-	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
+	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },
+	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
 	'': { precedence: 1.8, associativity: Associativity.left, arity: 2 },
 	'·': { precedence: 2, associativity: Associativity.both, arity: 2 },
 	'/': { precedence: 2, associativity: Associativity.left, arity: 2 },
-	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
-	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },
+	'+': { precedence: 4, associativity: Associativity.both, arity: 2 },
+	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
+	'<': { precedence: 5, associativity: Associativity.left, arity: 2 },
+	'<=': { precedence: 5, associativity: Associativity.left, arity: 2 },
+	'>': { precedence: 5, associativity: Associativity.left, arity: 2 },
+	'>=': { precedence: 5, associativity: Associativity.left, arity: 2 },
+	'==': { precedence: 6, associativity: Associativity.left, arity: 2 },
+	'!=': { precedence: 6, associativity: Associativity.left, arity: 2 },
+	//'&': { precedence: 7, associativity: Associativity.left, arity: 2 },
+	//'^': { precedence: 7.1, associativity: Associativity.left, arity: 2 },
+	//'|': { precedence: 7.2, associativity: Associativity.left, arity: 2 },
+	'&&': { precedence: 7.3, associativity: Associativity.left, arity: 2 },
+	'||': { precedence: 7.4, associativity: Associativity.left, arity: 2 },
 	'=>': { precedence: 8, associativity: Associativity.right, arity: 2 },
 	'=': { precedence: 10, associativity: Associativity.right, arity: 2 },
 	'≈': { precedence: 10, associativity: Associativity.right, arity: 2 },
