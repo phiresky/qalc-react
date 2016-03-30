@@ -104,22 +104,20 @@ export function getAliases(u: UnitNumber) {
 }
 export function getPrefix(name: string): EvaluatedNode {
 	let res = prefixMap.get(name);
-	if(!res) return undefined;
+	if(!res) throw Error("unknown prefix: "+name);
 	if(!isEvaluated(res)) {
 		prefixMap.delete(name);
 		return evaluate(res);
 	} else return res;
 }
-export function getUnit(name: string, {withPrefix = true} = {}): EvaluatedNode {
-	if (name.endsWith("_")) {
-		return getPrefix(name.substr(0, name.length - 1));
-	}
+export function getUnit(name: string, {withPrefix = true, throwOnError = true} = {}): EvaluatedNode {
+	if (name.endsWith("_")) return getPrefix(name.substr(0, name.length - 1));
 	if (!unitMap.has(name)) {
 		if (withPrefix) for (const prefix of prefixMap.keys()) {
 			if (name.startsWith(prefix)) {
 				let unit = getPrefix(prefix);
 				if (prefix.length < name.length) {
-					const suffix = getUnit(name.substr(prefix.length), { withPrefix: false });
+					const suffix = getUnit(name.substr(prefix.length), { withPrefix: false, throwOnError: false });
 					if (suffix === null) continue;
 					const unitValue = evaluate(new Tree.InfixFunctionCallNode("·", [unit, suffix]));
 					unit = new Tree.InfixFunctionCallNode("=", [new Tree.IdentifierNode(name), unitValue]) as EvaluatedNode;
@@ -128,11 +126,10 @@ export function getUnit(name: string, {withPrefix = true} = {}): EvaluatedNode {
 				return unit;
 			}
 		}
-		if (name[name.length - 1] === 's') return getUnit(name.substr(0, name.length - 1), { withPrefix });
-		return null;
+		if (name[name.length - 1] === 's') return getUnit(name.substr(0, name.length - 1), { withPrefix, throwOnError });
+		if(throwOnError) throw Error("unknown unit: "+name); else return null;
 	}
 	let res = unitMap.get(name);
-	if(!res) return undefined;
 	if(!isEvaluated(res)) {
 		unitMap.delete(name);
 		return evaluate(res);
