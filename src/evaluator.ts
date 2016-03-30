@@ -33,7 +33,7 @@ const loadUnits = (filename: string, data: string) => {
 	}
 	// force evaluate all units
 	for (const name of unitMap.keys()) {
-		try { getUnit(name); } catch (e) { console.error("force-evaluation", e); }
+		try { getUnit(name); } catch (e) { console.error("force-evaluate unit", name, e); }
 	}
 };
 export const unitMap = new Map<string, Tree.Node>();
@@ -111,7 +111,7 @@ export function getPrefix(name: string): EvaluatedNode {
 		return evaluate(res);
 	} else return res;
 }
-export function getUnit(name: string, {withPrefix = true, throwOnError = true} = {}): EvaluatedNode {
+export function getUnit(name: string, {withPrefix = true, withPluralSuffix = true, throwOnError = true} = {}): EvaluatedNode {
 	if (name.endsWith("_")) return getPrefix(name.substr(0, name.length - 1));
 	if (!unitMap.has(name)) {
 		if (withPrefix) for (const prefix of prefixMap.keys()) {
@@ -127,7 +127,7 @@ export function getUnit(name: string, {withPrefix = true, throwOnError = true} =
 				return unit;
 			}
 		}
-		if (name[name.length - 1] === 's') return getUnit(name.substr(0, name.length - 1), { withPrefix, throwOnError });
+		if (withPluralSuffix && name[name.length - 1] === 's') return getUnit(name.substr(0, name.length - 1), { withPrefix, withPluralSuffix: false, throwOnError });
 		if(throwOnError) throw Error("unknown unit: "+name); else return null;
 	}
 	let res = unitMap.get(name);
@@ -188,7 +188,7 @@ export function define(name: string): TaggedString {
 	const aliases = getAliases(unit.value);
 	return (t
 		`Definition: ${unit.toTaggedString()}.
-${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical}` : ""} 
+${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical}` : ""}
 
 ${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases, ", ")}` : ""}`
 	);
