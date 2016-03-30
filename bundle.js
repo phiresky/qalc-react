@@ -14797,14 +14797,13 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         }
       };
       presetLines = `
+sqrt(2 * (6 million tons * uranium_natural) / (100000 pounds + 0.7% * 6 million tons)) to c  # speed a rocket could get with all the uranium on earth (E=1/2 mv^2)
 5600 mAh * 11.7 V to Wh
 100W * 10 days * 0.25€/kWh to €
 7Mbit/s * 2h to Gbyte
 32bit/(0.2bit/s) to s
 88 mph to km/h|88 * mph = 0.03933952(km / s)
 100°F to °C
-sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
-
 `;
       GUI = class GUI extends React.Component {
         constructor(props) {
