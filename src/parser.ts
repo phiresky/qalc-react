@@ -180,7 +180,7 @@ export module Tree {
 			const leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
 			const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
 			let result : TaggedString;
-			if(this.operands.length === 1) result = TaggedString.t`${this.fnname}${this.operands[0].toTaggedString(op.precedence+rightAdd)}`;
+			if(this.operands.length === 1) result = TaggedString.t`${leftAdd?this.fnname:""}${this.operands[0].toTaggedString(op.precedence+leftAdd+rightAdd)}${rightAdd?this.fnname:""}`;
 			else if(this.operands.length === 2)
 				result = TaggedString.t`${this.operands[0].toTaggedString(op.precedence + leftAdd)} `
 					.append(this.fnname===""?"":this.fnname+" ")

@@ -59,7 +59,7 @@ export function getFunction(name: string): (...args: UnitNumber[]) => UnitNumber
 	} else throw Error("unknown function: " + name);
 }
 function setUnit(name: string, val: Tree.Node) {
-	if (unitMap.has(name)) throw Error("duplicate: " + name);
+	if (unitMap.has(name)) throw Error(`Unit ${name} already exists.\nUse delete(${name}) to remove it.`);
 	unitMap.set(name, val);
 }
 function deleteUnit(name: string) {
