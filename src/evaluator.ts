@@ -221,7 +221,7 @@ function unitConvertedTaggedString(node: Tree.Node) {
 	if(node instanceof Tree.FunctionCallNode && node.fnname === 'to') {
 		const unit = evaluate(node.operands[1], [unitMap]);
 		const numericValue = evaluate(node.operands[0], [unitMap]).value.div(unit.value);
-		return TaggedString.t`${numericValue.value.toString()} ${unit.toTaggedString()}`;
+		return TaggedString.t`${numericValue.toString()} ${unit.toTaggedString()}`;
 	}
 	else return evaluate(node, [unitMap]).value.toTaggedString();
 }

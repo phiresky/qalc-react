@@ -105,7 +105,7 @@ export class UnitNumber {
 		if (this.id) return new TaggedString(this);
 		else {
 			if (this.value.equals(1) && this.dimensions.size == 0) return new TaggedString("1");
-			const v = this.value.equals(1) ? "" : this.value.toString();
+			const v = this.value.equals(1) ? "" : this.value.toPrecision(10);
 			return TaggedString.t`${v}${v && this.dimensions.size > 0 ? " " : ""}${this.dimensions.toTaggedString()}`;
 		}
 	}
