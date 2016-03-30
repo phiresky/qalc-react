@@ -50,13 +50,14 @@ export const functionMap = new Map<string, (...arg: UnitNumber[]) => UnitNumber>
 	["log", num => { num.dimensions.assertEmpty(); return new UnitNumber(num.value.logarithm(10)) }],
 	["#", num => num.mul(new UnitNumber(-1))] // unary minus
 ]);
-export function getFunction(name: string): (...args: UnitNumber[]) => UnitNumber {
+export function getFunction({name, throwOnError = true}: {name: string, throwOnError?: boolean}): (...args: UnitNumber[]) => UnitNumber {
 	const memberAliases: { [name: string]: string } = { '·': 'mul', '': 'mul', '/': 'div', '|': 'div', '^': 'pow', '+': 'plus', '-': 'minus', 'to': 'convertTo' };
 	if (name in memberAliases) {
 		return (l, r) => (l as any)[memberAliases[name]](r);
 	} else if (functionMap.has(name)) {
 		return functionMap.get(name);
-	} else throw Error("unknown function: " + name);
+	} else if(throwOnError) throw Error("unknown function: " + name);
+	else return null;
 }
 function setUnit(name: string, val: Tree.Node) {
 	if (unitMap.has(name)) throw Error(`Unit ${name} already exists.\nUse delete(${name}) to remove it.`);
@@ -165,7 +166,17 @@ function evaluate(node: Tree.Node): EvaluatedNode {
 			if (name instanceof Tree.IdentifierNode)
 				setUnitOrPrefix(name.identifier, evNode, evaluate(val));
 			else throw Error('invalid left hand side of =');
-		} else evNode.value = getFunction(op)(...node.operands.map(evaluate).map(x => x.value));
+		} else if (op === '') {
+			const [l, r] = node.operands;
+			const lIden = l instanceof Tree.IdentifierNode && l.identifier;
+			const rIden = r instanceof Tree.IdentifierNode && r.identifier;
+			const lFunc = getFunction({name: lIden, throwOnError: false});
+			const rFunc = getFunction({name: rIden, throwOnError: false});
+			if(lFunc && !rFunc) evNode.value = lFunc(evaluate(r).value);
+			else if(rFunc && !lFunc) evNode.value = rFunc(evaluate(l).value);
+			else if(!rFunc && !lFunc) evNode.value = getFunction({name:op})(evaluate(l).value, evaluate(r).value);
+			else throw Error("can't apply function to function");
+		} else evNode.value = getFunction({name:op})(...node.operands.map(evaluate).map(x => x.value));
 	} else throw Error("what is " + node);
 	return evNode;
 }

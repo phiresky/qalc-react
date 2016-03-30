@@ -5,7 +5,6 @@ export enum TokenType {
 	Number,
 	LParen, RParen,
 	Operator,
-	FunctionCall,
 	Whitespace,
 	Unknown
 }
@@ -51,8 +50,6 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 	let lastToken: Token = null;
 	for (const token of tokens) {
 		if (token.type === TokenType.Whitespace) continue;
-		if (token.type === TokenType.LParen && lastToken && lastToken.type === TokenType.Identifier)
-			lastToken.type = TokenType.FunctionCall;
 		if (lastToken) yield lastToken;
 		if (lastToken && [TokenType.Identifier, TokenType.Number, TokenType.LParen].indexOf(token.type) >= 0
 			&& [TokenType.Identifier, TokenType.Number, TokenType.RParen].indexOf(lastToken.type) >= 0) yield { type: TokenType.Operator, str: "", start: token.start };
@@ -127,23 +124,20 @@ export function* toRPN(tokens: Iterable<Token>) {
 				stack.push(token);
 				break;
 			case TokenType.LParen:
-			case TokenType.FunctionCall:
 				stack.push(token);
 				break;
 			case TokenType.RParen:
 				while (top(stack) && top(stack).type !== TokenType.LParen)
 					yield stack.pop();
-				if (stack.length === 0) throw Error("mismatched parens 1: " + token.start);
+				if (stack.length === 0) throw Error(token.start+": missing opening paren");
 				stack.pop();
-				if (top(stack) && top(stack).type === TokenType.FunctionCall)
-					yield stack.pop();
 				break;
 			default: throw Error('what is ' + token);
 		}
 	}
 	while (stack.length > 0) {
 		if (top(stack).type === TokenType.Operator) yield stack.pop();
-		else throw Error("mismatched parens 2: " + top(stack).start);
+		else throw Error(top(stack).start+":missing closing parens");
 	}
 }
 
@@ -204,10 +198,6 @@ export module Tree {
 				stack.push(new IdentifierNode(token.str));
 			} else if (token.type === TokenType.Number) {
 				stack.push(new NumberNode(token.str));
-			} else if (token.type === TokenType.FunctionCall) {
-				if (stack.length < 1) throw Error("fn stack error");
-				const arg = stack.pop();
-				stack.push(new FunctionCallNode(token.str, [arg]));
 			} else throw Error("to tree: don't know token type " + token.type);
 		}
 		if (stack.length !== 1) throw Error("stack error " + stack);
