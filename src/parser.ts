@@ -69,7 +69,14 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 	if (lastToken) yield lastToken;
 }
 
-enum Associativity { left, right, both }
+enum Associativity {
+	/** a / b / c = (a / b) / c */
+	left,
+	/** a ^ b ^ c = a ^ (b ^ c) */
+	right,
+	/** a + b + c = (a + b) + c = a + (b + c) */
+	both
+}
 interface OperatorInfo { precedence: number, associativity: Associativity, arity: number };
 const operators: { [n: string]: OperatorInfo } = {
 	'#': { precedence: 0.5, associativity: Associativity.right, arity: 1 }, // unary minus
