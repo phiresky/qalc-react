@@ -196,7 +196,7 @@ export module Tree {
 		for (const token of tokens) {
 			if (token.type === TokenType.Operator) {
 				const op = operators[token.str.trim()];
-				if (stack.length < op.arity) throw Error("stack error");
+				if (stack.length < op.arity) throw Error(`Operator '${token.str.trim()}' needs ${op.arity} arguments, only got ${stack.length}`);
 				const args = stack.splice(stack.length - op.arity);
 				stack.push(new InfixFunctionCallNode(token.str.trim(), args));
 			} else if (token.type === TokenType.Identifier) {
