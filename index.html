@@ -20,5 +20,5 @@ System.import("src/gui.tsx")
 
 
 <script>
-"Qalc,parser,unitNumber,output".split(",").forEach(x => System.import("src/"+x).then(y => window[x]=y));
+"evaluator,parser,unitNumber,output".split(",").forEach(x => System.import("src/"+x).then(y => window[x]=y));
 </script>

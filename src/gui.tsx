@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as QalcLib from './Qalc';
+import * as QalcLib from './evaluator';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
 

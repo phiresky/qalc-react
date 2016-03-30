@@ -1,4 +1,4 @@
-import {isEvaluated} from './Qalc';
+import {isEvaluated} from './evaluator';
 import {TaggedString} from './output';
 export enum TokenType {
 	Identifier,
