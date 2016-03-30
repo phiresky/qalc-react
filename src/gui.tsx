@@ -104,7 +104,9 @@ export class GUI extends React.Component<{}, GuiState> {
 	render() {
 		return <div>
 			<div className="gui-line" >
-				<p>> <input onChange={this.onChange.bind(this) } onKeyPress={this.keyPress.bind(this)} value={this.state.currentInput} style={{width:"90%"}} /></p>
+				<p>> <input onChange={this.onChange.bind(this) } 
+					autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"}
+					onKeyPress={this.keyPress.bind(this)} value={this.state.currentInput} style={{width:"90%"}} /></p>
 				{this.state.currentOutput.vals.length>0?<UnitNumberDisplay text={this.state.currentOutput} onClickUnit={unit => this.showUnit(unit)}/>:""}
 				<hr />
 			</div>
@@ -125,4 +127,5 @@ ReactDOM.render(
 			<h1>Qalc</h1>
 		</div>
 		<GUI />
+		<footer><small><a href="https://github.com/phiresky/qalc-react">Source code on GitHub</a></small></footer>
 	</div>, document.getElementById("root"));
