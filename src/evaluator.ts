@@ -226,6 +226,7 @@ function unitConvertedTaggedString(node: Tree.Node) {
 	else return evaluate(node, [unitMap]).value.toTaggedString();
 }
 export async function qalculate(input: string): Promise<TaggedString> {
+	if(input.trim().length === 0) return new TaggedString();
 	const ret = parseEvaluate(input);
 	if (ret.value.id) return define(ret);
 	return TaggedString.t`${ret.toTaggedString()} = ${unitConvertedTaggedString(ret)}`;
