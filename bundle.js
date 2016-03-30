@@ -11036,7 +11036,7 @@ define("a0", [], function() {
 (function() {
 var define = $__System.amdDefine;
 define("a1", [], function() {
-  return "planck_constant = h\nh = hour \n\nAh = A h\n\nE = energy\n\n°C = tempC\n°F = tempF\n\n#\n# computing power\n#\n\nflo! # one floating point operation\n\nfloating_point_operation = flo\n\nflops = flo/s\n";
+  return "planck_constant = h\nh = hour \n\nAh = A h\n\nE = energy\n\n°C = tempC\n°F = tempF\n\nfibonacci = x => x >= 2 && fibonacci(x-1) + fibonacci(x-2) || x\n\ndelete(in) # to avoid confusion\n\n#\n# computing power\n#\n\nflo! # one floating point operation\n\nfloating_point_operation = flo\n\nflops = flo/s\n";
 });
 
 })();
@@ -13846,6 +13846,8 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       if (token.type === TokenType.Operator) {
         if (token.str === '*')
           token.str = '·';
+        if (token.str === 'in')
+          token.str = 'to';
         if (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
           if (token.str === '-')
             token.str = token.str.replace('-', '#');
@@ -13938,11 +13940,23 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       '-': 'minus',
       'to': 'convertTo'
     };
+    const yes = new UnitNumber(1);
+    const no = new UnitNumber(0);
+    const staticAliases = {
+      '>': (a, b) => (a.dimensions.assertEqual(b.dimensions), a.value.greaterThan(b.value) ? yes : no),
+      '<': (a, b) => (a.dimensions.assertEqual(b.dimensions), a.value.lessThan(b.value) ? yes : no),
+      '>=': (a, b) => (a.dimensions.assertEqual(b.dimensions), a.value.greaterThanOrEqualTo(b.value) ? yes : no),
+      '<=': (a, b) => (a.dimensions.assertEqual(b.dimensions), a.value.lessThanOrEqualTo(b.value) ? yes : no),
+      '==': (a, b) => (a.value.equals(b.value) && a.dimensions.equals(b.dimensions) ? yes : no),
+      '!=': (a, b) => (a.dimensions.assertEqual(b.dimensions), a.value.equals(b.value) ? no : yes)
+    };
     if (name === '#')
       return (l) => l.mul(new UnitNumber(-1));
     else if (name in memberAliases) {
       return (l, r) => l[memberAliases[name]](r);
-    } else if (throwOnError)
+    } else if (name in staticAliases)
+      return staticAliases[name];
+    else if (throwOnError)
       throw Error("unknown function: " + name);
     else
       return null;
@@ -14007,7 +14021,7 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
     } else
       return res;
   }
-  function getUnit(name, scope, {withPrefix = true,
+  function getUnit(name, scope = [unitMap], {withPrefix = true,
     withPluralSuffix = true,
     throwOnError = true} = {}) {
     if (name.endsWith("_"))
@@ -14088,6 +14102,8 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
           const leftVal = evaluate(name, scope);
           if (leftVal.value.id)
             leftVal.value.assign(evaluate(val, scope).value);
+          else
+            throw Error("invalid left hand side of assignment");
           evNode.value = leftVal.value;
         }
       } else if (op === '=>') {
@@ -14103,6 +14119,13 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
           }, undefined, undefined);
         } else
           throw Error('invalid lambda definition');
+      } else if (op === '||' || op === '&&') {
+        const [a, b] = node.operands;
+        const aEv = evaluate(a, scope).value;
+        if (op === '||')
+          evNode.value = aEv.value.isZero() ? evaluate(b, scope).value : aEv;
+        else if (op === '&&')
+          evNode.value = !aEv.value.isZero() ? evaluate(b, scope).value : aEv;
       } else
         evNode.value = getFunction({name: op})(...node.operands.map((x) => evaluate(x, scope)).map((x) => x.value));
     } else
@@ -14110,6 +14133,8 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
     return evNode;
   }
   function define(unit) {
+    if (unit instanceof Tree.IdentifierNode)
+      unit = getUnit(unit.value.id);
     const t = TaggedString.t;
     const canonical = getCanonical(unit.value);
     const aliases = getAliases(unit.value);
@@ -14248,6 +14273,20 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         assertEmpty(str = "") {
           if (this.size > 0)
             throw Error(str + " must be dimensionless");
+        }
+        equals(d) {
+          const diff = DimensionMap.join({
+            dimensions: this,
+            factor: 1
+          }, {
+            dimensions: d,
+            factor: -1
+          });
+          return diff.size === 0;
+        }
+        assertEqual(d) {
+          if (!this.equals(d))
+            throw Error("dimensions must be the same");
         }
         toMismatchString() {
           const {pos: tooMuch,
@@ -14432,7 +14471,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         TokenType[TokenType["Whitespace"] = 5] = "Whitespace";
         TokenType[TokenType["Unknown"] = 6] = "Unknown";
       })(TokenType || (TokenType = {}));
-      TokenTypeRegex = [[/^\s+/, TokenType.Whitespace], [/^\(/, TokenType.LParen], [/^\)/, TokenType.RParen], [/^(=>|[ =≈+*/^|·!-]|to )/, TokenType.Operator], [/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number], [/^[^() =≈+*/^|·!>-]+/i, TokenType.Identifier], [/^./, TokenType.Unknown]];
+      TokenTypeRegex = [[/^\s+/, TokenType.Whitespace], [/^\(/, TokenType.LParen], [/^\)/, TokenType.RParen], [/^(=>|<=|>=|\|\||&&|==|!=|[ =≈+*/^|·!<>-]|to )/, TokenType.Operator], [/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number], [/^[^() =<>≈+*/^&|·!>-]+/i, TokenType.Identifier], [/^./, TokenType.Unknown]];
       ;
       (function(Associativity) {
         Associativity[Associativity["left"] = 0] = "left";
@@ -14452,13 +14491,13 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           arity: 1,
           displayString: '-'
         },
-        '+': {
-          precedence: 4,
-          associativity: Associativity.both,
+        '^': {
+          precedence: 1,
+          associativity: Associativity.right,
           arity: 2
         },
-        '-': {
-          precedence: 4,
+        '|': {
+          precedence: 1.5,
           associativity: Associativity.left,
           arity: 2
         },
@@ -14477,14 +14516,54 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           associativity: Associativity.left,
           arity: 2
         },
-        '|': {
-          precedence: 1.5,
+        '+': {
+          precedence: 4,
+          associativity: Associativity.both,
+          arity: 2
+        },
+        '-': {
+          precedence: 4,
           associativity: Associativity.left,
           arity: 2
         },
-        '^': {
-          precedence: 1,
-          associativity: Associativity.right,
+        '<': {
+          precedence: 5,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '<=': {
+          precedence: 5,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '>': {
+          precedence: 5,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '>=': {
+          precedence: 5,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '==': {
+          precedence: 6,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '!=': {
+          precedence: 6,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '&&': {
+          precedence: 7.3,
+          associativity: Associativity.left,
+          arity: 2
+        },
+        '||': {
+          precedence: 7.4,
+          associativity: Associativity.left,
           arity: 2
         },
         '=>': {
@@ -14666,19 +14745,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         return new UnitNumber(num.value.ln());
       }], ["delete", (num) => {
         return unitMap.delete(num.id) ? new UnitNumber(1) : new UnitNumber(0);
-      }], ["log2", (num) => {
-        num.dimensions.assertEmpty();
-        return new UnitNumber(num.value.logarithm(2));
-      }], ["exp", (num) => {
-        num.dimensions.assertEmpty();
-        return new UnitNumber(num.value.exp());
-      }], ["tan", (num) => {
-        num.dimensions.assertEmpty();
-        return new UnitNumber(Math.tan(num.value.toNumber()));
-      }], ["log", (num) => {
-        num.dimensions.assertEmpty();
-        return new UnitNumber(num.value.logarithm(10));
-      }]);
+      }], ["log2", (num) => (num.dimensions.assertEmpty(), new UnitNumber(num.value.logarithm(2)))], ["exp", (num) => (num.dimensions.assertEmpty(), new UnitNumber(num.value.exp()))], ["tan", (num) => (num.dimensions.assertEmpty(), new UnitNumber(Math.tan(num.value.toNumber())))], ["log", (num) => (num.dimensions.assertEmpty(), new UnitNumber(num.value.logarithm(10)))]);
       loadUnits("units_data.txt", gnuUnitsData);
       loadUnits("custom_data.txt", customData);
       UnitNumberDisplay = class UnitNumberDisplay extends React.Component {
@@ -14787,7 +14854,7 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
             onChange: this.onChange.bind(this),
             onKeyPress: this.keyPress.bind(this),
             value: this.state.currentInput,
-            className: "form-input"
+            style: {width: "90%"}
           })), this.state.currentOutput.vals.length > 0 ? React.createElement(UnitNumberDisplay, {
             text: this.state.currentOutput,
             onClickUnit: (unit) => this.showUnit(unit)
