@@ -13944,7 +13944,7 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
   }
   function setUnit(name, val) {
     if (unitMap.has(name))
-      throw Error("duplicate: " + name);
+      throw Error(`Unit ${name} already exists.\nUse delete(${name}) to remove it.`);
     unitMap.set(name, val);
   }
   function setUnitOrPrefix(name, node, unit) {
@@ -13995,24 +13995,27 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
   function getPrefix(name) {
     let res = prefixMap.get(name);
     if (!res)
-      return undefined;
+      throw Error("unknown prefix: " + name);
     if (!isEvaluated(res)) {
       prefixMap.delete(name);
       return evaluate(res);
     } else
       return res;
   }
-  function getUnit(name, {withPrefix = true} = {}) {
-    if (name.endsWith("_")) {
+  function getUnit(name, {withPrefix = true,
+    throwOnError = true} = {}) {
+    if (name.endsWith("_"))
       return getPrefix(name.substr(0, name.length - 1));
-    }
     if (!unitMap.has(name)) {
       if (withPrefix)
         for (const prefix of prefixMap.keys()) {
           if (name.startsWith(prefix)) {
             let unit = getPrefix(prefix);
             if (prefix.length < name.length) {
-              const suffix = getUnit(name.substr(prefix.length), {withPrefix: false});
+              const suffix = getUnit(name.substr(prefix.length), {
+                withPrefix: false,
+                throwOnError: false
+              });
               if (suffix === null)
                 continue;
               const unitValue = evaluate(new Tree.InfixFunctionCallNode("·", [unit, suffix]));
@@ -14023,12 +14026,16 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
           }
         }
       if (name[name.length - 1] === 's')
-        return getUnit(name.substr(0, name.length - 1), {withPrefix});
-      return null;
+        return getUnit(name.substr(0, name.length - 1), {
+          withPrefix,
+          throwOnError
+        });
+      if (throwOnError)
+        throw Error("unknown unit: " + name);
+      else
+        return null;
     }
     let res = unitMap.get(name);
-    if (!res)
-      return undefined;
     if (!isEvaluated(res)) {
       unitMap.delete(name);
       return evaluate(res);
@@ -14428,7 +14435,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
             const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
             let result;
             if (this.operands.length === 1)
-              result = TaggedString.t `${this.fnname}${this.operands[0].toTaggedString(op.precedence + rightAdd)}`;
+              result = TaggedString.t `${leftAdd ? this.fnname : ""}${this.operands[0].toTaggedString(op.precedence + leftAdd + rightAdd)}${rightAdd ? this.fnname : ""}`;
             else if (this.operands.length === 2)
               result = TaggedString.t `${this.operands[0].toTaggedString(op.precedence + leftAdd)} `.append(this.fnname === "" ? "" : this.fnname + " ").append(this.operands[1].toTaggedString(op.precedence + rightAdd));
             else
