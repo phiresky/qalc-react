@@ -58,7 +58,7 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 			&& [TokenType.Identifier, TokenType.Number, TokenType.RParen].indexOf(lastToken.type) >= 0) yield { type: TokenType.Operator, str: "", start: token.start };
 
 		if (token.type === TokenType.Operator) {
-			if (token.str === '·') token.str = '*';
+			if (token.str === '*') token.str = '·';
 			if (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
 				// is an unary operator
 				if (token.str === '-') token.str = token.str.replace('-', '#');
@@ -86,7 +86,7 @@ const operators: { [n: string]: OperatorInfo } = {
 	'+': { precedence: 4, associativity: Associativity.both, arity: 2 },
 	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
 	'': { precedence: 1.8, associativity: Associativity.left, arity: 2 },
-	'*': { precedence: 2, associativity: Associativity.both, arity: 2 },
+	'·': { precedence: 2, associativity: Associativity.both, arity: 2 },
 	'/': { precedence: 2, associativity: Associativity.left, arity: 2 },
 	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
 	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },

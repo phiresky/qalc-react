@@ -88,13 +88,16 @@ export class UnitNumber {
 	withIdentifier(id: string) {
 		return new UnitNumber(this.value, this.dimensions, id);
 	}
-	toString(depth = 0): string {
-		if (this.id) return this.id;
+	toString(): string {
+		if(this.id) return this.id;
+		else return this.toTaggedString().toString();
+	}
+	toTaggedString() {
+		if (this.id) return new TaggedString(this);
 		else {
+			if (this.value.equals(1) && this.dimensions.size == 0) return new TaggedString("1");
 			const v = this.value.equals(1) ? "" : this.value.toString();
-			const d = this.dimensions.toString();
-			if (!v && !d) return "1";
-			return `${v}${v && d ? " " : ""}${d}`;
+			return TaggedString.t`${v}${v && this.dimensions.size > 0 ? " " : ""}${this.dimensions.toTaggedString()}`;
 		}
 	}
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
