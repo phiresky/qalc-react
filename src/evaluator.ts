@@ -11,6 +11,7 @@ export function isEvaluated(node: Tree.Node): node is EvaluatedNode {
 declare var fetch: any;
 const loadUnits = (filename: string, data: string) => {
 	const lines = data.split("\n");
+	const postEvaluate = [] as {reevaluateUnit?: string, evaluateNode?: Tree.Node}[];
 	for (let i = 0; i < lines.length; i++) {
 		try {
 			const line = stripCommentsTrim(lines[i]);
@@ -20,20 +21,28 @@ const loadUnits = (filename: string, data: string) => {
 			if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=') {
 				const nameNode = tree.operands[0];
 				const name = nameNode instanceof Tree.IdentifierNode && nameNode.identifier;
+				if(!name) {
+					postEvaluate.push({evaluateNode:tree});
+					continue;
+				}
 				if (name.endsWith("_")) {
 					const prefixName = name.substr(0, name.length - 1);
 					prefixMap.set(prefixName, tree);
 				} else {
-					setUnit(name, tree);
+					unitMap.set(name, tree);
 				}
-			} else evaluate(tree, [unitMap]);
+				postEvaluate.push({reevaluateUnit: name});
+			} else postEvaluate.push({evaluateNode:tree});
 		} catch (e) {
 			console.error(filename+":"+(i+1), lines[i], e);
 		}
 	}
 	// force evaluate all units
-	for (const name of unitMap.keys()) {
-		try { getUnit(name, [unitMap]); } catch (e) { console.error("force-evaluate unit", name, e); }
+	for(const {reevaluateUnit, evaluateNode} of postEvaluate) {
+		try {
+			if(reevaluateUnit) getUnit(reevaluateUnit, [unitMap])
+			if(evaluateNode) evaluate(evaluateNode, [unitMap]);
+		} catch (e) { console.error("force-evaluate unit", reevaluateUnit || evaluateNode, e); }
 	}
 };
 export const unitMap = new Map<string, Tree.Node>();
@@ -173,7 +182,11 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 			const [name, val] = node.operands;
 			if (name instanceof Tree.IdentifierNode)
 				setUnitOrPrefix(name.identifier, evNode, evaluate(val, scope));
-			else throw Error('invalid left hand side of =');
+			else {
+				const leftVal = evaluate(name, scope);
+				if(leftVal.value.id) leftVal.value.assign(evaluate(val, scope).value);
+				evNode.value = leftVal.value;
+			}
 		} else if (op === '=>') {
 			const [argNameNode, val] = node.operands;
 			if(argNameNode instanceof Tree.IdentifierNode) {
@@ -181,7 +194,7 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 				evNode.value = new SpecialUnitNumber(arg => {
 					const argval = new Tree.IdentifierNode(argName) as EvaluatedNode; argval.value = arg;
 					const newScope = new Map<string, Tree.Node>(); newScope.set(argName, argval);
-					return evaluate(val, [newScope, ...scope]).value;
+					return evaluate(val.clone(), [newScope, ...scope]).value;
 				}, undefined, undefined);
 			}
 			else throw Error('invalid lambda definition');	
@@ -190,8 +203,7 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 	return evNode;
 }
 
-export function define(name: string): TaggedString {
-	const unit = getUnit(name, [unitMap]);
+export function define(unit: EvaluatedNode): TaggedString {
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit.value);
 	const aliases = getAliases(unit.value);
@@ -212,7 +224,7 @@ function unitConvertedTaggedString(node: Tree.Node) {
 }
 export async function qalculate(input: string): Promise<TaggedString> {
 	const ret = parseEvaluate(input);
-	if (ret.value.id) return define(ret.value.id);
+	if (ret.value.id) return define(ret);
 	return TaggedString.t`${ret.toTaggedString()} = ${unitConvertedTaggedString(ret)}`;
 }
 

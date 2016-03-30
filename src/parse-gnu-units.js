@@ -52,6 +52,18 @@ function parseLine(line) {
 	if (variable.endsWith("-")) variable = variable.replace(/-$/, "_");
 	if (variable === 'to') return;
 	value = value.replace(/\bper\b/g, "/").replace(/([^0-9])([a-z]+)([2-9])\b([^(]|$)/g, "$1$2^$3$4");
+	const fnCall = variable.match(/(.*)\((.*)\)/);
+	if(fnCall) {
+		//console.warn("\t"+variable+ " = " +value);
+		const [_, fnName, argName] = fnCall;
+		if(argName === "") console.log(fnName + " = " + value);
+		else {
+			const [fn, inverseFn] = value.replace(/^((units=|range=|domain=)\S+\s+)+/, "").split(";");
+			console.log(`${fnName} = ${argName} => ${fn}`);
+			if(inverseFn) console.log(`${fnName}^-1 = ${fnName} => ${inverseFn.trim()}`);
+		}
+		return;
+	}
 	console.log(variable + " = " + value);
 }
 

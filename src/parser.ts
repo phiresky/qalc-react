@@ -155,6 +155,7 @@ export module Tree {
 		toTaggedString(parentPrecedence = Infinity) {
 			return new TaggedString(this.number);
 		}
+		clone() { return new NumberNode(this.number); }
 	}
 	export class IdentifierNode {
 		constructor(public identifier: string) { }
@@ -162,12 +163,14 @@ export module Tree {
 			if(isEvaluated(this)) return new TaggedString((this as any).value); // todo: remove cast
 			return new TaggedString(this.identifier);
 		}
+		clone() { return new IdentifierNode(this.identifier); }
 	}
 	export class FunctionCallNode {
 		constructor(public fnname: string, public operands: Node[]) { }
 		toTaggedString(parentPrecedence = Infinity):TaggedString {
 			return TaggedString.t`${this.fnname}(${TaggedString.join(this.operands.map(x => x.toTaggedString(parentPrecedence)), ", ")})`;
 		}
+		clone(): FunctionCallNode { return new FunctionCallNode(this.fnname, this.operands.map(x => x.clone())); }
 	}
 	export class InfixFunctionCallNode extends FunctionCallNode {
 		toTaggedString(parentPrecedence = Infinity): TaggedString {

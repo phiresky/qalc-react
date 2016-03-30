@@ -49,6 +49,7 @@ const presetLines = `
 7Mbit/s * 2h to Gbyte
 32bit/(0.2bit/s) to s
 88 mph to km/h|88 * mph = 0.03933952(km / s)
+100°F to °C
 sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * million * tonne * 500000 * megajoule) / kilogram)) / (100000 * pound)) / speed_of_light = approx. 1.2131711
 
 `;
@@ -86,7 +87,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	showUnit(unit: UnitNumber) {
 		console.log("showing", unit);
-		this.addLine(new GuiLineElement(unit.toString(), QalcLib.define(unit.id)));
+		this.addLine(new GuiLineElement(unit.toString(), QalcLib.define(QalcLib.getUnit(unit.id, [QalcLib.unitMap]))));
 	}
 	render() {
 		return <div>

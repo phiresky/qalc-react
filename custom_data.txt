@@ -1,10 +1,12 @@
 planck_constant = h
-delete(h)
 h = hour 
 
 Ah = A h
 
 E = energy
+
+°C = tempC
+°F = tempF
 
 #
 # computing power

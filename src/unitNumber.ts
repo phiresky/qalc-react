@@ -1,7 +1,7 @@
 import Decimal from 'decimal.js';
 import {Tree} from './parser';
 import {TaggedString} from './output';
-export type EvaluatedNode = Tree.Node & {value: UnitNumber};
+export type EvaluatedNode = Tree.Node & { value: UnitNumber };
 
 
 // maps from dimension id to exponent
@@ -59,19 +59,19 @@ export class UnitNumber {
 	readonly dimensions: DimensionMap;
 	readonly id: string;
 	constructor(value: decimal.Decimal | number | string, dimensions: DimensionMap = new DimensionMap(), id: string = undefined) {
-		if(value !== null) this.value = Decimal(value);
-		if(dimensions !== null) this.dimensions = dimensions;
+		if (value !== null) this.value = Decimal(value);
+		if (dimensions !== null) this.dimensions = dimensions;
 		this.id = id;
 	}
 	mul(other: UnitNumber): UnitNumber {
-		if(other.isSpecial()) return other.mul(this, true); 
+		if (other.isSpecial()) return other.mul(this, true);
 		return new UnitNumber(this.value.times(other.value), DimensionMap.join(
 			{ dimensions: this.dimensions, factor: 1 },
 			{ dimensions: other.dimensions, factor: 1 }
 		));
 	}
 	div(other: UnitNumber): UnitNumber {
-		if(other.isSpecial()) return other.div(this, true); 
+		if (other.isSpecial()) return other.div(this, true);
 		let name: string = undefined;
 		if (this.dimensions.size == 0 && other.dimensions.size == 0) name = this.value.toString() + "|" + other.value.toString();
 		return new UnitNumber(this.value.div(other.value), DimensionMap.join(
@@ -80,7 +80,7 @@ export class UnitNumber {
 		), name);
 	}
 	plus(other: UnitNumber, factor = 1): UnitNumber {
-		if(other.isSpecial()) return other.plus(this, factor, true);
+		if (other.isSpecial()) return other.plus(this, factor, true);
 		const dimensionDifference = this.div(other).dimensions;
 		if (dimensionDifference.size > 0) throw Error("Dimensions don't match: " + dimensionDifference.toMismatchString());
 		return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions);
@@ -94,8 +94,11 @@ export class UnitNumber {
 	isSpecial(): this is SpecialUnitNumber {
 		return false;
 	}
+	assign(unit: UnitNumber) {
+		throw Error("Can't assign value to " + this);
+	}
 	toString(): string {
-		if(this.id) return this.id;
+		if (this.id) return this.id;
 		else return this.toTaggedString().toString();
 	}
 	toTaggedString() {
@@ -109,7 +112,7 @@ export class UnitNumber {
 	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
 			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor: typeof factor === 'number' ? factor : factor.toNumber() }));
-		else if(factor.isSpecial()) return factor.pow(this, true);
+		else if (factor.isSpecial()) return factor.pow(this, true);
 		else if (factor.dimensions.size > 0) throw Error("power must be dimensionless");
 		else return this.pow(factor.value);
 	}
@@ -124,38 +127,43 @@ export class UnitNumber {
 }
 
 export class SpecialUnitNumber extends UnitNumber {
-	get value(): decimal.Decimal { throw Error("can't get function.value")}
-	get dimensions(): DimensionMap { throw Error("can't get function.dimensions")}
-	readonly fn: (arg:UnitNumber) => UnitNumber;
-	readonly fnInverse: (arg: UnitNumber) => UnitNumber;
-	constructor(fn: (arg: UnitNumber) => UnitNumber, fnInverse: (arg: UnitNumber) => UnitNumber, id: string) {
+	get value(): decimal.Decimal { throw Error("can't get function.value") }
+	get dimensions(): DimensionMap { throw Error("can't get function.dimensions") }
+	fn: (arg: UnitNumber) => UnitNumber;
+	readonly inverse: SpecialUnitNumber;
+	constructor(fn: (arg: UnitNumber) => UnitNumber, inverse: SpecialUnitNumber, id: string, inverseFn: (arg: UnitNumber) => UnitNumber = null) {
 		super(null, null, id);
 		this.fn = fn;
-		this.fnInverse = fnInverse;
+		this.inverse = inverse || new SpecialUnitNumber(inverseFn, this, id + "^-1");
 	}
-	withIdentifier(id: string) {
-		return new SpecialUnitNumber(this.fn, this.fnInverse, id);
+	withIdentifier(id: string, alsoInverseId = true): SpecialUnitNumber {
+		return new SpecialUnitNumber(this.fn, null, id, this.inverse.fn);
 	}
 	mul(other: UnitNumber, reversed = false): UnitNumber {
-		return this.fn(other);
+		if (this.fn) return this.fn(other);
+		throw Error(`function not defined: ${this}`);
 	}
 	div(other: UnitNumber, reversed = false): UnitNumber {
-		if(reversed) {
-			if(this.fnInverse) return this.fnInverse(other);
-			else throw Error(`inverse function not defined for ${this}. Use ~${this} = x => ... to define it.`)
-		} else throw Error(`can't divide function ${this} with ${other}`)
+		if (reversed) return this.inverse.mul(other);
+		else throw Error(`can't divide function ${this} with ${other}`)
 	}
 	plus(other: UnitNumber, factor = 1, reversed = false): UnitNumber {
 		throw Error(`can't add ${this} and ${other}`);
 	}
 	pow(other: UnitNumber, reversed = false): UnitNumber {
+		other.dimensions.assertEmpty();
+		if (other.value.equals(-1)) return this.inverse;
 		throw Error(`can't pow ${this} with ${other}`);
+	}
+	assign(other: UnitNumber) {
+		if (other.isSpecial()) this.fn = other.fn;
+		else throw Error("can't assign non-function to function");
 	}
 	isSpecial(): this is SpecialUnitNumber {
 		return true;
 	}
 	toString(): string {
-		if(this.id) return this.id;
+		if (this.id) return this.id;
 		else return this.toTaggedString().toString();
 	}
 	toTaggedString(): TaggedString {
