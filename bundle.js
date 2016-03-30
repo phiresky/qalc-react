@@ -14852,6 +14852,9 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
         render() {
           return React.createElement("div", null, React.createElement("div", {className: "gui-line"}, React.createElement("p", null, "> ", React.createElement("input", {
             onChange: this.onChange.bind(this),
+            autoCorrect: "off",
+            autoComplete: "off",
+            autoCapitalize: "none",
             onKeyPress: this.keyPress.bind(this),
             value: this.state.currentInput,
             style: {width: "90%"}
@@ -14867,7 +14870,7 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
         }
         componentDidUpdate() {}
       };
-      ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(GUI, null)), document.getElementById("root"));
+      ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(GUI, null), React.createElement("footer", null, React.createElement("small", null, React.createElement("a", {href: "https://github.com/phiresky/qalc-react"}, "Source code on GitHub")))), document.getElementById("root"));
       $__export("GUILine", GUILine), $__export("GUI", GUI);
     }
   };
