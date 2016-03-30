@@ -40,7 +40,7 @@ const loadUnits = (filename: string, data: string) => {
 	// force evaluate all units
 	for(const {reevaluateUnit, evaluateNode} of postEvaluate) {
 		try {
-			if(reevaluateUnit) getUnit(reevaluateUnit, [unitMap])
+			if(reevaluateUnit) getUnit(reevaluateUnit, [unitMap]);
 			if(evaluateNode) evaluate(evaluateNode, [unitMap]);
 		} catch (e) { console.error("force-evaluate unit", reevaluateUnit || evaluateNode, e); }
 	}
@@ -49,12 +49,12 @@ export const unitMap = new Map<string, Tree.Node>();
 type Scope = Map<string, Tree.Node>[];
 export const prefixMap = new Map<string, Tree.Node>();
 export const canonicalMap = new Map<UnitNumber, UnitNumber>();
-export const aliasMap = new Map<UnitNumber, Set<UnitNumber>>();
+export const aliasMap = new Map<UnitNumber, Set<EvaluatedNode>>();
 function addFunctions(...fns: [string, ((...arg: UnitNumber[]) => UnitNumber)][]) {
 	for(const [name, fn] of fns) {
-		const node = new Tree.InfixFunctionCallNode("=", [new Tree.IdentifierNode(name), new Tree.IdentifierNode("[builtin]")]) as EvaluatedNode;
-		node.value = new SpecialUnitNumber(fn, undefined, name);
-		unitMap.set(name, node);	
+		const builtin = new Tree.IdentifierNode("[builtin]") as EvaluatedNode;
+		builtin.value = new SpecialUnitNumber(new Tree.NumberNode("[built in]"), fn, null, null);
+		evaluate(new Tree.InfixFunctionCallNode("=", [new Tree.IdentifierNode(name), builtin]), [unitMap]);
 	}
 }
 addFunctions(
@@ -81,7 +81,7 @@ function setUnit(name: string, val: Tree.Node) {
 function deleteUnit(name: string, scope: Scope) {
 	const unit = getUnit(name, scope);
 	const aliases = aliasMap.get(getCanonical(unit.value));
-	if (aliases) aliases.delete(unit.value);
+	if (aliases) aliases.delete(unit);
 	return unitMap.delete(name);
 }
 function setUnitOrPrefix(name: string, node: EvaluatedNode, unit: EvaluatedNode) {
@@ -92,19 +92,19 @@ function setUnitOrPrefix(name: string, node: EvaluatedNode, unit: EvaluatedNode)
 	} else {
 		setUnit(name, node);
 	}
-	unifyAliases(node.value, unit.value);
+	unifyAliases(node, unit);
 }
-function unifyAliases(unit1: UnitNumber, unit2: UnitNumber) {
-	const can1 = getCanonical(unit1), can2 = getCanonical(unit2);
+function unifyAliases(unit1: EvaluatedNode, unit2: EvaluatedNode) {
+	const can1 = getCanonical(unit1.value), can2 = getCanonical(unit2.value);
 	if (!can1 && !can2) {
-		const canonical = unit2.isSpecial() || unit2.dimensions.size > 0 ? unit2 : unit1;
-		canonicalMap.set(unit1, canonical);
-		canonicalMap.set(unit2, canonical);
+		const canonical = unit2.value.isSpecial() || unit2.value.dimensions.size > 0 ? unit2.value : unit1.value;
+		canonicalMap.set(unit1.value, canonical);
+		canonicalMap.set(unit2.value, canonical);
 		aliasMap.set(canonical, new Set([unit1, unit2]));
 		return;
 	}
-	if (!can2) { canonicalMap.set(unit2, can1); aliasMap.get(can1).add(unit2); return }
-	if (!can1) { canonicalMap.set(unit1, can2); aliasMap.get(can2).add(unit1); return }
+	if (!can2) { canonicalMap.set(unit2.value, can1); aliasMap.get(can1).add(unit2); return }
+	if (!can1) { canonicalMap.set(unit1.value, can2); aliasMap.get(can2).add(unit1); return }
 	throw Error("unity error, can. form ex. for both " + unit1 + " and " + unit2 + ":" + can1 + " and " + can2);
 }
 export function getCanonical(u: UnitNumber) {
@@ -116,7 +116,7 @@ export function getCanonical(u: UnitNumber) {
 	}
 }
 export function getAliases(u: UnitNumber) {
-	return [...(aliasMap.get(getCanonical(u)) || [])].filter(x => !!x.id);
+	return [...(aliasMap.get(getCanonical(u)) || [])].filter(x => !!x.value.id);
 }
 export function getPrefix(name: string): EvaluatedNode {
 	let res = prefixMap.get(name);
@@ -191,7 +191,7 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 			const [argNameNode, val] = node.operands;
 			if(argNameNode instanceof Tree.IdentifierNode) {
 				const argName = argNameNode.identifier;
-				evNode.value = new SpecialUnitNumber(arg => {
+				evNode.value = new SpecialUnitNumber(val, arg => {
 					const argval = new Tree.IdentifierNode(argName) as EvaluatedNode; argval.value = arg;
 					const newScope = new Map<string, Tree.Node>(); newScope.set(argName, argval);
 					return evaluate(val.clone(), [newScope, ...scope]).value;
@@ -207,11 +207,14 @@ export function define(unit: EvaluatedNode): TaggedString {
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit.value);
 	const aliases = getAliases(unit.value);
+	unit = [...aliases, unit].find(alternative => alternative.value.id === unit.value.id);
+	const inverse = unit.value instanceof SpecialUnitNumber && unit.value.inverse.fnTree;
 	return (t
 		`Definition: ${unit.toTaggedString()}.
-${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical}` : ""}
+${inverse ? t`Inverse:    ${inverse.toTaggedString()}`:""}
+${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical.toTaggedString()}` : ""}
 
-${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases, ", ")}` : ""}`
+${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases.map(a => a.value), ", ")}` : ""}`
 	);
 }
 function unitConvertedTaggedString(node: Tree.Node) {

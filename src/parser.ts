@@ -76,10 +76,10 @@ enum Associativity {
 	/** a + b + c = (a + b) + c = a + (b + c) */
 	both
 }
-interface OperatorInfo { precedence: number, associativity: Associativity, arity: number };
+interface OperatorInfo { precedence: number, associativity: Associativity, arity: number, displayString?: string };
 const operators: { [n: string]: OperatorInfo } = {
-	'!': {precedence: 0.5, associativity: Associativity.left, arity: 1},
-	'#': { precedence: 0.5, associativity: Associativity.right, arity: 1 }, // unary minus
+	'!': { precedence: 0.5, associativity: Associativity.left, arity: 1 },
+	'#': { precedence: 0.5, associativity: Associativity.right, arity: 1, displayString: '-' }, // unary minus
 	'+': { precedence: 4, associativity: Associativity.both, arity: 2 },
 	'-': { precedence: 4, associativity: Associativity.left, arity: 2 },
 	'': { precedence: 1.8, associativity: Associativity.left, arity: 2 },
@@ -87,7 +87,7 @@ const operators: { [n: string]: OperatorInfo } = {
 	'/': { precedence: 2, associativity: Associativity.left, arity: 2 },
 	'|': { precedence: 1.5, associativity: Associativity.left, arity: 2 },
 	'^': { precedence: 1, associativity: Associativity.right, arity: 2 },
-	'=>': { precedence: 8, associativity: Associativity.right, arity: 2 }, 
+	'=>': { precedence: 8, associativity: Associativity.right, arity: 2 },
 	'=': { precedence: 10, associativity: Associativity.right, arity: 2 },
 	'≈': { precedence: 10, associativity: Associativity.right, arity: 2 },
 	'to': { precedence: 12, associativity: Associativity.left, arity: 2 }
@@ -130,7 +130,7 @@ export function* toRPN(tokens: Iterable<Token>) {
 			case TokenType.RParen:
 				while (top(stack) && top(stack).type !== TokenType.LParen)
 					yield stack.pop();
-				if (stack.length === 0) throw Error(token.start+": missing opening paren");
+				if (stack.length === 0) throw Error(token.start + ": missing opening paren");
 				stack.pop();
 				break;
 			default: throw Error('what is ' + token);
@@ -138,7 +138,7 @@ export function* toRPN(tokens: Iterable<Token>) {
 	}
 	while (stack.length > 0) {
 		if (top(stack).type === TokenType.Operator) yield stack.pop();
-		else throw Error(top(stack).start+":missing closing parens");
+		else throw Error(top(stack).start + ":missing closing parens");
 	}
 }
 
@@ -149,7 +149,7 @@ export function parse(str: string) {
 export module Tree {
 
 	export type Node = NumberNode | IdentifierNode | FunctionCallNode;
-	
+
 	export class NumberNode {
 		constructor(public number: string) { }
 		toTaggedString(parentPrecedence = Infinity) {
@@ -160,14 +160,14 @@ export module Tree {
 	export class IdentifierNode {
 		constructor(public identifier: string) { }
 		toTaggedString(parentPrecedence = Infinity) {
-			if(isEvaluated(this)) return new TaggedString((this as any).value); // todo: remove cast
+			if (isEvaluated(this)) return (this as any).value.toTaggedString(); // todo: remove cast
 			return new TaggedString(this.identifier);
 		}
 		clone() { return new IdentifierNode(this.identifier); }
 	}
 	export class FunctionCallNode {
 		constructor(public fnname: string, public operands: Node[]) { }
-		toTaggedString(parentPrecedence = Infinity):TaggedString {
+		toTaggedString(parentPrecedence = Infinity): TaggedString {
 			return TaggedString.t`${this.fnname}(${TaggedString.join(this.operands.map(x => x.toTaggedString(parentPrecedence)), ", ")})`;
 		}
 		clone(): FunctionCallNode { return new FunctionCallNode(this.fnname, this.operands.map(x => x.clone())); }
@@ -175,13 +175,14 @@ export module Tree {
 	export class InfixFunctionCallNode extends FunctionCallNode {
 		toTaggedString(parentPrecedence = Infinity): TaggedString {
 			const op = operators[this.fnname];
+			const disp = op.displayString || this.fnname;
 			const leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
 			const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
-			let result : TaggedString;
-			if(this.operands.length === 1) result = TaggedString.t`${leftAdd?this.fnname:""}${this.operands[0].toTaggedString(op.precedence+leftAdd+rightAdd)}${rightAdd?this.fnname:""}`;
-			else if(this.operands.length === 2)
+			let result: TaggedString;
+			if (this.operands.length === 1) result = TaggedString.t`${leftAdd ? disp : ""}${this.operands[0].toTaggedString(op.precedence + leftAdd + rightAdd)}${rightAdd ? disp : ""}`;
+			else if (this.operands.length === 2)
 				result = TaggedString.t`${this.operands[0].toTaggedString(op.precedence + leftAdd)} `
-					.append(this.fnname===""?"":this.fnname+" ")
+					.append(disp === "" ? "" : disp + " ")
 					.append(this.operands[1].toTaggedString(op.precedence + rightAdd));
 			else throw Error("invalid operand count");
 

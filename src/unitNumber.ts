@@ -130,14 +130,16 @@ export class SpecialUnitNumber extends UnitNumber {
 	get value(): decimal.Decimal { throw Error("can't get function.value") }
 	get dimensions(): DimensionMap { throw Error("can't get function.dimensions") }
 	fn: (arg: UnitNumber) => UnitNumber;
+	fnTree: Tree.Node;
 	readonly inverse: SpecialUnitNumber;
-	constructor(fn: (arg: UnitNumber) => UnitNumber, inverse: SpecialUnitNumber, id: string, inverseFn: (arg: UnitNumber) => UnitNumber = null) {
+	constructor(fnTree: Tree.Node, fn: (arg: UnitNumber) => UnitNumber, inverse: SpecialUnitNumber, id: string, inverseFnTree: Tree.Node = null, inverseFn: (arg: UnitNumber) => UnitNumber = null) {
 		super(null, null, id);
+		this.fnTree = fnTree;
 		this.fn = fn;
-		this.inverse = inverse || new SpecialUnitNumber(inverseFn, this, id + "^-1");
+		this.inverse = inverse || new SpecialUnitNumber(inverseFnTree, inverseFn, this, id + "^-1");
 	}
 	withIdentifier(id: string, alsoInverseId = true): SpecialUnitNumber {
-		return new SpecialUnitNumber(this.fn, null, id, this.inverse.fn);
+		return new SpecialUnitNumber(this.fnTree, this.fn, null, id, this.inverse.fnTree, this.inverse.fn);
 	}
 	mul(other: UnitNumber, reversed = false): UnitNumber {
 		if (this.fn) return this.fn(other);
@@ -156,7 +158,7 @@ export class SpecialUnitNumber extends UnitNumber {
 		throw Error(`can't pow ${this} with ${other}`);
 	}
 	assign(other: UnitNumber) {
-		if (other.isSpecial()) this.fn = other.fn;
+		if (other.isSpecial()) {this.fn = other.fn; this.fnTree = other.fnTree; }
 		else throw Error("can't assign non-function to function");
 	}
 	isSpecial(): this is SpecialUnitNumber {
@@ -168,7 +170,7 @@ export class SpecialUnitNumber extends UnitNumber {
 	}
 	toTaggedString(): TaggedString {
 		if (this.id) return new TaggedString(this);
-		else return TaggedString.t`(anonymous function)`;
+		else return this.fnTree.toTaggedString();
 	}
 }
 
