@@ -13846,8 +13846,8 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
           start: token.start
         };
       if (token.type === TokenType.Operator) {
-        if (token.str === '·')
-          token.str = '*';
+        if (token.str === '*')
+          token.str = '·';
         if (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
           if (token.str === '-')
             token.str = token.str.replace('-', '#');
@@ -13921,9 +13921,12 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
   function parse(str) {
     return Tree.rpnToTree(toRPN(preprocess(tokenize(str))));
   }
+  function isEvaluated(node) {
+    return !!node.value;
+  }
   function getFunction(name) {
     const memberAliases = {
-      '*': 'mul',
+      '·': 'mul',
       '': 'mul',
       '/': 'div',
       '|': 'div',
@@ -13944,17 +13947,15 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       throw Error("duplicate: " + name);
     unitMap.set(name, val);
   }
-  function setUnitOrPrefix(name, unit) {
-    let oldUnit;
-    [unit, oldUnit] = [unit.withIdentifier(name), unit];
-    unifyAliases(unit, oldUnit);
+  function setUnitOrPrefix(name, node, unit) {
+    node.value = unit.value.withIdentifier(name);
+    unifyAliases(node.value, unit.value);
     if (name.endsWith("_")) {
       const prefixName = name.substr(0, name.length - 1);
-      prefixMap.set(prefixName, unit);
+      prefixMap.set(prefixName, node);
     } else {
-      setUnit(name, unit);
+      setUnit(name, node);
     }
-    return unit;
   }
   function unifyAliases(unit1, unit2) {
     const can1 = getCanonical(unit1),
@@ -13992,13 +13993,16 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
     return [...(aliasMap.get(getCanonical(u)) || [])].filter((x) => !!x.id);
   }
   function getPrefix(name) {
-    let pref = prefixMap.get(name);
-    if (typeof pref === "function")
-      pref = pref();
-    return pref;
+    let res = prefixMap.get(name);
+    if (!res)
+      return undefined;
+    if (!isEvaluated(res)) {
+      prefixMap.delete(name);
+      return evaluate(res);
+    } else
+      return res;
   }
-  function getUnit(name, {withPrefix = true,
-    canonical = false} = {}) {
+  function getUnit(name, {withPrefix = true} = {}) {
     if (name.endsWith("_")) {
       return getPrefix(name.substr(0, name.length - 1));
     }
@@ -14007,35 +14011,29 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
         for (const prefix of prefixMap.keys()) {
           if (name.startsWith(prefix)) {
             let unit = getPrefix(prefix);
-            if (canonical)
-              unit = getCanonical(unit);
             if (prefix.length < name.length) {
-              const suffix = getUnit(name.substr(prefix.length), {
-                withPrefix: false,
-                canonical
-              });
+              const suffix = getUnit(name.substr(prefix.length), {withPrefix: false});
               if (suffix === null)
                 continue;
-              unit = unit.mul(suffix).withIdentifier(name);
+              const unitValue = evaluate(new Tree.InfixFunctionCallNode("·", [unit, suffix]));
+              unit = new Tree.InfixFunctionCallNode("=", [new Tree.IdentifierNode(name), unitValue]);
+              unit.value = unitValue.value.withIdentifier(name);
             }
             return unit;
           }
         }
       if (name[name.length - 1] === 's')
-        return getUnit(name.substr(0, name.length - 1), {
-          canonical,
-          withPrefix
-        });
+        return getUnit(name.substr(0, name.length - 1), {withPrefix});
       return null;
     }
     let res = unitMap.get(name);
-    if (typeof res === "function") {
+    if (!res)
+      return undefined;
+    if (!isEvaluated(res)) {
       unitMap.delete(name);
-      res = res();
-    }
-    if (res && canonical)
-      res = getCanonical(res);
-    return res;
+      return evaluate(res);
+    } else
+      return res;
   }
   function stripCommentsTrim(str) {
     const commentStart = str.indexOf("#");
@@ -14043,56 +14041,64 @@ $__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
       str = str.substr(0, commentStart);
     return str.trim();
   }
-  function checkDefineBaseUnit(str) {
-    if (str[str.length - 1] === "!") {
-      const name = str.substr(0, str.length - 1);
-      const unit = UnitNumber.createBaseUnit(name);
-      setUnit(name, unit);
-      return unit;
-    }
-    return null;
-  }
   function parseEvaluate(str) {
-    str = stripCommentsTrim(str);
-    if (checkDefineBaseUnit(str))
-      return;
-    if (str.length === 0)
-      return new UnitNumber(NaN);
-    return evaluate(parse(str));
+    return evaluate(parse(stripCommentsTrim(str)));
   }
   function evaluate(node) {
+    if (isEvaluated(node))
+      return node;
+    const evNode = node;
     if (node instanceof Tree.NumberNode) {
-      return new UnitNumber(node.number);
+      evNode.value = new UnitNumber(node.number);
     } else if (node instanceof Tree.IdentifierNode) {
-      return getUnit(node.identifier);
+      evNode.value = getUnit(node.identifier).value;
+      if (!evNode.value)
+        throw Error("can't resolve " + node.identifier);
     } else if (node instanceof Tree.FunctionCallNode) {
       const op = node.fnname;
-      if (op === '=' || op === '≈') {
+      if (op === '!') {
+        const name = node.operands[0];
+        if (name instanceof Tree.IdentifierNode) {
+          evNode.value = UnitNumber.createBaseUnit(name.identifier);
+          setUnit(name.identifier, evNode);
+        } else
+          throw Error("invalid definition");
+      } else if (op === '=' || op === '≈') {
         const [name, val] = node.operands;
         if (name instanceof Tree.IdentifierNode)
-          return setUnitOrPrefix(name.identifier, evaluate(val));
+          setUnitOrPrefix(name.identifier, evNode, evaluate(val));
         else
           throw Error('invalid left hand side of =');
-      }
-      return getFunction(op)(...node.operands.map(evaluate));
+      } else
+        evNode.value = getFunction(op)(...node.operands.map(evaluate).map((x) => x.value));
     } else
       throw Error("what is " + node);
+    return evNode;
   }
-  function define(unit) {
+  function define(name) {
+    const unit = getUnit(name);
     const t = TaggedString.t;
-    const canonical = getCanonical(unit);
-    const aliases = getAliases(unit);
-    return (t `Definition: ${unit.toTaggedDefinition()}.
-${canonical ? canonical == unit ? "(Canonical form)" : t `Canonical Form: ${canonical}` : ""} 
+    const canonical = getCanonical(unit.value);
+    const aliases = getAliases(unit.value);
+    return (t `Definition: ${unit.toTaggedString()}.
+${canonical ? canonical == unit.value ? "(Canonical form)" : t `Canonical Form: ${canonical}` : ""} 
 
 ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(aliases, ", ")}` : ""}`);
+  }
+  function unitConvertedTaggedString(node) {
+    if (node instanceof Tree.FunctionCallNode && node.fnname === 'to') {
+      const unit = evaluate(node.operands[1]);
+      const numericValue = evaluate(node.operands[0]).value.div(unit.value);
+      return TaggedString.t `${numericValue.value.toString()} ${unit.toTaggedString()}`;
+    } else
+      return evaluate(node).value.toTaggedString();
   }
   function qalculate(input) {
     return __awaiter(this, void 0, void 0, function*() {
       const ret = parseEvaluate(input);
-      if (ret.id)
-        return define(ret);
-      return TaggedString.t `= ${ret.toTaggedDefinition()} = ${ret.toTaggedString()}`;
+      if (ret.value.id)
+        return define(ret.value.id);
+      return TaggedString.t `${ret.toTaggedString()} = ${unitConvertedTaggedString(ret)}`;
     });
   }
   function loadPresetLines() {
@@ -14139,10 +14145,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           for (let i = 0; i < placeholders.length; i++) {
             if (literals[i].length > 0)
               result.push(literals[i]);
-            if (placeholders[i] instanceof Array)
-              result.push(...placeholders[i]);
-            else
-              result.push(placeholders[i]);
+            result.push(placeholders[i]);
           }
           const last = literals[literals.length - 1];
           if (last.length > 0)
@@ -14220,11 +14223,10 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       };
       DimensionMap.unicodePow = '⁰¹²³⁴⁵⁶⁷⁸⁹';
       UnitNumber = class UnitNumber {
-        constructor(value, dimensions = new DimensionMap(), source = undefined, id = undefined) {
+        constructor(value, dimensions = new DimensionMap(), id = undefined) {
           this.value = Decimal(value);
           this.dimensions = dimensions;
           this.id = id;
-          this.source = source;
         }
         mul(other) {
           return new UnitNumber(this.value.times(other.value), DimensionMap.join({
@@ -14233,10 +14235,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           }, {
             dimensions: other.dimensions,
             factor: 1
-          }), {
-            fn: "·",
-            args: [this, other]
-          });
+          }));
         }
         div(other) {
           let name = undefined;
@@ -14248,92 +14247,42 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           }, {
             dimensions: other.dimensions,
             factor: -1
-          }), {
-            fn: "/",
-            args: [this, other]
-          }, name);
+          }), name);
         }
         plus(other, factor = 1) {
           const dimensionDifference = this.div(other).dimensions;
           if (dimensionDifference.size > 0)
             throw Error("Dimensions don't match: " + dimensionDifference.toMismatchString());
-          return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions, {
-            fn: factor == 1 ? "+" : "-",
-            args: [this, other]
-          });
+          return new UnitNumber(this.value.plus(other.value.times(factor)), this.dimensions);
         }
         minus(other) {
           return this.plus(other, -1);
         }
         withIdentifier(id) {
-          return new UnitNumber(this.value, this.dimensions, {
-            fn: "==",
-            args: [this]
-          }, id);
+          return new UnitNumber(this.value, this.dimensions, id);
         }
-        toString(depth = 0) {
+        toString() {
           if (this.id)
             return this.id;
-          else {
-            const v = this.value.equals(1) ? "" : this.value.toString();
-            const d = this.dimensions.toString();
-            if (!v && !d)
-              return "1";
-            return `${v}${v && d ? " " : ""}${d}`;
-          }
+          else
+            return this.toTaggedString().toString();
         }
         toTaggedString() {
           if (this.id)
             return new TaggedString(this);
           else {
+            if (this.value.equals(1) && this.dimensions.size == 0)
+              return new TaggedString("1");
             const v = this.value.equals(1) ? "" : this.value.toString();
-            const d = this.dimensions.toTaggedString();
-            if (!v && d.vals.length == 0)
-              return TaggedString.t `1`;
-            return TaggedString.t `${v}${v && d.vals.length > 0 ? " " : ""}${d}`;
+            return TaggedString.t `${v}${v && this.dimensions.size > 0 ? " " : ""}${this.dimensions.toTaggedString()}`;
           }
-        }
-        toTaggedDefinitionOld() {
-          if (!this.source) {
-            if (this.dimensions.size === 0)
-              return this.toTaggedString().append(" (dimensionless)");
-            return new TaggedString(this);
-          } else {
-            if (this.source.fn == '==')
-              return this.source.args[0].toTaggedDefinitionOld();
-            else
-              return TaggedString.t `${this.source.args[0].toTaggedString()} ${this.source.fn} ${this.source.args[1].toTaggedString()}`;
-          }
-        }
-        toTaggedTilNamed() {
-          if (this.id || !this.source)
-            return this.toTaggedString();
-          else {
-            if (this.source.fn == '==')
-              return this.source.args[0].toTaggedTilNamed();
-            else
-              return TaggedString.t `${this.source.args[0].toTaggedTilNamed()} ${this.source.fn} ${this.source.args[1].toTaggedTilNamed()}`;
-          }
-        }
-        toTaggedDefinition() {
-          if (!this.source)
-            return this.toTaggedString();
-          if (this.source.fn == '==')
-            return TaggedString.t `${this} = ${this.source.args[0].toTaggedDefinition()}`;
-          if (this.source.fn == 'to')
-            return TaggedString.t `${new UnitNumber(this.source.args[0].value).mul(this.source.args[1]).toTaggedDefinition()}`;
-          else
-            return TaggedString.t `${this.source.args[0].toTaggedTilNamed()} ${this.source.fn} ${this.source.args[1].toTaggedTilNamed()}`;
         }
         pow(factor) {
           if (typeof factor === 'number' || factor instanceof Decimal)
             return new UnitNumber(this.value.pow(factor), DimensionMap.join({
               dimensions: this.dimensions,
               factor: typeof factor === 'number' ? factor : factor.toNumber()
-            }), {
-              fn: "^",
-              args: [this, new UnitNumber(factor)]
-            });
+            }));
           else if (factor.dimensions.size > 0)
             throw Error("power must be dimensionless");
           else
@@ -14343,10 +14292,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           const d = this.div(unit);
           if (d.dimensions.size > 0)
             throw Error("Dimensions don't match: " + d.dimensions.toMismatchString());
-          const d2 = d.mul(unit);
-          d2.source.fn = "to";
-          d2.source.args = [d, unit];
-          return d2;
+          return d.mul(unit);
         }
         static createBaseUnit(dimensionName) {
           return new Dimension(dimensionName).baseUnit;
@@ -14357,7 +14303,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           this.id = Dimension.dimensions.size;
           this.name = name;
           Dimension.dimensions.set(this.id, this);
-          this.baseUnit = new UnitNumber(1, new DimensionMap([[this.id, 1]]), undefined, this.name);
+          this.baseUnit = new UnitNumber(1, new DimensionMap([[this.id, 1]]), this.name);
         }
         static get(id) {
           return Dimension.dimensions.get(id);
@@ -14374,7 +14320,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         TokenType[TokenType["Whitespace"] = 6] = "Whitespace";
         TokenType[TokenType["Unknown"] = 7] = "Unknown";
       })(TokenType || (TokenType = {}));
-      TokenTypeRegex = [[/^\s+/, TokenType.Whitespace], [/^\(/, TokenType.LParen], [/^\)/, TokenType.RParen], [/^([ =≈+*/^|·-]|to )/, TokenType.Operator], [/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number], [/^[^() =≈+*/^|·-]+/i, TokenType.Identifier], [/^./, TokenType.Unknown]];
+      TokenTypeRegex = [[/^\s+/, TokenType.Whitespace], [/^\(/, TokenType.LParen], [/^\)/, TokenType.RParen], [/^([ =≈+*/^|·!-]|to )/, TokenType.Operator], [/^[-+]?(([0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)|NaN|Infinity)/, TokenType.Number], [/^[^() =≈+*/^|·!-]+/i, TokenType.Identifier], [/^./, TokenType.Unknown]];
       ;
       (function(Associativity) {
         Associativity[Associativity["left"] = 0] = "left";
@@ -14383,6 +14329,11 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       })(Associativity || (Associativity = {}));
       ;
       operators = {
+        '!': {
+          precedence: 0.5,
+          associativity: Associativity.left,
+          arity: 1
+        },
         '#': {
           precedence: 0.5,
           associativity: Associativity.right,
@@ -14403,7 +14354,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           associativity: Associativity.left,
           arity: 2
         },
-        '*': {
+        '·': {
           precedence: 2,
           associativity: Associativity.both,
           arity: 2
@@ -14440,19 +14391,12 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         }
       };
       (function(Tree) {
-        class Node {
-          constructor() {}
-          toString(parentPrecedence = Infinity) {
-            throw Error("abstract");
-          }
-        }
-        Tree.Node = Node;
         class NumberNode {
           constructor(number) {
             this.number = number;
           }
-          toString(parentPrecedence = Infinity) {
-            return this.number;
+          toTaggedString(parentPrecedence = Infinity) {
+            return new TaggedString(this.number);
           }
         }
         Tree.NumberNode = NumberNode;
@@ -14460,36 +14404,37 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           constructor(identifier) {
             this.identifier = identifier;
           }
-          toString(parentPrecedence = Infinity) {
-            return this.identifier;
+          toTaggedString(parentPrecedence = Infinity) {
+            if (isEvaluated(this))
+              return new TaggedString(this.value);
+            return new TaggedString(this.identifier);
           }
         }
         Tree.IdentifierNode = IdentifierNode;
-        class FunctionCallNode extends Node {
+        class FunctionCallNode {
           constructor(fnname, operands) {
-            super();
             this.fnname = fnname;
             this.operands = operands;
           }
-          toString(parentPrecedence = Infinity) {
-            return `${this.fnname}(${this.operands.join(", ")})`;
+          toTaggedString(parentPrecedence = Infinity) {
+            return TaggedString.t `${this.fnname}(${TaggedString.join(this.operands.map((x) => x.toTaggedString(parentPrecedence)), ", ")})`;
           }
         }
         Tree.FunctionCallNode = FunctionCallNode;
         class InfixFunctionCallNode extends FunctionCallNode {
-          toString(parentPrecedence = Infinity) {
+          toTaggedString(parentPrecedence = Infinity) {
             const op = operators[this.fnname];
             const leftAdd = op.associativity === Associativity.right ? -0.01 : 0;
             const rightAdd = op.associativity === Associativity.left ? -0.01 : 0;
             let result;
             if (this.operands.length === 1)
-              result = `${this.fnname}${this.operands[0].toString(op.precedence + rightAdd)}`;
+              result = TaggedString.t `${this.fnname}${this.operands[0].toTaggedString(op.precedence + rightAdd)}`;
             else if (this.operands.length === 2)
-              result = `${this.operands[0].toString(op.precedence + leftAdd)} ${this.fnname} ${this.operands[1].toString(op.precedence + rightAdd)}`;
+              result = TaggedString.t `${this.operands[0].toTaggedString(op.precedence + leftAdd)} `.append(this.fnname === "" ? "" : this.fnname + " ").append(this.operands[1].toTaggedString(op.precedence + rightAdd));
             else
               throw Error("invalid operand count");
             if (parentPrecedence < op.precedence)
-              return `(${result})`;
+              return TaggedString.t `(${result})`;
             else
               return result;
           }
@@ -14546,37 +14491,36 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           step((generator = generator.apply(thisArg, _arguments)).next());
         });
       };
-      loadUnits = (t) => {
-        const lines = t.split("\n");
+      loadUnits = (filename, data) => {
+        const lines = data.split("\n");
         for (let i = 0; i < lines.length; i++) {
           try {
             const line = stripCommentsTrim(lines[i]);
             if (line.length === 0)
               continue;
-            if (checkDefineBaseUnit(line))
-              continue;
             if (line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0)
               continue;
             const tree = parse(line);
-            if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=' && tree.operands[0] instanceof Tree.IdentifierNode) {
-              const name = tree.operands[0].toString();
+            if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=') {
+              const nameNode = tree.operands[0];
+              const name = nameNode instanceof Tree.IdentifierNode && nameNode.identifier;
               if (name.endsWith("_")) {
                 const prefixName = name.substr(0, name.length - 1);
-                prefixMap.set(prefixName, () => evaluate(tree));
+                prefixMap.set(prefixName, tree);
               } else {
-                setUnit(name, () => evaluate(tree));
+                setUnit(name, tree);
               }
             } else
               evaluate(tree);
           } catch (e) {
-            console.error(lines[i], e);
+            console.error(filename + ":" + (i + 1), lines[i], e);
           }
         }
         for (const name of unitMap.keys()) {
           try {
             getUnit(name);
           } catch (e) {
-            console.error(e);
+            console.error("force-evaluation", e);
           }
         }
       };
@@ -14602,19 +14546,20 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
         num.dimensions.assertEmpty();
         return new UnitNumber(num.value.logarithm(10));
       }], ["#", (num) => num.mul(new UnitNumber(-1))]]);
-      loadUnits(gnuUnitsData);
-      loadUnits(customData);
+      loadUnits("units_data.txt", gnuUnitsData);
+      loadUnits("custom_data.txt", customData);
       UnitNumberDisplay = class UnitNumberDisplay extends React.Component {
         constructor(props) {
           super(props);
           props.text.flatten();
         }
         render() {
-          return React.createElement("pre", null, this.props.text.vals.map((x) => {
+          return React.createElement("pre", null, this.props.text.vals.map((x, i) => {
             if (typeof x === 'string')
-              return x;
+              return React.createElement("span", {key: i}, x);
             else if (x instanceof UnitNumber)
               return React.createElement("a", {
+                key: i,
                 href: "#",
                 onClick: (e) => {
                   this.props.onClickUnit(x);
@@ -14681,7 +14626,7 @@ sqrt(2 * (6 million tons * 500000 MJ/kg) / (100000 pounds))/c|sqrt((2 * ((6 * mi
         }
         showUnit(unit) {
           console.log("showing", unit);
-          this.addLine(new GuiLineElement(unit.toString(), define(unit)));
+          this.addLine(new GuiLineElement(unit.toString(), define(unit.id)));
         }
         render() {
           return React.createElement("div", null, this.state.lines.map((line) => React.createElement(GUILine, {
