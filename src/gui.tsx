@@ -185,7 +185,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	componentDidUpdate(prevProps: any, prevState: GuiState) {
 		if(prevState.lines !== this.state.lines) {
-			history.replaceState({}, "", "#");
+			history.replaceState({}, "", window.location.pathname + window.location.search);
 		}
 	}
 	exportToUrl() {
