@@ -1,7 +1,7 @@
 import * as React from 'react';
 import lzString from 'lz-string';
 import * as ReactDOM from 'react-dom';
-import {qalculate, unitMap} from './evaluator';
+import {parseEvaluate, qalculate, unitMap, getUnit} from './evaluator';
 import {tokenize, TokenType} from './parser';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
@@ -90,17 +90,27 @@ class UnitCompleteInput extends React.Component<{
 		this.props.onChange({target: this.refs["inp"]} as any);
 	}
 	render() {
-		const last = this.props.value.split(" ").pop(); // hacky (chrome bug when use tokenize)
+		const tokens = this.props.value.split(" "); // hacky (chrome bug when use tokenize)
+		const last = tokens.pop();
 		const poss: string[] = [];
 		if(/[a-z]/.test(last)) {
 			for(const unitName of unitMap.keys()) {
 				if(unitName.indexOf(last) >= 0) poss.push(unitName);
-				if(poss.length > 10) break;
+				if(poss.length > 30) break;
 			}
+		} else if(last === "" && tokens.pop() === "to") {
+			try {
+				const val = parseEvaluate(tokens.join(" ")).value;
+				for(const name of unitMap.keys()) {
+					const unit = getUnit(name).value;
+					if(!unit.isSpecial() && unit.dimensions.equals(val.dimensions))
+						poss.push(name);
+				}
+			} catch(e) { console.log(e); }
 		}
 		return <div className="dropdown">
 			<input {...this.props} ref="inp" autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"} className="form-control" placeholder="enter formula" />
-			{poss.length > 0?<ul className="dropdown-menu" style={{display:"block"}}>{poss.map(unit => <li key={unit}><a href="#" onClick={() => this.setUnit(unit)}>{unit}</a></li>)}</ul>:""}
+			{poss.length > 0?<ul className="dropdown-menu" style={{display:"block", maxHeight:"200px",overflowX:"hidden"}}>{poss.map(unit => <li key={unit}><a href="#" onClick={() => this.setUnit(unit)}>{unit}</a></li>)}</ul>:""}
 		</div>;
 	}
 	
