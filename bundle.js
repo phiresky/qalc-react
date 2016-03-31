@@ -14388,6 +14388,7 @@ $__System.register("1", ["28", "29", "a0", "a5", "a3", "a4", "a2"], function($__
       GUILine,
       guiInst,
       presetLines,
+      UnitCompleteInput,
       GUI;
   function* tokenize(str) {
     let i = 0;
@@ -15400,6 +15401,45 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 88 mph to km/h|88 * mph = 0.03933952(km / s)
 100°F to °C
 `.split("\n").map((line) => line.trim()).filter((line) => line.length > 0).map((line) => line.split("|")[0]);
+      UnitCompleteInput = class UnitCompleteInput extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {};
+        }
+        setUnit(unit) {
+          const val = this.props.value.split(" ");
+          val.pop();
+          val.push(unit, "");
+          this.refs["inp"].value = val.join(" ");
+          this.props.onChange({target: this.refs["inp"]});
+        }
+        render() {
+          const last = this.props.value.split(" ").pop();
+          const poss = [];
+          if (/[a-z]/.test(last)) {
+            for (const unitName of unitMap()) {
+              if (unitName.indexOf(last) >= 0)
+                poss.push(unitName);
+              if (poss.length > 10)
+                break;
+            }
+          }
+          return React.createElement("div", {className: "dropdown"}, React.createElement("input", React.__spread({}, this.props, {
+            ref: "inp",
+            autoCorrect: "off",
+            autoComplete: "off",
+            autoCapitalize: "none",
+            className: "form-control",
+            placeholder: "enter formula"
+          })), poss.length > 0 ? React.createElement("ul", {
+            className: "dropdown-menu",
+            style: {display: "block"}
+          }, poss.map((unit) => React.createElement("li", {key: unit}, React.createElement("a", {
+            href: "#",
+            onClick: () => this.setUnit(unit)
+          }, unit)))) : "");
+        }
+      };
       GUI = class GUI extends React.Component {
         constructor(props) {
           super(props);
@@ -15421,17 +15461,15 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
           lines.splice(index, 1);
           this.setState({lines: lines});
         }
-        keyPress(evt) {
-          const target = evt.target;
-          const input = target.value;
-          if (evt.charCode == 13) {
-            if (input.trim().length > 0)
-              qalculate(input).then((output) => this.addLine(new GuiLineElement(input, output))).catch((reason) => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))));
-            this.setState({
-              currentInput: "",
-              currentOutput: new TaggedString()
-            });
-          }
+        onSubmit(evt) {
+          evt.preventDefault();
+          const input = this.state.currentInput;
+          if (input.trim().length > 0)
+            qalculate(input).then((output) => this.addLine(new GuiLineElement(input, output))).catch((reason) => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))));
+          this.setState({
+            currentInput: "",
+            currentOutput: new TaggedString()
+          });
         }
         setInput(input) {
           this.setState({currentInput: input});
@@ -15449,14 +15487,12 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
           this.setInput(unit.toString());
         }
         render() {
-          return React.createElement("div", null, React.createElement("div", {className: "gui-line"}, React.createElement("p", null, "> ", React.createElement("input", {
+          return (React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement("div", {className: "gui-line"}, React.createElement("form", {
+            className: "form",
+            onSubmit: this.onSubmit.bind(this)
+          }, React.createElement(UnitCompleteInput, {
             onChange: this.onChange.bind(this),
-            autoCorrect: "off",
-            autoComplete: "off",
-            autoCapitalize: "none",
-            onKeyPress: this.keyPress.bind(this),
-            value: this.state.currentInput,
-            style: {width: "90%"}
+            value: this.state.currentInput
           })), this.state.currentOutput.vals.length > 0 ? React.createElement(UnitNumberDisplay, {
             text: this.state.currentOutput,
             onClickUnit: (unit) => this.showUnit(unit)
@@ -15466,18 +15502,27 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
             onClickInput: () => this.setInput(line.input),
             onClickUnit: (unit) => this.showUnit(unit),
             onClickRemove: () => this.removeLine(i)
-          })));
+          })), React.createElement("footer", null, React.createElement("small", null, React.createElement("a", {
+            href: "#",
+            onClick: (e) => {
+              e.preventDefault();
+              this.exportToUrl();
+            }
+          }, "Export to URL"), " | ", React.createElement("a", {href: "https://github.com/phiresky/qalc-react"}, "Source code on GitHub")))));
         }
         componentDidUpdate(prevProps, prevState) {
           if (prevState.lines !== this.state.lines) {
-            history.replaceState({}, "", "#" + queryString.stringify({state: this.serialize()}));
+            history.replaceState({}, "", "#");
           }
+        }
+        exportToUrl() {
+          history.replaceState({}, "", "#" + queryString.stringify({state: this.serialize()}));
         }
         serialize() {
           return lzString.compressToEncodedURIComponent(JSON.stringify(this.state.lines.map((line) => line.input)));
         }
       };
-      ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(GUI, null), React.createElement("footer", null, React.createElement("small", null, React.createElement("a", {href: "https://github.com/phiresky/qalc-react"}, "Source code on GitHub")))), document.getElementById("root"));
+      ReactDOM.render(React.createElement(GUI, null), document.getElementById("root"));
       $__export("GUILine", GUILine), $__export("GUI", GUI);
     }
   };
