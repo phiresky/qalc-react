@@ -93,12 +93,7 @@ class UnitCompleteInput extends React.Component<{
 		const tokens = this.props.value.split(" "); // hacky (chrome bug when use tokenize)
 		const last = tokens.pop();
 		const poss: string[] = [];
-		if(/[a-z]/.test(last)) {
-			for(const unitName of unitMap.keys()) {
-				if(unitName.indexOf(last) >= 0) poss.push(unitName);
-				if(poss.length > 30) break;
-			}
-		} else if(last === "" && tokens.pop() === "to") {
+		if(tokens.pop() === "to") {
 			try {
 				const val = parseEvaluate(tokens.join(" ")).value;
 				for(const name of unitMap.keys()) {
@@ -108,6 +103,14 @@ class UnitCompleteInput extends React.Component<{
 				}
 			} catch(e) { console.log(e); }
 		}
+		if(/[a-z]/i.test(last)) {
+			const units = poss.length>0?poss.splice(0):unitMap.keys();
+			
+			for(const unitName of units) {
+				if(unitName.indexOf(last) >= 0) poss.push(unitName);
+				if(poss.length > 30) break;
+			}
+		} 
 		return <div className="dropdown">
 			<input {...this.props} ref="inp" autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"} className="form-control" placeholder="enter formula" />
 			{poss.length > 0?<ul className="dropdown-menu" style={{display:"block", maxHeight:"200px",overflowX:"hidden"}}>{poss.map(unit => <li key={unit}><a href="#" onClick={() => this.setUnit(unit)}>{unit}</a></li>)}</ul>:""}
