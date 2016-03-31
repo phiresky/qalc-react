@@ -15530,7 +15530,7 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
         }
         componentDidUpdate(prevProps, prevState) {
           if (prevState.lines !== this.state.lines) {
-            history.replaceState({}, "", "#");
+            history.replaceState({}, "", window.location.pathname + window.location.search);
           }
         }
         exportToUrl() {
