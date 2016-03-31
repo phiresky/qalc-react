@@ -115,36 +115,43 @@ export class GUI extends React.Component<{}, GuiState> {
 		this.setInput(unit.toString());
 	}
 	render() {
-		return <div>
-			<div className="gui-line" >
-				<p>> <input onChange={this.onChange.bind(this) } 
-					autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"}
-					onKeyPress={this.keyPress.bind(this)} value={this.state.currentInput} style={{width:"90%"}} /></p>
-				{this.state.currentOutput.vals.length>0?<UnitNumberDisplay text={this.state.currentOutput} onClickUnit={unit => this.showUnit(unit)}/>:""}
-				<hr />
+		return (
+			<div className="container">
+				<div className="page-header">
+					<h1>Qalc</h1>
+				</div>
+				<div className="gui-line" >
+				<form className="form" onSubmit={e => e.preventDefault()}>
+					<input onChange={this.onChange.bind(this) } id="textInput" className="form-control" placeholder="enter formula"
+					 inputValue={this.state.currentInput} autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"}
+							onKeyPress={this.keyPress.bind(this)}/>
+				</form>
+						{this.state.currentOutput.vals.length>0?<UnitNumberDisplay text={this.state.currentOutput} onClickUnit={unit => this.showUnit(unit)}/>:""}
+						<hr />
+				</div>
+					{this.state.lines.map((line,i) => <GUILine key={line.id} line={line}
+						onClickInput={() => this.setInput(line.input) }
+						onClickUnit={unit => this.showUnit(unit) }
+						onClickRemove={() => this.removeLine(i) } />) }
+				<footer>
+					<small>
+						<a href="#" onClick={e => {e.preventDefault(); this.exportToUrl(); }}>Export to URL</a> | <a href="https://github.com/phiresky/qalc-react">Source code on GitHub</a>
+					</small>
+				</footer>
 			</div>
-			{this.state.lines.map((line,i) => <GUILine key={line.id} line={line}
-				onClickInput={() => this.setInput(line.input) }
-				onClickUnit={unit => this.showUnit(unit) }
-				onClickRemove={() => this.removeLine(i) } />) }
-		</div>;
+		);
 	}
 	componentDidUpdate(prevProps: any, prevState: GuiState) {
-		//window.scrollTo(0, 1e10);
 		if(prevState.lines !== this.state.lines) {
-			history.replaceState({}, "", "#" + queryString.stringify({state:this.serialize()}));
+			history.replaceState({}, "", "#");
 		}
+	}
+	exportToUrl() {
+		history.replaceState({}, "", "#" + queryString.stringify({state:this.serialize()}));
 	}
 	serialize() {
 		return lzString.compressToEncodedURIComponent(JSON.stringify(this.state.lines.map(line => line.input)));
 	}
 }
 
-ReactDOM.render(
-	<div className="container">
-		<div className="page-header">
-			<h1>Qalc</h1>
-		</div>
-		<GUI />
-		<footer><small><a href="https://github.com/phiresky/qalc-react">Source code on GitHub</a></small></footer>
-	</div>, document.getElementById("root"));
+ReactDOM.render(<GUI />, document.getElementById("root"));
