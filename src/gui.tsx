@@ -2,6 +2,7 @@ import * as React from 'react';
 import lzString from 'lz-string';
 import * as ReactDOM from 'react-dom';
 import * as QalcLib from './evaluator';
+import {tokenize, TokenType} from './parser';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
 import queryString from 'query-string';
@@ -72,6 +73,38 @@ function loadPresetLines() {
 			.catch(error => guiInst.addLine(new GuiLineElement(input, new TaggedString("" + error))))
 		);
 }
+
+class UnitCompleteInput extends React.Component<{
+	value: string,
+	onChange: __React.FormEventHandler,
+}, {}> {
+	constructor(props: any) {
+		super(props);
+		this.state = {};
+	}
+	setUnit(unit: string) {
+		// hacky
+		const val = this.props.value.split(" ");
+		val.pop(); val.push(unit, "");
+		(this.refs["inp"] as HTMLInputElement).value = val.join(" ");
+		this.props.onChange({target: this.refs["inp"]} as any);
+	}
+	render() {
+		const last = this.props.value.split(" ").pop(); // hacky (chrome bug when use tokenize)
+		const poss: string[] = [];
+		if(/[a-z]/.test(last)) {
+			for(const unitName of QalcLib.unitMap.keys()) {
+				if(unitName.indexOf(last) >= 0) poss.push(unitName);
+				if(poss.length > 10) break;
+			}
+		}
+		return <div className="dropdown">
+			<input {...this.props} ref="inp" autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"} className="form-control" placeholder="enter formula" />
+			{poss.length > 0?<ul className="dropdown-menu" style={{display:"block"}}>{poss.map(unit => <li key={unit}><a href="#" onClick={() => this.setUnit(unit)}>{unit}</a></li>)}</ul>:""}
+		</div>;
+	}
+	
+}
 export class GUI extends React.Component<{}, GuiState> {
 	constructor(props: {}) {
 		super(props);
@@ -89,15 +122,13 @@ export class GUI extends React.Component<{}, GuiState> {
 		lines.splice(index, 1);
 		this.setState({lines: lines} as any);
 	}
-	keyPress(evt: KeyboardEvent) {
-		const target = evt.target as HTMLInputElement;
-		const input = target.value;
-		if (evt.charCode == 13) {// enter
-			if (input.trim().length > 0) QalcLib.qalculate(input).then(output =>
-				this.addLine(new GuiLineElement(input, output))
-			).catch(reason => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))))
-			this.setState({currentInput: "", currentOutput: new TaggedString()} as any);
-		}
+	onSubmit(evt: Event) {
+		evt.preventDefault();
+		const input = this.state.currentInput;
+		if (input.trim().length > 0) QalcLib.qalculate(input).then(output =>
+			this.addLine(new GuiLineElement(input, output))
+		).catch(reason => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))))
+		this.setState({currentInput: "", currentOutput: new TaggedString()} as any);
 	}
 	setInput(input: string) {
 		this.setState({currentInput: input} as any);
@@ -121,10 +152,8 @@ export class GUI extends React.Component<{}, GuiState> {
 					<h1>Qalc</h1>
 				</div>
 				<div className="gui-line" >
-				<form className="form" onSubmit={e => e.preventDefault()}>
-					<input onChange={this.onChange.bind(this) } id="textInput" className="form-control" placeholder="enter formula"
-					 inputValue={this.state.currentInput} autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"}
-							onKeyPress={this.keyPress.bind(this)}/>
+				<form className="form" onSubmit={this.onSubmit.bind(this)}>
+					<UnitCompleteInput onChange={this.onChange.bind(this)} value={this.state.currentInput}/>
 				</form>
 						{this.state.currentOutput.vals.length>0?<UnitNumberDisplay text={this.state.currentOutput} onClickUnit={unit => this.showUnit(unit)}/>:""}
 						<hr />
