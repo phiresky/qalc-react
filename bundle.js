@@ -603,7 +603,501 @@ $__System.registerDynamic("28", ["26", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("29", ["5", "8", "2a", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("29", ["3"], true, function($__require, exports, module) {
+  var process = $__require("3");
+  var define,
+      global = this,
+      GLOBAL = this;
+  var LZString = (function() {
+    var f = String.fromCharCode;
+    var keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var keyStrUriSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$";
+    var baseReverseDic = {};
+    function getBaseValue(alphabet, character) {
+      if (!baseReverseDic[alphabet]) {
+        baseReverseDic[alphabet] = {};
+        for (var i = 0; i < alphabet.length; i++) {
+          baseReverseDic[alphabet][alphabet.charAt(i)] = i;
+        }
+      }
+      return baseReverseDic[alphabet][character];
+    }
+    var LZString = {
+      compressToBase64: function(input) {
+        if (input == null)
+          return "";
+        var res = LZString._compress(input, 6, function(a) {
+          return keyStrBase64.charAt(a);
+        });
+        switch (res.length % 4) {
+          default:
+          case 0:
+            return res;
+          case 1:
+            return res + "===";
+          case 2:
+            return res + "==";
+          case 3:
+            return res + "=";
+        }
+      },
+      decompressFromBase64: function(input) {
+        if (input == null)
+          return "";
+        if (input == "")
+          return null;
+        return LZString._decompress(input.length, 32, function(index) {
+          return getBaseValue(keyStrBase64, input.charAt(index));
+        });
+      },
+      compressToUTF16: function(input) {
+        if (input == null)
+          return "";
+        return LZString._compress(input, 15, function(a) {
+          return f(a + 32);
+        }) + " ";
+      },
+      decompressFromUTF16: function(compressed) {
+        if (compressed == null)
+          return "";
+        if (compressed == "")
+          return null;
+        return LZString._decompress(compressed.length, 16384, function(index) {
+          return compressed.charCodeAt(index) - 32;
+        });
+      },
+      compressToUint8Array: function(uncompressed) {
+        var compressed = LZString.compress(uncompressed);
+        var buf = new Uint8Array(compressed.length * 2);
+        for (var i = 0,
+            TotalLen = compressed.length; i < TotalLen; i++) {
+          var current_value = compressed.charCodeAt(i);
+          buf[i * 2] = current_value >>> 8;
+          buf[i * 2 + 1] = current_value % 256;
+        }
+        return buf;
+      },
+      decompressFromUint8Array: function(compressed) {
+        if (compressed === null || compressed === undefined) {
+          return LZString.decompress(compressed);
+        } else {
+          var buf = new Array(compressed.length / 2);
+          for (var i = 0,
+              TotalLen = buf.length; i < TotalLen; i++) {
+            buf[i] = compressed[i * 2] * 256 + compressed[i * 2 + 1];
+          }
+          var result = [];
+          buf.forEach(function(c) {
+            result.push(f(c));
+          });
+          return LZString.decompress(result.join(''));
+        }
+      },
+      compressToEncodedURIComponent: function(input) {
+        if (input == null)
+          return "";
+        return LZString._compress(input, 6, function(a) {
+          return keyStrUriSafe.charAt(a);
+        });
+      },
+      decompressFromEncodedURIComponent: function(input) {
+        if (input == null)
+          return "";
+        if (input == "")
+          return null;
+        input = input.replace(/ /g, "+");
+        return LZString._decompress(input.length, 32, function(index) {
+          return getBaseValue(keyStrUriSafe, input.charAt(index));
+        });
+      },
+      compress: function(uncompressed) {
+        return LZString._compress(uncompressed, 16, function(a) {
+          return f(a);
+        });
+      },
+      _compress: function(uncompressed, bitsPerChar, getCharFromInt) {
+        if (uncompressed == null)
+          return "";
+        var i,
+            value,
+            context_dictionary = {},
+            context_dictionaryToCreate = {},
+            context_c = "",
+            context_wc = "",
+            context_w = "",
+            context_enlargeIn = 2,
+            context_dictSize = 3,
+            context_numBits = 2,
+            context_data = [],
+            context_data_val = 0,
+            context_data_position = 0,
+            ii;
+        for (ii = 0; ii < uncompressed.length; ii += 1) {
+          context_c = uncompressed.charAt(ii);
+          if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
+            context_dictionary[context_c] = context_dictSize++;
+            context_dictionaryToCreate[context_c] = true;
+          }
+          context_wc = context_w + context_c;
+          if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
+            context_w = context_wc;
+          } else {
+            if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+              if (context_w.charCodeAt(0) < 256) {
+                for (i = 0; i < context_numBits; i++) {
+                  context_data_val = (context_data_val << 1);
+                  if (context_data_position == bitsPerChar - 1) {
+                    context_data_position = 0;
+                    context_data.push(getCharFromInt(context_data_val));
+                    context_data_val = 0;
+                  } else {
+                    context_data_position++;
+                  }
+                }
+                value = context_w.charCodeAt(0);
+                for (i = 0; i < 8; i++) {
+                  context_data_val = (context_data_val << 1) | (value & 1);
+                  if (context_data_position == bitsPerChar - 1) {
+                    context_data_position = 0;
+                    context_data.push(getCharFromInt(context_data_val));
+                    context_data_val = 0;
+                  } else {
+                    context_data_position++;
+                  }
+                  value = value >> 1;
+                }
+              } else {
+                value = 1;
+                for (i = 0; i < context_numBits; i++) {
+                  context_data_val = (context_data_val << 1) | value;
+                  if (context_data_position == bitsPerChar - 1) {
+                    context_data_position = 0;
+                    context_data.push(getCharFromInt(context_data_val));
+                    context_data_val = 0;
+                  } else {
+                    context_data_position++;
+                  }
+                  value = 0;
+                }
+                value = context_w.charCodeAt(0);
+                for (i = 0; i < 16; i++) {
+                  context_data_val = (context_data_val << 1) | (value & 1);
+                  if (context_data_position == bitsPerChar - 1) {
+                    context_data_position = 0;
+                    context_data.push(getCharFromInt(context_data_val));
+                    context_data_val = 0;
+                  } else {
+                    context_data_position++;
+                  }
+                  value = value >> 1;
+                }
+              }
+              context_enlargeIn--;
+              if (context_enlargeIn == 0) {
+                context_enlargeIn = Math.pow(2, context_numBits);
+                context_numBits++;
+              }
+              delete context_dictionaryToCreate[context_w];
+            } else {
+              value = context_dictionary[context_w];
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = (context_data_val << 1) | (value & 1);
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            }
+            context_enlargeIn--;
+            if (context_enlargeIn == 0) {
+              context_enlargeIn = Math.pow(2, context_numBits);
+              context_numBits++;
+            }
+            context_dictionary[context_wc] = context_dictSize++;
+            context_w = String(context_c);
+          }
+        }
+        if (context_w !== "") {
+          if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
+            if (context_w.charCodeAt(0) < 256) {
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = (context_data_val << 1);
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+              }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 8; i++) {
+                context_data_val = (context_data_val << 1) | (value & 1);
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            } else {
+              value = 1;
+              for (i = 0; i < context_numBits; i++) {
+                context_data_val = (context_data_val << 1) | value;
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = 0;
+              }
+              value = context_w.charCodeAt(0);
+              for (i = 0; i < 16; i++) {
+                context_data_val = (context_data_val << 1) | (value & 1);
+                if (context_data_position == bitsPerChar - 1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            }
+            context_enlargeIn--;
+            if (context_enlargeIn == 0) {
+              context_enlargeIn = Math.pow(2, context_numBits);
+              context_numBits++;
+            }
+            delete context_dictionaryToCreate[context_w];
+          } else {
+            value = context_dictionary[context_w];
+            for (i = 0; i < context_numBits; i++) {
+              context_data_val = (context_data_val << 1) | (value & 1);
+              if (context_data_position == bitsPerChar - 1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+        }
+        value = 2;
+        for (i = 0; i < context_numBits; i++) {
+          context_data_val = (context_data_val << 1) | (value & 1);
+          if (context_data_position == bitsPerChar - 1) {
+            context_data_position = 0;
+            context_data.push(getCharFromInt(context_data_val));
+            context_data_val = 0;
+          } else {
+            context_data_position++;
+          }
+          value = value >> 1;
+        }
+        while (true) {
+          context_data_val = (context_data_val << 1);
+          if (context_data_position == bitsPerChar - 1) {
+            context_data.push(getCharFromInt(context_data_val));
+            break;
+          } else
+            context_data_position++;
+        }
+        return context_data.join('');
+      },
+      decompress: function(compressed) {
+        if (compressed == null)
+          return "";
+        if (compressed == "")
+          return null;
+        return LZString._decompress(compressed.length, 32768, function(index) {
+          return compressed.charCodeAt(index);
+        });
+      },
+      _decompress: function(length, resetValue, getNextValue) {
+        var dictionary = [],
+            next,
+            enlargeIn = 4,
+            dictSize = 4,
+            numBits = 3,
+            entry = "",
+            result = [],
+            i,
+            w,
+            bits,
+            resb,
+            maxpower,
+            power,
+            c,
+            data = {
+              val: getNextValue(0),
+              position: resetValue,
+              index: 1
+            };
+        for (i = 0; i < 3; i += 1) {
+          dictionary[i] = i;
+        }
+        bits = 0;
+        maxpower = Math.pow(2, 2);
+        power = 1;
+        while (power != maxpower) {
+          resb = data.val & data.position;
+          data.position >>= 1;
+          if (data.position == 0) {
+            data.position = resetValue;
+            data.val = getNextValue(data.index++);
+          }
+          bits |= (resb > 0 ? 1 : 0) * power;
+          power <<= 1;
+        }
+        switch (next = bits) {
+          case 0:
+            bits = 0;
+            maxpower = Math.pow(2, 8);
+            power = 1;
+            while (power != maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position == 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+            c = f(bits);
+            break;
+          case 1:
+            bits = 0;
+            maxpower = Math.pow(2, 16);
+            power = 1;
+            while (power != maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position == 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+            c = f(bits);
+            break;
+          case 2:
+            return "";
+        }
+        dictionary[3] = c;
+        w = c;
+        result.push(c);
+        while (true) {
+          if (data.index > length) {
+            return "";
+          }
+          bits = 0;
+          maxpower = Math.pow(2, numBits);
+          power = 1;
+          while (power != maxpower) {
+            resb = data.val & data.position;
+            data.position >>= 1;
+            if (data.position == 0) {
+              data.position = resetValue;
+              data.val = getNextValue(data.index++);
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power <<= 1;
+          }
+          switch (c = bits) {
+            case 0:
+              bits = 0;
+              maxpower = Math.pow(2, 8);
+              power = 1;
+              while (power != maxpower) {
+                resb = data.val & data.position;
+                data.position >>= 1;
+                if (data.position == 0) {
+                  data.position = resetValue;
+                  data.val = getNextValue(data.index++);
+                }
+                bits |= (resb > 0 ? 1 : 0) * power;
+                power <<= 1;
+              }
+              dictionary[dictSize++] = f(bits);
+              c = dictSize - 1;
+              enlargeIn--;
+              break;
+            case 1:
+              bits = 0;
+              maxpower = Math.pow(2, 16);
+              power = 1;
+              while (power != maxpower) {
+                resb = data.val & data.position;
+                data.position >>= 1;
+                if (data.position == 0) {
+                  data.position = resetValue;
+                  data.val = getNextValue(data.index++);
+                }
+                bits |= (resb > 0 ? 1 : 0) * power;
+                power <<= 1;
+              }
+              dictionary[dictSize++] = f(bits);
+              c = dictSize - 1;
+              enlargeIn--;
+              break;
+            case 2:
+              return result.join('');
+          }
+          if (enlargeIn == 0) {
+            enlargeIn = Math.pow(2, numBits);
+            numBits++;
+          }
+          if (dictionary[c]) {
+            entry = dictionary[c];
+          } else {
+            if (c === dictSize) {
+              entry = w + w.charAt(0);
+            } else {
+              return null;
+            }
+          }
+          result.push(entry);
+          dictionary[dictSize++] = w + entry.charAt(0);
+          enlargeIn--;
+          w = entry;
+          if (enlargeIn == 0) {
+            enlargeIn = Math.pow(2, numBits);
+            numBits++;
+          }
+        }
+      }
+    };
+    return LZString;
+  })();
+  if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return LZString;
+    });
+  } else if (typeof module !== 'undefined' && module != null) {
+    module.exports = LZString;
+  }
+  return module.exports;
+});
+
+$__System.registerDynamic("2a", ["5", "8", "2b", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -611,7 +1105,7 @@ $__System.registerDynamic("29", ["5", "8", "2a", "3"], true, function($__require
       GLOBAL = this;
   var PooledClass = $__require('5');
   var assign = $__require('8');
-  var getTextContentAccessor = $__require('2a');
+  var getTextContentAccessor = $__require('2b');
   function FallbackCompositionState(root) {
     this._root = root;
     this._startText = this.getText();
@@ -660,13 +1154,13 @@ $__System.registerDynamic("29", ["5", "8", "2a", "3"], true, function($__require
   return module.exports;
 });
 
-$__System.registerDynamic("2b", ["2c", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("2c", ["2d", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticEvent = $__require('2c');
+  var SyntheticEvent = $__require('2d');
   var CompositionEventInterface = {data: null};
   function SyntheticCompositionEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget) {
     SyntheticEvent.call(this, dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget);
@@ -676,13 +1170,13 @@ $__System.registerDynamic("2b", ["2c", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("2d", ["2c", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("2e", ["2d", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticEvent = $__require('2c');
+  var SyntheticEvent = $__require('2d');
   var InputEventInterface = {data: null};
   function SyntheticInputEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget) {
     SyntheticEvent.call(this, dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget);
@@ -692,19 +1186,19 @@ $__System.registerDynamic("2d", ["2c", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("2e", ["2f", "30", "31", "29", "2b", "2d", "32", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("2f", ["30", "31", "32", "2a", "2c", "2e", "33", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventPropagators = $__require('30');
-  var ExecutionEnvironment = $__require('31');
-  var FallbackCompositionState = $__require('29');
-  var SyntheticCompositionEvent = $__require('2b');
-  var SyntheticInputEvent = $__require('2d');
-  var keyOf = $__require('32');
+  var EventConstants = $__require('30');
+  var EventPropagators = $__require('31');
+  var ExecutionEnvironment = $__require('32');
+  var FallbackCompositionState = $__require('2a');
+  var SyntheticCompositionEvent = $__require('2c');
+  var SyntheticInputEvent = $__require('2e');
+  var keyOf = $__require('33');
   var END_KEYCODES = [9, 13, 27, 32];
   var START_KEYCODE = 229;
   var canUseCompositionEvent = ExecutionEnvironment.canUseDOM && 'CompositionEvent' in window;
@@ -896,22 +1390,22 @@ $__System.registerDynamic("2e", ["2f", "30", "31", "29", "2b", "2d", "32", "3"],
   return module.exports;
 });
 
-$__System.registerDynamic("33", ["2f", "34", "30", "31", "f", "2c", "35", "36", "37", "32", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("34", ["30", "35", "31", "32", "f", "2d", "36", "37", "38", "33", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventPluginHub = $__require('34');
-  var EventPropagators = $__require('30');
-  var ExecutionEnvironment = $__require('31');
+  var EventConstants = $__require('30');
+  var EventPluginHub = $__require('35');
+  var EventPropagators = $__require('31');
+  var ExecutionEnvironment = $__require('32');
   var ReactUpdates = $__require('f');
-  var SyntheticEvent = $__require('2c');
-  var getEventTarget = $__require('35');
-  var isEventSupported = $__require('36');
-  var isTextInputElement = $__require('37');
-  var keyOf = $__require('32');
+  var SyntheticEvent = $__require('2d');
+  var getEventTarget = $__require('36');
+  var isEventSupported = $__require('37');
+  var isTextInputElement = $__require('38');
+  var keyOf = $__require('33');
   var topLevelTypes = EventConstants.topLevelTypes;
   var eventTypes = {change: {
       phasedRegistrationNames: {
@@ -1078,7 +1572,7 @@ $__System.registerDynamic("33", ["2f", "34", "30", "31", "f", "2c", "35", "36", 
   return module.exports;
 });
 
-$__System.registerDynamic("38", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("39", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1092,29 +1586,29 @@ $__System.registerDynamic("38", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("39", ["32", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("3a", ["33", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var keyOf = $__require('32');
+  var keyOf = $__require('33');
   var DefaultEventPluginOrder = [keyOf({ResponderEventPlugin: null}), keyOf({SimpleEventPlugin: null}), keyOf({TapEventPlugin: null}), keyOf({EnterLeaveEventPlugin: null}), keyOf({ChangeEventPlugin: null}), keyOf({SelectEventPlugin: null}), keyOf({BeforeInputEventPlugin: null})];
   module.exports = DefaultEventPluginOrder;
   return module.exports;
 });
 
-$__System.registerDynamic("3a", ["2f", "30", "3b", "3c", "32", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("3b", ["30", "31", "3c", "3d", "33", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventPropagators = $__require('30');
-  var SyntheticMouseEvent = $__require('3b');
-  var ReactMount = $__require('3c');
-  var keyOf = $__require('32');
+  var EventConstants = $__require('30');
+  var EventPropagators = $__require('31');
+  var SyntheticMouseEvent = $__require('3c');
+  var ReactMount = $__require('3d');
+  var keyOf = $__require('33');
   var topLevelTypes = EventConstants.topLevelTypes;
   var getFirstReactDOM = ReactMount.getFirstReactDOM;
   var eventTypes = {
@@ -1188,14 +1682,14 @@ $__System.registerDynamic("3a", ["2f", "30", "3b", "3c", "32", "3"], true, funct
   return module.exports;
 });
 
-$__System.registerDynamic("3d", ["3e", "31", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("3e", ["3f", "32", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMProperty = $__require('3e');
-  var ExecutionEnvironment = $__require('31');
+  var DOMProperty = $__require('3f');
+  var ExecutionEnvironment = $__require('32');
   var MUST_USE_ATTRIBUTE = DOMProperty.injection.MUST_USE_ATTRIBUTE;
   var MUST_USE_PROPERTY = DOMProperty.injection.MUST_USE_PROPERTY;
   var HAS_BOOLEAN_VALUE = DOMProperty.injection.HAS_BOOLEAN_VALUE;
@@ -1375,14 +1869,14 @@ $__System.registerDynamic("3d", ["3e", "31", "3"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("3f", ["40", "41", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("40", ["41", "42", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactInstanceMap = $__require('40');
-  var findDOMNode = $__require('41');
+  var ReactInstanceMap = $__require('41');
+  var findDOMNode = $__require('42');
   var warning = $__require('1e');
   var didWarnKey = '_getDOMNodeDidWarn';
   var ReactBrowserComponentMixin = {getDOMNode: function() {
@@ -1438,15 +1932,15 @@ $__System.registerDynamic("b", ["f", "7", "8", "9", "3"], true, function($__requ
   return module.exports;
 });
 
-$__System.registerDynamic("42", ["3c", "41", "43", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("43", ["3d", "42", "44", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactMount = $__require('3c');
-  var findDOMNode = $__require('41');
-  var focusNode = $__require('43');
+  var ReactMount = $__require('3d');
+  var findDOMNode = $__require('42');
+  var focusNode = $__require('44');
   var Mixin = {componentDidMount: function() {
       if (this.props.autoFocus) {
         focusNode(findDOMNode(this));
@@ -1462,7 +1956,7 @@ $__System.registerDynamic("42", ["3c", "41", "43", "3"], true, function($__requi
   return module.exports;
 });
 
-$__System.registerDynamic("44", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("45", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1478,13 +1972,13 @@ $__System.registerDynamic("44", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("45", ["44", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("46", ["45", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var camelize = $__require('44');
+  var camelize = $__require('45');
   var msPattern = /^-ms-/;
   function camelizeStyleName(string) {
     return camelize(string.replace(msPattern, 'ms-'));
@@ -1493,7 +1987,7 @@ $__System.registerDynamic("45", ["44", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("46", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("47", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1596,13 +2090,13 @@ $__System.registerDynamic("46", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("47", ["46", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("48", ["47", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var CSSProperty = $__require('46');
+  var CSSProperty = $__require('47');
   var isUnitlessNumber = CSSProperty.isUnitlessNumber;
   function dangerousStyleValue(name, value) {
     var isEmpty = value == null || typeof value === 'boolean' || value === '';
@@ -1622,7 +2116,7 @@ $__System.registerDynamic("47", ["46", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("48", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("49", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1636,13 +2130,13 @@ $__System.registerDynamic("48", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("49", ["48", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("4a", ["49", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var hyphenate = $__require('48');
+  var hyphenate = $__require('49');
   var msPattern = /^ms-/;
   function hyphenateStyleName(string) {
     return hyphenate(string).replace(msPattern, '-ms-');
@@ -1651,7 +2145,7 @@ $__System.registerDynamic("49", ["48", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("4a", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("4b", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1670,19 +2164,19 @@ $__System.registerDynamic("4a", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("4b", ["46", "31", "4c", "45", "47", "49", "4a", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("4c", ["47", "32", "4d", "46", "48", "4a", "4b", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var CSSProperty = $__require('46');
-  var ExecutionEnvironment = $__require('31');
-  var ReactPerf = $__require('4c');
-  var camelizeStyleName = $__require('45');
-  var dangerousStyleValue = $__require('47');
-  var hyphenateStyleName = $__require('49');
-  var memoizeStringOnly = $__require('4a');
+  var CSSProperty = $__require('47');
+  var ExecutionEnvironment = $__require('32');
+  var ReactPerf = $__require('4d');
+  var camelizeStyleName = $__require('46');
+  var dangerousStyleValue = $__require('48');
+  var hyphenateStyleName = $__require('4a');
+  var memoizeStringOnly = $__require('4b');
   var warning = $__require('1e');
   var processStyleName = memoizeStringOnly(function(styleName) {
     return hyphenateStyleName(styleName);
@@ -1787,7 +2281,7 @@ $__System.registerDynamic("4b", ["46", "31", "4c", "45", "47", "49", "4a", "1e",
   return module.exports;
 });
 
-$__System.registerDynamic("4d", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("4e", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1821,15 +2315,15 @@ $__System.registerDynamic("4d", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("4e", ["4f", "50", "3c", "f", "8", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("4f", ["50", "51", "3d", "f", "8", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactDOMIDOperations = $__require('4f');
-  var LinkedValueUtils = $__require('50');
-  var ReactMount = $__require('3c');
+  var ReactDOMIDOperations = $__require('50');
+  var LinkedValueUtils = $__require('51');
+  var ReactMount = $__require('3d');
   var ReactUpdates = $__require('f');
   var assign = $__require('8');
   var invariant = $__require('12');
@@ -1911,7 +2405,7 @@ $__System.registerDynamic("4e", ["4f", "50", "3c", "f", "8", "12", "3"], true, f
   return module.exports;
 });
 
-$__System.registerDynamic("21", ["5", "c", "9", "51", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("21", ["5", "c", "9", "52", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -1920,7 +2414,7 @@ $__System.registerDynamic("21", ["5", "c", "9", "51", "3"], true, function($__re
   var PooledClass = $__require('5');
   var ReactElement = $__require('c');
   var emptyFunction = $__require('9');
-  var traverseAllChildren = $__require('51');
+  var traverseAllChildren = $__require('52');
   var twoArgumentPooler = PooledClass.twoArgumentPooler;
   var fourArgumentPooler = PooledClass.fourArgumentPooler;
   var userProvidedKeyEscapeRegex = /\/(?!\/)/g;
@@ -2020,14 +2514,14 @@ $__System.registerDynamic("21", ["5", "c", "9", "51", "3"], true, function($__re
   return module.exports;
 });
 
-$__System.registerDynamic("52", ["21", "53", "8", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("53", ["21", "54", "8", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
   var ReactChildren = $__require('21');
-  var ReactDOMSelect = $__require('53');
+  var ReactDOMSelect = $__require('54');
   var assign = $__require('8');
   var warning = $__require('1e');
   var valueContextKey = ReactDOMSelect.valueContextKey;
@@ -2082,14 +2576,14 @@ $__System.registerDynamic("52", ["21", "53", "8", "1e", "3"], true, function($__
   return module.exports;
 });
 
-$__System.registerDynamic("53", ["50", "3c", "f", "8", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("54", ["51", "3d", "f", "8", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var LinkedValueUtils = $__require('50');
-  var ReactMount = $__require('3c');
+  var LinkedValueUtils = $__require('51');
+  var ReactMount = $__require('3d');
   var ReactUpdates = $__require('f');
   var assign = $__require('8');
   var warning = $__require('1e');
@@ -2476,7 +2970,7 @@ $__System.registerDynamic("24", ["c", "1a", "9", "1d", "3"], true, function($__r
   return module.exports;
 });
 
-$__System.registerDynamic("50", ["24", "19", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("51", ["24", "19", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -2574,14 +3068,14 @@ $__System.registerDynamic("50", ["24", "19", "12", "1e", "3"], true, function($_
   return module.exports;
 });
 
-$__System.registerDynamic("54", ["50", "4f", "f", "8", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("55", ["51", "50", "f", "8", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var LinkedValueUtils = $__require('50');
-  var ReactDOMIDOperations = $__require('4f');
+  var LinkedValueUtils = $__require('51');
+  var ReactDOMIDOperations = $__require('50');
   var ReactUpdates = $__require('f');
   var assign = $__require('8');
   var invariant = $__require('12');
@@ -2646,16 +3140,16 @@ $__System.registerDynamic("54", ["50", "4f", "f", "8", "12", "1e", "3"], true, f
   return module.exports;
 });
 
-$__System.registerDynamic("55", ["56", "10", "57", "51", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("56", ["57", "10", "58", "52", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactReconciler = $__require('56');
+  var ReactReconciler = $__require('57');
   var instantiateReactComponent = $__require('10');
-  var shouldUpdateReactComponent = $__require('57');
-  var traverseAllChildren = $__require('51');
+  var shouldUpdateReactComponent = $__require('58');
+  var traverseAllChildren = $__require('52');
   var warning = $__require('1e');
   function instantiateChild(childInstances, child, name) {
     var keyUnique = childInstances[name] === undefined;
@@ -2736,7 +3230,7 @@ $__System.registerDynamic("1d", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("51", ["1b", "c", "d", "1d", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("52", ["1b", "c", "d", "1d", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -2847,13 +3341,13 @@ $__System.registerDynamic("51", ["1b", "c", "d", "1d", "12", "1e", "3"], true, f
   return module.exports;
 });
 
-$__System.registerDynamic("58", ["51", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("59", ["52", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var traverseAllChildren = $__require('51');
+  var traverseAllChildren = $__require('52');
   var warning = $__require('1e');
   function flattenSingleChildIntoContext(traverseContext, child, name) {
     var result = traverseContext;
@@ -2877,18 +3371,18 @@ $__System.registerDynamic("58", ["51", "1e", "3"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("59", ["5a", "5b", "1b", "56", "55", "58", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("5a", ["5b", "5c", "1b", "57", "56", "59", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactComponentEnvironment = $__require('5a');
-  var ReactMultiChildUpdateTypes = $__require('5b');
+  var ReactComponentEnvironment = $__require('5b');
+  var ReactMultiChildUpdateTypes = $__require('5c');
   var ReactCurrentOwner = $__require('1b');
-  var ReactReconciler = $__require('56');
-  var ReactChildReconciler = $__require('55');
-  var flattenChildren = $__require('58');
+  var ReactReconciler = $__require('57');
+  var ReactChildReconciler = $__require('56');
+  var flattenChildren = $__require('59');
   var updateDepth = 0;
   var updateQueue = [];
   var markupQueue = [];
@@ -3140,38 +3634,38 @@ $__System.registerDynamic("59", ["5a", "5b", "1b", "56", "55", "58", "3"], true,
   return module.exports;
 });
 
-$__System.registerDynamic("5c", ["42", "4b", "3e", "5d", "2f", "5e", "5f", "4d", "4e", "52", "53", "54", "3c", "59", "4c", "60", "8", "1c", "61", "12", "36", "32", "62", "63", "65", "64", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("5d", ["43", "4c", "3f", "5e", "30", "5f", "60", "4e", "4f", "53", "54", "55", "3d", "5a", "4d", "61", "8", "1c", "62", "12", "37", "33", "63", "64", "66", "65", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var AutoFocusUtils = $__require('42');
-  var CSSPropertyOperations = $__require('4b');
-  var DOMProperty = $__require('3e');
-  var DOMPropertyOperations = $__require('5d');
-  var EventConstants = $__require('2f');
-  var ReactBrowserEventEmitter = $__require('5e');
-  var ReactComponentBrowserEnvironment = $__require('5f');
-  var ReactDOMButton = $__require('4d');
-  var ReactDOMInput = $__require('4e');
-  var ReactDOMOption = $__require('52');
-  var ReactDOMSelect = $__require('53');
-  var ReactDOMTextarea = $__require('54');
-  var ReactMount = $__require('3c');
-  var ReactMultiChild = $__require('59');
-  var ReactPerf = $__require('4c');
-  var ReactUpdateQueue = $__require('60');
+  var AutoFocusUtils = $__require('43');
+  var CSSPropertyOperations = $__require('4c');
+  var DOMProperty = $__require('3f');
+  var DOMPropertyOperations = $__require('5e');
+  var EventConstants = $__require('30');
+  var ReactBrowserEventEmitter = $__require('5f');
+  var ReactComponentBrowserEnvironment = $__require('60');
+  var ReactDOMButton = $__require('4e');
+  var ReactDOMInput = $__require('4f');
+  var ReactDOMOption = $__require('53');
+  var ReactDOMSelect = $__require('54');
+  var ReactDOMTextarea = $__require('55');
+  var ReactMount = $__require('3d');
+  var ReactMultiChild = $__require('5a');
+  var ReactPerf = $__require('4d');
+  var ReactUpdateQueue = $__require('61');
   var assign = $__require('8');
   var canDefineProperty = $__require('1c');
-  var escapeTextContentForBrowser = $__require('61');
+  var escapeTextContentForBrowser = $__require('62');
   var invariant = $__require('12');
-  var isEventSupported = $__require('36');
-  var keyOf = $__require('32');
-  var setInnerHTML = $__require('62');
-  var setTextContent = $__require('63');
-  var shallowEqual = $__require('65');
-  var validateDOMNesting = $__require('64');
+  var isEventSupported = $__require('37');
+  var keyOf = $__require('33');
+  var setInnerHTML = $__require('63');
+  var setTextContent = $__require('64');
+  var shallowEqual = $__require('66');
+  var validateDOMNesting = $__require('65');
   var warning = $__require('1e');
   var deleteListener = ReactBrowserEventEmitter.deleteListener;
   var listenTo = ReactBrowserEventEmitter.listenTo;
@@ -3846,7 +4340,7 @@ $__System.registerDynamic("5c", ["42", "4b", "3e", "5d", "2f", "5e", "5f", "4d",
   return module.exports;
 });
 
-$__System.registerDynamic("66", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("67", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -3873,13 +4367,13 @@ $__System.registerDynamic("66", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("67", ["66", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("68", ["67", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var toArray = $__require('66');
+  var toArray = $__require('67');
   function hasArrayNature(obj) {
     return (!!obj && (typeof obj == 'object' || typeof obj == 'function') && 'length' in obj && !('setInterval' in obj) && typeof obj.nodeType != 'number' && (Array.isArray(obj) || 'callee' in obj || 'item' in obj));
   }
@@ -3896,15 +4390,15 @@ $__System.registerDynamic("67", ["66", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("68", ["31", "67", "69", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("69", ["32", "68", "6a", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
-  var createArrayFromMixed = $__require('67');
-  var getMarkupWrap = $__require('69');
+  var ExecutionEnvironment = $__require('32');
+  var createArrayFromMixed = $__require('68');
+  var getMarkupWrap = $__require('6a');
   var invariant = $__require('12');
   var dummyNode = ExecutionEnvironment.canUseDOM ? document.createElement('div') : null;
   var nodeNamePattern = /^\s*<(\w+)/;
@@ -3941,13 +4435,13 @@ $__System.registerDynamic("68", ["31", "67", "69", "12", "3"], true, function($_
   return module.exports;
 });
 
-$__System.registerDynamic("69", ["31", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("6a", ["32", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
+  var ExecutionEnvironment = $__require('32');
   var invariant = $__require('12');
   var dummyNode = ExecutionEnvironment.canUseDOM ? document.createElement('div') : null;
   var shouldWrap = {};
@@ -3996,16 +4490,16 @@ $__System.registerDynamic("69", ["31", "12", "3"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("6a", ["31", "68", "9", "69", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("6b", ["32", "69", "9", "6a", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
-  var createNodesFromMarkup = $__require('68');
+  var ExecutionEnvironment = $__require('32');
+  var createNodesFromMarkup = $__require('69');
   var emptyFunction = $__require('9');
-  var getMarkupWrap = $__require('69');
+  var getMarkupWrap = $__require('6a');
   var invariant = $__require('12');
   var OPEN_TAG_NAME_EXP = /^(<[^ \/>]+)/;
   var RESULT_INDEX_ATTR = 'data-danger-index';
@@ -4073,13 +4567,13 @@ $__System.registerDynamic("6a", ["31", "68", "9", "69", "12", "3"], true, functi
   return module.exports;
 });
 
-$__System.registerDynamic("5b", ["6b", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("5c", ["6c", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var keyMirror = $__require('6b');
+  var keyMirror = $__require('6c');
   var ReactMultiChildUpdateTypes = keyMirror({
     INSERT_MARKUP: null,
     MOVE_EXISTING: null,
@@ -4091,17 +4585,17 @@ $__System.registerDynamic("5b", ["6b", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("6c", ["6a", "5b", "4c", "62", "63", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("6d", ["6b", "5c", "4d", "63", "64", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var Danger = $__require('6a');
-  var ReactMultiChildUpdateTypes = $__require('5b');
-  var ReactPerf = $__require('4c');
-  var setInnerHTML = $__require('62');
-  var setTextContent = $__require('63');
+  var Danger = $__require('6b');
+  var ReactMultiChildUpdateTypes = $__require('5c');
+  var ReactPerf = $__require('4d');
+  var setInnerHTML = $__require('63');
+  var setTextContent = $__require('64');
   var invariant = $__require('12');
   function insertChildAt(parentNode, childNode, index) {
     var beforeChild = index >= parentNode.childNodes.length ? null : parentNode.childNodes.item(index);
@@ -4165,13 +4659,13 @@ $__System.registerDynamic("6c", ["6a", "5b", "4c", "62", "63", "12", "3"], true,
   return module.exports;
 });
 
-$__System.registerDynamic("6d", ["61", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("6e", ["62", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var escapeTextContentForBrowser = $__require('61');
+  var escapeTextContentForBrowser = $__require('62');
   function quoteAttributeValueForBrowser(value) {
     return '"' + escapeTextContentForBrowser(value) + '"';
   }
@@ -4179,15 +4673,15 @@ $__System.registerDynamic("6d", ["61", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("5d", ["3e", "4c", "6d", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("5e", ["3f", "4d", "6e", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMProperty = $__require('3e');
-  var ReactPerf = $__require('4c');
-  var quoteAttributeValueForBrowser = $__require('6d');
+  var DOMProperty = $__require('3f');
+  var ReactPerf = $__require('4d');
+  var quoteAttributeValueForBrowser = $__require('6e');
   var warning = $__require('1e');
   var VALID_ATTRIBUTE_NAME_REGEX = /^[a-zA-Z_][\w\.\-]*$/;
   var illegalAttributeNameCache = {};
@@ -4333,16 +4827,16 @@ $__System.registerDynamic("5d", ["3e", "4c", "6d", "1e", "3"], true, function($_
   return module.exports;
 });
 
-$__System.registerDynamic("4f", ["6c", "5d", "3c", "4c", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("50", ["6d", "5e", "3d", "4d", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMChildrenOperations = $__require('6c');
-  var DOMPropertyOperations = $__require('5d');
-  var ReactMount = $__require('3c');
-  var ReactPerf = $__require('4c');
+  var DOMChildrenOperations = $__require('6d');
+  var DOMPropertyOperations = $__require('5e');
+  var ReactMount = $__require('3d');
+  var ReactPerf = $__require('4d');
   var invariant = $__require('12');
   var INVALID_PROPERTY_ERRORS = {
     dangerouslySetInnerHTML: '`dangerouslySetInnerHTML` must be set using `updateInnerHTMLByID()`.',
@@ -4377,14 +4871,14 @@ $__System.registerDynamic("4f", ["6c", "5d", "3c", "4c", "12", "3"], true, funct
   return module.exports;
 });
 
-$__System.registerDynamic("5f", ["4f", "3c", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("60", ["50", "3d", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactDOMIDOperations = $__require('4f');
-  var ReactMount = $__require('3c');
+  var ReactDOMIDOperations = $__require('50');
+  var ReactMount = $__require('3d');
   var ReactComponentBrowserEnvironment = {
     processChildrenUpdates: ReactDOMIDOperations.dangerouslyProcessChildrenUpdates,
     replaceNodeWithMarkupByID: ReactDOMIDOperations.dangerouslyReplaceNodeWithMarkupByID,
@@ -4396,7 +4890,7 @@ $__System.registerDynamic("5f", ["4f", "3c", "3"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("61", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("62", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -4420,15 +4914,15 @@ $__System.registerDynamic("61", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("63", ["31", "61", "62", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("64", ["32", "62", "63", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
-  var escapeTextContentForBrowser = $__require('61');
-  var setInnerHTML = $__require('62');
+  var ExecutionEnvironment = $__require('32');
+  var escapeTextContentForBrowser = $__require('62');
+  var setInnerHTML = $__require('63');
   var setTextContent = function(node, text) {
     node.textContent = text;
   };
@@ -4443,20 +4937,20 @@ $__System.registerDynamic("63", ["31", "61", "62", "3"], true, function($__requi
   return module.exports;
 });
 
-$__System.registerDynamic("6e", ["6c", "5d", "5f", "3c", "8", "61", "63", "64", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("6f", ["6d", "5e", "60", "3d", "8", "62", "64", "65", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMChildrenOperations = $__require('6c');
-  var DOMPropertyOperations = $__require('5d');
-  var ReactComponentBrowserEnvironment = $__require('5f');
-  var ReactMount = $__require('3c');
+  var DOMChildrenOperations = $__require('6d');
+  var DOMPropertyOperations = $__require('5e');
+  var ReactComponentBrowserEnvironment = $__require('60');
+  var ReactMount = $__require('3d');
   var assign = $__require('8');
-  var escapeTextContentForBrowser = $__require('61');
-  var setTextContent = $__require('63');
-  var validateDOMNesting = $__require('64');
+  var escapeTextContentForBrowser = $__require('62');
+  var setTextContent = $__require('64');
+  var validateDOMNesting = $__require('65');
   var ReactDOMTextComponent = function(props) {};
   assign(ReactDOMTextComponent.prototype, {
     construct: function(text) {
@@ -4506,7 +5000,7 @@ $__System.registerDynamic("6e", ["6c", "5d", "5f", "3c", "8", "61", "63", "64", 
   return module.exports;
 });
 
-$__System.registerDynamic("6f", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("70", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -4528,21 +5022,21 @@ $__System.registerDynamic("6f", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("70", ["71", "31", "5", "d", "3c", "f", "8", "35", "6f", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("71", ["72", "32", "5", "d", "3d", "f", "8", "36", "70", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventListener = $__require('71');
-  var ExecutionEnvironment = $__require('31');
+  var EventListener = $__require('72');
+  var ExecutionEnvironment = $__require('32');
   var PooledClass = $__require('5');
   var ReactInstanceHandles = $__require('d');
-  var ReactMount = $__require('3c');
+  var ReactMount = $__require('3d');
   var ReactUpdates = $__require('f');
   var assign = $__require('8');
-  var getEventTarget = $__require('35');
-  var getUnboundedScrollPosition = $__require('6f');
+  var getEventTarget = $__require('36');
+  var getUnboundedScrollPosition = $__require('70');
   var DOCUMENT_FRAGMENT_NODE_TYPE = 11;
   function findParent(node) {
     var nodeID = ReactMount.getID(node);
@@ -4658,13 +5152,13 @@ $__System.registerDynamic("70", ["71", "31", "5", "d", "3c", "f", "8", "35", "6f
   return module.exports;
 });
 
-$__System.registerDynamic("22", ["72", "1c", "11", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("22", ["73", "1c", "11", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactNoopUpdateQueue = $__require('72');
+  var ReactNoopUpdateQueue = $__require('73');
   var canDefineProperty = $__require('1c');
   var emptyObject = $__require('11');
   var invariant = $__require('12');
@@ -4718,7 +5212,7 @@ $__System.registerDynamic("22", ["72", "1c", "11", "12", "1e", "3"], true, funct
   return module.exports;
 });
 
-$__System.registerDynamic("72", ["1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("73", ["1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -4755,7 +5249,7 @@ $__System.registerDynamic("72", ["1e", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("23", ["22", "c", "19", "1a", "72", "8", "11", "12", "6b", "32", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("23", ["22", "c", "19", "1a", "73", "8", "11", "12", "6c", "33", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -4765,12 +5259,12 @@ $__System.registerDynamic("23", ["22", "c", "19", "1a", "72", "8", "11", "12", "
   var ReactElement = $__require('c');
   var ReactPropTypeLocations = $__require('19');
   var ReactPropTypeLocationNames = $__require('1a');
-  var ReactNoopUpdateQueue = $__require('72');
+  var ReactNoopUpdateQueue = $__require('73');
   var assign = $__require('8');
   var emptyObject = $__require('11');
   var invariant = $__require('12');
-  var keyMirror = $__require('6b');
-  var keyOf = $__require('32');
+  var keyMirror = $__require('6c');
+  var keyOf = $__require('33');
   var warning = $__require('1e');
   var MIXINS_KEY = keyOf({mixins: null});
   var SpecPolicy = keyMirror({
@@ -5089,21 +5583,21 @@ $__System.registerDynamic("23", ["22", "c", "19", "1a", "72", "8", "11", "12", "
   return module.exports;
 });
 
-$__System.registerDynamic("73", ["3e", "34", "5a", "23", "74", "5e", "75", "4c", "76", "f", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("74", ["3f", "35", "5b", "23", "75", "5f", "76", "4d", "77", "f", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMProperty = $__require('3e');
-  var EventPluginHub = $__require('34');
-  var ReactComponentEnvironment = $__require('5a');
+  var DOMProperty = $__require('3f');
+  var EventPluginHub = $__require('35');
+  var ReactComponentEnvironment = $__require('5b');
   var ReactClass = $__require('23');
-  var ReactEmptyComponent = $__require('74');
-  var ReactBrowserEventEmitter = $__require('5e');
-  var ReactNativeComponent = $__require('75');
-  var ReactPerf = $__require('4c');
-  var ReactRootIndex = $__require('76');
+  var ReactEmptyComponent = $__require('75');
+  var ReactBrowserEventEmitter = $__require('5f');
+  var ReactNativeComponent = $__require('76');
+  var ReactPerf = $__require('4d');
+  var ReactRootIndex = $__require('77');
   var ReactUpdates = $__require('f');
   var ReactInjection = {
     Component: ReactComponentEnvironment.injection,
@@ -5121,7 +5615,7 @@ $__System.registerDynamic("73", ["3e", "34", "5a", "23", "74", "5e", "75", "4c",
   return module.exports;
 });
 
-$__System.registerDynamic("77", ["6", "5", "5e", "78", "79", "7", "8", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("78", ["6", "5", "5f", "79", "7a", "7", "8", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5129,9 +5623,9 @@ $__System.registerDynamic("77", ["6", "5", "5e", "78", "79", "7", "8", "3"], tru
       GLOBAL = this;
   var CallbackQueue = $__require('6');
   var PooledClass = $__require('5');
-  var ReactBrowserEventEmitter = $__require('5e');
-  var ReactDOMFeatureFlags = $__require('78');
-  var ReactInputSelection = $__require('79');
+  var ReactBrowserEventEmitter = $__require('5f');
+  var ReactDOMFeatureFlags = $__require('79');
+  var ReactInputSelection = $__require('7a');
   var Transaction = $__require('7');
   var assign = $__require('8');
   var SELECTION_RESTORATION = {
@@ -5181,7 +5675,7 @@ $__System.registerDynamic("77", ["6", "5", "5e", "78", "79", "7", "8", "3"], tru
   return module.exports;
 });
 
-$__System.registerDynamic("7a", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("7b", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5223,13 +5717,13 @@ $__System.registerDynamic("7a", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("2a", ["31", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("2b", ["32", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
+  var ExecutionEnvironment = $__require('32');
   var contentKey = null;
   function getTextContentAccessor() {
     if (!contentKey && ExecutionEnvironment.canUseDOM) {
@@ -5241,15 +5735,15 @@ $__System.registerDynamic("2a", ["31", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("7b", ["31", "7a", "2a", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("7c", ["32", "7b", "2b", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
-  var getNodeForCharacterOffset = $__require('7a');
-  var getTextContentAccessor = $__require('2a');
+  var ExecutionEnvironment = $__require('32');
+  var getNodeForCharacterOffset = $__require('7b');
+  var getTextContentAccessor = $__require('2b');
   function isCollapsed(anchorNode, anchorOffset, focusNode, focusOffset) {
     return anchorNode === focusNode && anchorOffset === focusOffset;
   }
@@ -5357,7 +5851,7 @@ $__System.registerDynamic("7b", ["31", "7a", "2a", "3"], true, function($__requi
   return module.exports;
 });
 
-$__System.registerDynamic("43", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("44", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5372,16 +5866,16 @@ $__System.registerDynamic("43", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("79", ["7b", "7c", "43", "7d", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("7a", ["7c", "7d", "44", "7e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactDOMSelection = $__require('7b');
-  var containsNode = $__require('7c');
-  var focusNode = $__require('43');
-  var getActiveElement = $__require('7d');
+  var ReactDOMSelection = $__require('7c');
+  var containsNode = $__require('7d');
+  var focusNode = $__require('44');
+  var getActiveElement = $__require('7e');
   function isInDocument(node) {
     return containsNode(document.documentElement, node);
   }
@@ -5455,7 +5949,7 @@ $__System.registerDynamic("79", ["7b", "7c", "43", "7d", "3"], true, function($_
   return module.exports;
 });
 
-$__System.registerDynamic("7d", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("7e", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5475,7 +5969,7 @@ $__System.registerDynamic("7d", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("37", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("38", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5506,7 +6000,7 @@ $__System.registerDynamic("37", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("65", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("66", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5537,21 +6031,21 @@ $__System.registerDynamic("65", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("7e", ["2f", "30", "31", "79", "2c", "7d", "37", "32", "65", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("7f", ["30", "31", "32", "7a", "2d", "7e", "38", "33", "66", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventPropagators = $__require('30');
-  var ExecutionEnvironment = $__require('31');
-  var ReactInputSelection = $__require('79');
-  var SyntheticEvent = $__require('2c');
-  var getActiveElement = $__require('7d');
-  var isTextInputElement = $__require('37');
-  var keyOf = $__require('32');
-  var shallowEqual = $__require('65');
+  var EventConstants = $__require('30');
+  var EventPropagators = $__require('31');
+  var ExecutionEnvironment = $__require('32');
+  var ReactInputSelection = $__require('7a');
+  var SyntheticEvent = $__require('2d');
+  var getActiveElement = $__require('7e');
+  var isTextInputElement = $__require('38');
+  var keyOf = $__require('33');
+  var shallowEqual = $__require('66');
   var topLevelTypes = EventConstants.topLevelTypes;
   var skipSelectionChangeEvent = ExecutionEnvironment.canUseDOM && 'documentMode' in document && document.documentMode <= 11;
   var eventTypes = {select: {
@@ -5652,7 +6146,7 @@ $__System.registerDynamic("7e", ["2f", "30", "31", "79", "2c", "7d", "37", "32",
   return module.exports;
 });
 
-$__System.registerDynamic("7f", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("80", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5666,7 +6160,7 @@ $__System.registerDynamic("7f", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("71", ["9", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("72", ["9", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -5706,17 +6200,17 @@ $__System.registerDynamic("71", ["9", "3"], true, function($__require, exports, 
   return module.exports;
 });
 
-$__System.registerDynamic("30", ["2f", "34", "1e", "80", "81", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("31", ["30", "35", "1e", "81", "82", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventPluginHub = $__require('34');
+  var EventConstants = $__require('30');
+  var EventPluginHub = $__require('35');
   var warning = $__require('1e');
-  var accumulateInto = $__require('80');
-  var forEachAccumulated = $__require('81');
+  var accumulateInto = $__require('81');
+  var forEachAccumulated = $__require('82');
   var PropagationPhases = EventConstants.PropagationPhases;
   var getListener = EventPluginHub.getListener;
   function listenerAtPhase(id, event, propagationPhase) {
@@ -5781,13 +6275,13 @@ $__System.registerDynamic("30", ["2f", "34", "1e", "80", "81", "3"], true, funct
   return module.exports;
 });
 
-$__System.registerDynamic("82", ["2c", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("83", ["2d", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticEvent = $__require('2c');
+  var SyntheticEvent = $__require('2d');
   var ClipboardEventInterface = {clipboardData: function(event) {
       return 'clipboardData' in event ? event.clipboardData : window.clipboardData;
     }};
@@ -5799,13 +6293,13 @@ $__System.registerDynamic("82", ["2c", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("83", ["84", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("84", ["85", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticUIEvent = $__require('84');
+  var SyntheticUIEvent = $__require('85');
   var FocusEventInterface = {relatedTarget: null};
   function SyntheticFocusEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget) {
     SyntheticUIEvent.call(this, dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget);
@@ -5815,13 +6309,13 @@ $__System.registerDynamic("83", ["84", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("85", ["86", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("86", ["87", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var getEventCharCode = $__require('86');
+  var getEventCharCode = $__require('87');
   var normalizeKey = {
     'Esc': 'Escape',
     'Spacebar': ' ',
@@ -5894,16 +6388,16 @@ $__System.registerDynamic("85", ["86", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("87", ["84", "86", "85", "88", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("88", ["85", "87", "86", "89", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticUIEvent = $__require('84');
-  var getEventCharCode = $__require('86');
-  var getEventKey = $__require('85');
-  var getEventModifierState = $__require('88');
+  var SyntheticUIEvent = $__require('85');
+  var getEventCharCode = $__require('87');
+  var getEventKey = $__require('86');
+  var getEventModifierState = $__require('89');
   var KeyboardEventInterface = {
     key: getEventKey,
     location: null,
@@ -5944,13 +6438,13 @@ $__System.registerDynamic("87", ["84", "86", "85", "88", "3"], true, function($_
   return module.exports;
 });
 
-$__System.registerDynamic("89", ["3b", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("8a", ["3c", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticMouseEvent = $__require('3b');
+  var SyntheticMouseEvent = $__require('3c');
   var DragEventInterface = {dataTransfer: null};
   function SyntheticDragEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget) {
     SyntheticMouseEvent.call(this, dispatchConfig, dispatchMarker, nativeEvent, nativeEventTarget);
@@ -5960,14 +6454,14 @@ $__System.registerDynamic("89", ["3b", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("8a", ["84", "88", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("8b", ["85", "89", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticUIEvent = $__require('84');
-  var getEventModifierState = $__require('88');
+  var SyntheticUIEvent = $__require('85');
+  var getEventModifierState = $__require('89');
   var TouchEventInterface = {
     touches: null,
     targetTouches: null,
@@ -5986,7 +6480,7 @@ $__System.registerDynamic("8a", ["84", "88", "3"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("2c", ["5", "8", "9", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("2d", ["5", "8", "9", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -6099,7 +6593,7 @@ $__System.registerDynamic("2c", ["5", "8", "9", "1e", "3"], true, function($__re
   return module.exports;
 });
 
-$__System.registerDynamic("35", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("36", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -6113,14 +6607,14 @@ $__System.registerDynamic("35", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("84", ["2c", "35", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("85", ["2d", "36", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticEvent = $__require('2c');
-  var getEventTarget = $__require('35');
+  var SyntheticEvent = $__require('2d');
+  var getEventTarget = $__require('36');
   var UIEventInterface = {
     view: function(event) {
       if (event.view) {
@@ -6149,7 +6643,7 @@ $__System.registerDynamic("84", ["2c", "35", "3"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("88", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("89", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -6177,15 +6671,15 @@ $__System.registerDynamic("88", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("3b", ["84", "8b", "88", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("3c", ["85", "8c", "89", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticUIEvent = $__require('84');
-  var ViewportMetrics = $__require('8b');
-  var getEventModifierState = $__require('88');
+  var SyntheticUIEvent = $__require('85');
+  var ViewportMetrics = $__require('8c');
+  var getEventModifierState = $__require('89');
   var MouseEventInterface = {
     screenX: null,
     screenY: null,
@@ -6222,13 +6716,13 @@ $__System.registerDynamic("3b", ["84", "8b", "88", "3"], true, function($__requi
   return module.exports;
 });
 
-$__System.registerDynamic("8c", ["3b", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("8d", ["3c", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var SyntheticMouseEvent = $__require('3b');
+  var SyntheticMouseEvent = $__require('3c');
   var WheelEventInterface = {
     deltaX: function(event) {
       return 'deltaX' in event ? event.deltaX : 'wheelDeltaX' in event ? -event.wheelDeltaX : 0;
@@ -6247,7 +6741,7 @@ $__System.registerDynamic("8c", ["3b", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("86", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("87", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -6273,7 +6767,7 @@ $__System.registerDynamic("86", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("32", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("33", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -6293,29 +6787,29 @@ $__System.registerDynamic("32", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("8d", ["2f", "71", "30", "3c", "82", "2c", "83", "87", "3b", "89", "8a", "84", "8c", "9", "86", "12", "32", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("8e", ["30", "72", "31", "3d", "83", "2d", "84", "88", "3c", "8a", "8b", "85", "8d", "9", "87", "12", "33", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventListener = $__require('71');
-  var EventPropagators = $__require('30');
-  var ReactMount = $__require('3c');
-  var SyntheticClipboardEvent = $__require('82');
-  var SyntheticEvent = $__require('2c');
-  var SyntheticFocusEvent = $__require('83');
-  var SyntheticKeyboardEvent = $__require('87');
-  var SyntheticMouseEvent = $__require('3b');
-  var SyntheticDragEvent = $__require('89');
-  var SyntheticTouchEvent = $__require('8a');
-  var SyntheticUIEvent = $__require('84');
-  var SyntheticWheelEvent = $__require('8c');
+  var EventConstants = $__require('30');
+  var EventListener = $__require('72');
+  var EventPropagators = $__require('31');
+  var ReactMount = $__require('3d');
+  var SyntheticClipboardEvent = $__require('83');
+  var SyntheticEvent = $__require('2d');
+  var SyntheticFocusEvent = $__require('84');
+  var SyntheticKeyboardEvent = $__require('88');
+  var SyntheticMouseEvent = $__require('3c');
+  var SyntheticDragEvent = $__require('8a');
+  var SyntheticTouchEvent = $__require('8b');
+  var SyntheticUIEvent = $__require('85');
+  var SyntheticWheelEvent = $__require('8d');
   var emptyFunction = $__require('9');
-  var getEventCharCode = $__require('86');
+  var getEventCharCode = $__require('87');
   var invariant = $__require('12');
-  var keyOf = $__require('32');
+  var keyOf = $__require('33');
   var topLevelTypes = EventConstants.topLevelTypes;
   var eventTypes = {
     abort: {phasedRegistrationNames: {
@@ -6726,13 +7220,13 @@ $__System.registerDynamic("8d", ["2f", "71", "30", "3c", "82", "2c", "83", "87",
   return module.exports;
 });
 
-$__System.registerDynamic("8e", ["3e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("8f", ["3f", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMProperty = $__require('3e');
+  var DOMProperty = $__require('3f');
   var MUST_USE_ATTRIBUTE = DOMProperty.injection.MUST_USE_ATTRIBUTE;
   var NS = {
     xlink: 'http://www.w3.org/1999/xlink',
@@ -6845,7 +7339,7 @@ $__System.registerDynamic("8e", ["3e", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("8f", ["8", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("90", ["8", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -7001,13 +7495,13 @@ $__System.registerDynamic("8f", ["8", "3"], true, function($__require, exports, 
   return module.exports;
 });
 
-$__System.registerDynamic("90", ["31", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("91", ["32", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
+  var ExecutionEnvironment = $__require('32');
   var performance;
   if (ExecutionEnvironment.canUseDOM) {
     performance = window.performance || window.msPerformance || window.webkitPerformance;
@@ -7016,13 +7510,13 @@ $__System.registerDynamic("90", ["31", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("91", ["90", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("92", ["91", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var performance = $__require('90');
+  var performance = $__require('91');
   var performanceNow;
   if (performance.now) {
     performanceNow = function() {
@@ -7037,17 +7531,17 @@ $__System.registerDynamic("91", ["90", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("92", ["3e", "8f", "3c", "4c", "91", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("93", ["3f", "90", "3d", "4d", "92", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMProperty = $__require('3e');
-  var ReactDefaultPerfAnalysis = $__require('8f');
-  var ReactMount = $__require('3c');
-  var ReactPerf = $__require('4c');
-  var performanceNow = $__require('91');
+  var DOMProperty = $__require('3f');
+  var ReactDefaultPerfAnalysis = $__require('90');
+  var ReactMount = $__require('3d');
+  var ReactPerf = $__require('4d');
+  var performanceNow = $__require('92');
   function roundFloat(val) {
     return Math.floor(val * 100) / 100;
   }
@@ -7234,33 +7728,33 @@ $__System.registerDynamic("92", ["3e", "8f", "3c", "4c", "91", "3"], true, funct
   return module.exports;
 });
 
-$__System.registerDynamic("14", ["2e", "33", "38", "39", "3a", "31", "3d", "3f", "5f", "b", "5c", "6e", "70", "73", "d", "3c", "77", "7e", "7f", "8d", "8e", "92", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("14", ["2f", "34", "39", "3a", "3b", "32", "3e", "40", "60", "b", "5d", "6f", "71", "74", "d", "3d", "78", "7f", "80", "8e", "8f", "93", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var BeforeInputEventPlugin = $__require('2e');
-  var ChangeEventPlugin = $__require('33');
-  var ClientReactRootIndex = $__require('38');
-  var DefaultEventPluginOrder = $__require('39');
-  var EnterLeaveEventPlugin = $__require('3a');
-  var ExecutionEnvironment = $__require('31');
-  var HTMLDOMPropertyConfig = $__require('3d');
-  var ReactBrowserComponentMixin = $__require('3f');
-  var ReactComponentBrowserEnvironment = $__require('5f');
+  var BeforeInputEventPlugin = $__require('2f');
+  var ChangeEventPlugin = $__require('34');
+  var ClientReactRootIndex = $__require('39');
+  var DefaultEventPluginOrder = $__require('3a');
+  var EnterLeaveEventPlugin = $__require('3b');
+  var ExecutionEnvironment = $__require('32');
+  var HTMLDOMPropertyConfig = $__require('3e');
+  var ReactBrowserComponentMixin = $__require('40');
+  var ReactComponentBrowserEnvironment = $__require('60');
   var ReactDefaultBatchingStrategy = $__require('b');
-  var ReactDOMComponent = $__require('5c');
-  var ReactDOMTextComponent = $__require('6e');
-  var ReactEventListener = $__require('70');
-  var ReactInjection = $__require('73');
+  var ReactDOMComponent = $__require('5d');
+  var ReactDOMTextComponent = $__require('6f');
+  var ReactEventListener = $__require('71');
+  var ReactInjection = $__require('74');
   var ReactInstanceHandles = $__require('d');
-  var ReactMount = $__require('3c');
-  var ReactReconcileTransaction = $__require('77');
-  var SelectEventPlugin = $__require('7e');
-  var ServerReactRootIndex = $__require('7f');
-  var SimpleEventPlugin = $__require('8d');
-  var SVGDOMPropertyConfig = $__require('8e');
+  var ReactMount = $__require('3d');
+  var ReactReconcileTransaction = $__require('78');
+  var SelectEventPlugin = $__require('7f');
+  var ServerReactRootIndex = $__require('80');
+  var SimpleEventPlugin = $__require('8e');
+  var SVGDOMPropertyConfig = $__require('8f');
   var alreadyInjected = false;
   function inject() {
     if (alreadyInjected) {
@@ -7291,7 +7785,7 @@ $__System.registerDynamic("14", ["2e", "33", "38", "39", "3a", "31", "3d", "3f",
     if (process.env.NODE_ENV !== 'production') {
       var url = ExecutionEnvironment.canUseDOM && window.location.href || '';
       if (/[?&]react_perf\b/.test(url)) {
-        var ReactDefaultPerf = $__require('92');
+        var ReactDefaultPerf = $__require('93');
         ReactDefaultPerf.start();
       }
     }
@@ -7310,15 +7804,15 @@ $__System.registerDynamic("15", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("41", ["1b", "40", "3c", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("42", ["1b", "41", "3d", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
   var ReactCurrentOwner = $__require('1b');
-  var ReactInstanceMap = $__require('40');
-  var ReactMount = $__require('3c');
+  var ReactInstanceMap = $__require('41');
+  var ReactMount = $__require('3d');
   var invariant = $__require('12');
   var warning = $__require('1e');
   function findDOMNode(componentOrElement) {
@@ -7345,7 +7839,7 @@ $__System.registerDynamic("41", ["1b", "40", "3c", "12", "1e", "3"], true, funct
   return module.exports;
 });
 
-$__System.registerDynamic("3e", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("3f", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -7449,7 +7943,7 @@ $__System.registerDynamic("3e", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("93", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("94", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -7569,13 +8063,13 @@ $__System.registerDynamic("93", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("2f", ["6b", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("30", ["6c", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var keyMirror = $__require('6b');
+  var keyMirror = $__require('6c');
   var PropagationPhases = keyMirror({
     bubbled: null,
     captured: null
@@ -7653,14 +8147,14 @@ $__System.registerDynamic("2f", ["6b", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("94", ["2f", "95", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("95", ["30", "96", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var ReactErrorUtils = $__require('95');
+  var EventConstants = $__require('30');
+  var ReactErrorUtils = $__require('96');
   var invariant = $__require('12');
   var warning = $__require('1e');
   var injection = {
@@ -7786,7 +8280,7 @@ $__System.registerDynamic("94", ["2f", "95", "12", "1e", "3"], true, function($_
   return module.exports;
 });
 
-$__System.registerDynamic("95", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("96", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -7832,7 +8326,7 @@ $__System.registerDynamic("95", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("80", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("81", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -7863,7 +8357,7 @@ $__System.registerDynamic("80", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("81", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("82", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -7880,17 +8374,17 @@ $__System.registerDynamic("81", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("34", ["93", "94", "95", "80", "81", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("35", ["94", "95", "96", "81", "82", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventPluginRegistry = $__require('93');
-  var EventPluginUtils = $__require('94');
-  var ReactErrorUtils = $__require('95');
-  var accumulateInto = $__require('80');
-  var forEachAccumulated = $__require('81');
+  var EventPluginRegistry = $__require('94');
+  var EventPluginUtils = $__require('95');
+  var ReactErrorUtils = $__require('96');
+  var accumulateInto = $__require('81');
+  var forEachAccumulated = $__require('82');
   var invariant = $__require('12');
   var warning = $__require('1e');
   var listenerBank = {};
@@ -8010,13 +8504,13 @@ $__System.registerDynamic("34", ["93", "94", "95", "80", "81", "12", "1e", "3"],
   return module.exports;
 });
 
-$__System.registerDynamic("96", ["34", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("97", ["35", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventPluginHub = $__require('34');
+  var EventPluginHub = $__require('35');
   function runEventQueueInBatch(events) {
     EventPluginHub.enqueueEvents(events);
     EventPluginHub.processEventQueue(false);
@@ -8029,7 +8523,7 @@ $__System.registerDynamic("96", ["34", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("8b", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("8c", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8047,13 +8541,13 @@ $__System.registerDynamic("8b", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("36", ["31", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("37", ["32", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
+  var ExecutionEnvironment = $__require('32');
   var useHasFeature;
   if (ExecutionEnvironment.canUseDOM) {
     useHasFeature = document.implementation && document.implementation.hasFeature && document.implementation.hasFeature('', '') !== true;
@@ -8078,20 +8572,20 @@ $__System.registerDynamic("36", ["31", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("5e", ["2f", "34", "93", "96", "4c", "8b", "8", "36", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("5f", ["30", "35", "94", "97", "4d", "8c", "8", "37", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var EventConstants = $__require('2f');
-  var EventPluginHub = $__require('34');
-  var EventPluginRegistry = $__require('93');
-  var ReactEventEmitterMixin = $__require('96');
-  var ReactPerf = $__require('4c');
-  var ViewportMetrics = $__require('8b');
+  var EventConstants = $__require('30');
+  var EventPluginHub = $__require('35');
+  var EventPluginRegistry = $__require('94');
+  var ReactEventEmitterMixin = $__require('97');
+  var ReactPerf = $__require('4d');
+  var ViewportMetrics = $__require('8c');
   var assign = $__require('8');
-  var isEventSupported = $__require('36');
+  var isEventSupported = $__require('37');
   var alreadyListeningTo = {};
   var isMonitoringScrollValue = false;
   var reactTopListenersCounter = 0;
@@ -8246,7 +8740,7 @@ $__System.registerDynamic("5e", ["2f", "34", "93", "96", "4c", "8b", "8", "36", 
   return module.exports;
 });
 
-$__System.registerDynamic("78", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("79", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8257,7 +8751,7 @@ $__System.registerDynamic("78", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("76", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("77", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8274,13 +8768,13 @@ $__System.registerDynamic("76", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("d", ["76", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("d", ["77", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactRootIndex = $__require('76');
+  var ReactRootIndex = $__require('77');
   var invariant = $__require('12');
   var SEPARATOR = '.';
   var SEPARATOR_LENGTH = SEPARATOR.length;
@@ -8398,7 +8892,7 @@ $__System.registerDynamic("d", ["76", "12", "3"], true, function($__require, exp
   return module.exports;
 });
 
-$__System.registerDynamic("97", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("98", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8429,13 +8923,13 @@ $__System.registerDynamic("97", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("e", ["97", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("e", ["98", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var adler32 = $__require('97');
+  var adler32 = $__require('98');
   var TAG_END = /\/?>/;
   var ReactMarkupChecksum = {
     CHECKSUM_ATTR_NAME: 'data-react-checksum',
@@ -8454,7 +8948,7 @@ $__System.registerDynamic("e", ["97", "3"], true, function($__require, exports, 
   return module.exports;
 });
 
-$__System.registerDynamic("98", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("99", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8467,13 +8961,13 @@ $__System.registerDynamic("98", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("99", ["98", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("9a", ["99", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var isNode = $__require('98');
+  var isNode = $__require('99');
   function isTextNode(object) {
     return isNode(object) && object.nodeType == 3;
   }
@@ -8481,13 +8975,13 @@ $__System.registerDynamic("99", ["98", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("7c", ["99", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("7d", ["9a", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var isTextNode = $__require('99');
+  var isTextNode = $__require('9a');
   function containsNode(_x, _x2) {
     var _again = true;
     _function: while (_again) {
@@ -8518,7 +9012,7 @@ $__System.registerDynamic("7c", ["99", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("5a", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("5b", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8542,7 +9036,7 @@ $__System.registerDynamic("5a", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("6b", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("6c", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8565,13 +9059,13 @@ $__System.registerDynamic("6b", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("19", ["6b", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("19", ["6c", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var keyMirror = $__require('6b');
+  var keyMirror = $__require('6c');
   var ReactPropTypeLocations = keyMirror({
     prop: null,
     context: null,
@@ -8599,7 +9093,7 @@ $__System.registerDynamic("1a", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("40", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("41", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8759,7 +9253,7 @@ $__System.registerDynamic("5", ["12", "3"], true, function($__require, exports, 
   return module.exports;
 });
 
-$__System.registerDynamic("4c", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("4d", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8901,7 +9395,7 @@ $__System.registerDynamic("7", ["12", "3"], true, function($__require, exports, 
   return module.exports;
 });
 
-$__System.registerDynamic("f", ["6", "5", "4c", "56", "7", "8", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("f", ["6", "5", "4d", "57", "7", "8", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -8909,8 +9403,8 @@ $__System.registerDynamic("f", ["6", "5", "4c", "56", "7", "8", "12", "3"], true
       GLOBAL = this;
   var CallbackQueue = $__require('6');
   var PooledClass = $__require('5');
-  var ReactPerf = $__require('4c');
-  var ReactReconciler = $__require('56');
+  var ReactPerf = $__require('4d');
+  var ReactReconciler = $__require('57');
   var Transaction = $__require('7');
   var assign = $__require('8');
   var invariant = $__require('12');
@@ -9042,7 +9536,7 @@ $__System.registerDynamic("f", ["6", "5", "4c", "56", "7", "8", "12", "3"], true
   return module.exports;
 });
 
-$__System.registerDynamic("60", ["1b", "c", "40", "f", "8", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("61", ["1b", "c", "41", "f", "8", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -9050,7 +9544,7 @@ $__System.registerDynamic("60", ["1b", "c", "40", "f", "8", "12", "1e", "3"], tr
       GLOBAL = this;
   var ReactCurrentOwner = $__require('1b');
   var ReactElement = $__require('c');
-  var ReactInstanceMap = $__require('40');
+  var ReactInstanceMap = $__require('41');
   var ReactUpdates = $__require('f');
   var assign = $__require('8');
   var invariant = $__require('12');
@@ -9189,25 +9683,25 @@ $__System.registerDynamic("11", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("9a", ["5a", "1b", "c", "40", "4c", "19", "1a", "56", "60", "8", "11", "12", "57", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("9b", ["5b", "1b", "c", "41", "4d", "19", "1a", "57", "61", "8", "11", "12", "58", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactComponentEnvironment = $__require('5a');
+  var ReactComponentEnvironment = $__require('5b');
   var ReactCurrentOwner = $__require('1b');
   var ReactElement = $__require('c');
-  var ReactInstanceMap = $__require('40');
-  var ReactPerf = $__require('4c');
+  var ReactInstanceMap = $__require('41');
+  var ReactPerf = $__require('4d');
   var ReactPropTypeLocations = $__require('19');
   var ReactPropTypeLocationNames = $__require('1a');
-  var ReactReconciler = $__require('56');
-  var ReactUpdateQueue = $__require('60');
+  var ReactReconciler = $__require('57');
+  var ReactUpdateQueue = $__require('61');
   var assign = $__require('8');
   var emptyObject = $__require('11');
   var invariant = $__require('12');
-  var shouldUpdateReactComponent = $__require('57');
+  var shouldUpdateReactComponent = $__require('58');
   var warning = $__require('1e');
   function getDeclarationErrorAddendum(component) {
     var owner = component._currentElement._owner || null;
@@ -9742,7 +10236,7 @@ $__System.registerDynamic("c", ["1b", "8", "1c", "3"], true, function($__require
   return module.exports;
 });
 
-$__System.registerDynamic("9b", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("9c", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -9767,7 +10261,7 @@ $__System.registerDynamic("9b", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("9c", ["12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("9d", ["12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -9793,13 +10287,13 @@ $__System.registerDynamic("9c", ["12", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("9d", ["9c", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("9e", ["9d", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactOwner = $__require('9c');
+  var ReactOwner = $__require('9d');
   var ReactRef = {};
   function attachRef(ref, component, owner) {
     if (typeof ref === 'function') {
@@ -9842,13 +10336,13 @@ $__System.registerDynamic("9d", ["9c", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("56", ["9d", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("57", ["9e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactRef = $__require('9d');
+  var ReactRef = $__require('9e');
   function attachRefs() {
     ReactRef.attachRefs(this, this._currentElement);
   }
@@ -9886,15 +10380,15 @@ $__System.registerDynamic("56", ["9d", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("74", ["c", "9b", "56", "8", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("75", ["c", "9c", "57", "8", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
   var ReactElement = $__require('c');
-  var ReactEmptyComponentRegistry = $__require('9b');
-  var ReactReconciler = $__require('56');
+  var ReactEmptyComponentRegistry = $__require('9c');
+  var ReactReconciler = $__require('57');
   var assign = $__require('8');
   var placeholderElement;
   var ReactEmptyComponentInjection = {injectEmptyComponent: function(component) {
@@ -9925,7 +10419,7 @@ $__System.registerDynamic("74", ["c", "9b", "56", "8", "3"], true, function($__r
   return module.exports;
 });
 
-$__System.registerDynamic("75", ["8", "12", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("76", ["8", "12", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -9980,15 +10474,15 @@ $__System.registerDynamic("75", ["8", "12", "3"], true, function($__require, exp
   return module.exports;
 });
 
-$__System.registerDynamic("10", ["9a", "74", "75", "8", "12", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("10", ["9b", "75", "76", "8", "12", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactCompositeComponent = $__require('9a');
-  var ReactEmptyComponent = $__require('74');
-  var ReactNativeComponent = $__require('75');
+  var ReactCompositeComponent = $__require('9b');
+  var ReactEmptyComponent = $__require('75');
+  var ReactNativeComponent = $__require('76');
   var assign = $__require('8');
   var invariant = $__require('12');
   var warning = $__require('1e');
@@ -10078,13 +10572,13 @@ $__System.registerDynamic("12", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("62", ["31", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("63", ["32", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ExecutionEnvironment = $__require('31');
+  var ExecutionEnvironment = $__require('32');
   var WHITESPACE_TEST = /^[ \r\n\t\f]/;
   var NONVISIBLE_TEST = /<(!--|link|noscript|meta|script|style)[ \r\n\t\f\/>]/;
   var setInnerHTML = function(node, html) {
@@ -10123,7 +10617,7 @@ $__System.registerDynamic("62", ["31", "3"], true, function($__require, exports,
   return module.exports;
 });
 
-$__System.registerDynamic("57", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("58", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -10178,7 +10672,7 @@ $__System.registerDynamic("8", ["3"], true, function($__require, exports, module
   return module.exports;
 });
 
-$__System.registerDynamic("64", ["8", "9", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("65", ["8", "9", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -10421,33 +10915,33 @@ $__System.registerDynamic("64", ["8", "9", "1e", "3"], true, function($__require
   return module.exports;
 });
 
-$__System.registerDynamic("3c", ["3e", "5e", "1b", "78", "c", "9b", "d", "40", "e", "4c", "56", "60", "f", "8", "11", "7c", "10", "12", "62", "57", "64", "1e", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("3d", ["3f", "5f", "1b", "79", "c", "9c", "d", "41", "e", "4d", "57", "61", "f", "8", "11", "7d", "10", "12", "63", "58", "65", "1e", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var DOMProperty = $__require('3e');
-  var ReactBrowserEventEmitter = $__require('5e');
+  var DOMProperty = $__require('3f');
+  var ReactBrowserEventEmitter = $__require('5f');
   var ReactCurrentOwner = $__require('1b');
-  var ReactDOMFeatureFlags = $__require('78');
+  var ReactDOMFeatureFlags = $__require('79');
   var ReactElement = $__require('c');
-  var ReactEmptyComponentRegistry = $__require('9b');
+  var ReactEmptyComponentRegistry = $__require('9c');
   var ReactInstanceHandles = $__require('d');
-  var ReactInstanceMap = $__require('40');
+  var ReactInstanceMap = $__require('41');
   var ReactMarkupChecksum = $__require('e');
-  var ReactPerf = $__require('4c');
-  var ReactReconciler = $__require('56');
-  var ReactUpdateQueue = $__require('60');
+  var ReactPerf = $__require('4d');
+  var ReactReconciler = $__require('57');
+  var ReactUpdateQueue = $__require('61');
   var ReactUpdates = $__require('f');
   var assign = $__require('8');
   var emptyObject = $__require('11');
-  var containsNode = $__require('7c');
+  var containsNode = $__require('7d');
   var instantiateReactComponent = $__require('10');
   var invariant = $__require('12');
-  var setInnerHTML = $__require('62');
-  var shouldUpdateReactComponent = $__require('57');
-  var validateDOMNesting = $__require('64');
+  var setInnerHTML = $__require('63');
+  var shouldUpdateReactComponent = $__require('58');
+  var validateDOMNesting = $__require('65');
   var warning = $__require('1e');
   var ATTR_NAME = DOMProperty.ID_ATTRIBUTE_NAME;
   var nodeCache = {};
@@ -10862,13 +11356,13 @@ $__System.registerDynamic("3c", ["3e", "5e", "1b", "78", "c", "9b", "d", "40", "
   return module.exports;
 });
 
-$__System.registerDynamic("9e", ["3c", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("9f", ["3d", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
-  var ReactMount = $__require('3c');
+  var ReactMount = $__require('3d');
   module.exports = ReactMount.renderSubtreeIntoContainer;
   return module.exports;
 });
@@ -10938,7 +11432,7 @@ $__System.registerDynamic("1e", ["9", "3"], true, function($__require, exports, 
   return module.exports;
 });
 
-$__System.registerDynamic("31", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("32", ["3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -10956,23 +11450,23 @@ $__System.registerDynamic("31", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("27", ["1b", "6e", "14", "d", "3c", "4c", "56", "f", "15", "41", "9e", "1e", "31", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("27", ["1b", "6f", "14", "d", "3d", "4d", "57", "f", "15", "42", "9f", "1e", "32", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
       global = this,
       GLOBAL = this;
   var ReactCurrentOwner = $__require('1b');
-  var ReactDOMTextComponent = $__require('6e');
+  var ReactDOMTextComponent = $__require('6f');
   var ReactDefaultInjection = $__require('14');
   var ReactInstanceHandles = $__require('d');
-  var ReactMount = $__require('3c');
-  var ReactPerf = $__require('4c');
-  var ReactReconciler = $__require('56');
+  var ReactMount = $__require('3d');
+  var ReactPerf = $__require('4d');
+  var ReactReconciler = $__require('57');
   var ReactUpdates = $__require('f');
   var ReactVersion = $__require('15');
-  var findDOMNode = $__require('41');
-  var renderSubtreeIntoContainer = $__require('9e');
+  var findDOMNode = $__require('42');
+  var renderSubtreeIntoContainer = $__require('9f');
   var warning = $__require('1e');
   ReactDefaultInjection.inject();
   var render = ReactPerf.measure('React', 'render', ReactMount.render);
@@ -10994,7 +11488,7 @@ $__System.registerDynamic("27", ["1b", "6e", "14", "d", "3c", "4c", "56", "f", "
     });
   }
   if (process.env.NODE_ENV !== 'production') {
-    var ExecutionEnvironment = $__require('31');
+    var ExecutionEnvironment = $__require('32');
     if (ExecutionEnvironment.canUseDOM && window.top === window.self) {
       if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === 'undefined') {
         if (navigator.userAgent.indexOf('Chrome') > -1 && navigator.userAgent.indexOf('Edge') === -1 || navigator.userAgent.indexOf('Firefox') > -1) {
@@ -11016,7 +11510,7 @@ $__System.registerDynamic("27", ["1b", "6e", "14", "d", "3c", "4c", "56", "f", "
   return module.exports;
 });
 
-$__System.registerDynamic("9f", ["27", "3"], true, function($__require, exports, module) {
+$__System.registerDynamic("a0", ["27", "3"], true, function($__require, exports, module) {
   "use strict";
   var process = $__require("3");
   var define,
@@ -11026,17 +11520,102 @@ $__System.registerDynamic("9f", ["27", "3"], true, function($__require, exports,
   return module.exports;
 });
 
+$__System.registerDynamic("a1", ["3"], true, function($__require, exports, module) {
+  "use strict";
+  var process = $__require("3");
+  var define,
+      global = this,
+      GLOBAL = this;
+  module.exports = function(str) {
+    return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+      return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+    });
+  };
+  return module.exports;
+});
+
+$__System.registerDynamic("a2", ["a1", "3"], true, function($__require, exports, module) {
+  "use strict";
+  var process = $__require("3");
+  var define,
+      global = this,
+      GLOBAL = this;
+  var strictUriEncode = $__require('a1');
+  function encode(value, strict) {
+    return strict ? strictUriEncode(value) : encodeURIComponent(value);
+  }
+  exports.extract = function(str) {
+    return str.split('?')[1] || '';
+  };
+  exports.parse = function(str) {
+    var ret = Object.create(null);
+    if (typeof str !== 'string') {
+      return ret;
+    }
+    str = str.trim().replace(/^(\?|#|&)/, '');
+    if (!str) {
+      return ret;
+    }
+    str.split('&').forEach(function(param) {
+      var parts = param.replace(/\+/g, ' ').split('=');
+      var key = parts.shift();
+      var val = parts.length > 0 ? parts.join('=') : undefined;
+      key = decodeURIComponent(key);
+      val = val === undefined ? null : decodeURIComponent(val);
+      if (ret[key] === undefined) {
+        ret[key] = val;
+      } else if (Array.isArray(ret[key])) {
+        ret[key].push(val);
+      } else {
+        ret[key] = [ret[key], val];
+      }
+    });
+    return ret;
+  };
+  exports.stringify = function(obj, opts) {
+    opts = opts || {};
+    var strict = opts.strict !== false;
+    return obj ? Object.keys(obj).sort().map(function(key) {
+      var val = obj[key];
+      if (val === undefined) {
+        return '';
+      }
+      if (val === null) {
+        return key;
+      }
+      if (Array.isArray(val)) {
+        var result = [];
+        val.slice().sort().forEach(function(val2) {
+          if (val2 === undefined) {
+            return;
+          }
+          if (val2 === null) {
+            result.push(encode(key, strict));
+          } else {
+            result.push(encode(key, strict) + '=' + encode(val2, strict));
+          }
+        });
+        return result.join('&');
+      }
+      return encode(key, strict) + '=' + encode(val, strict);
+    }).filter(function(x) {
+      return x.length > 0;
+    }).join('&') : '';
+  };
+  return module.exports;
+});
+
 (function() {
 var define = $__System.amdDefine;
-define("a0", [], function() {
-  return "# source: GNU Units\nkg!\nkilogram = kg\ns!\nsecond = s\nm!\nmeter = m\nA!\nampere = A\namp = ampere\ncd!\ncandela = cd\nmol!\nmole = mol\nK!\nkelvin = K\nradian = 1\nsr = 1\nsteradian = sr\nUS$!\nbit!\nyotta_ = 1e24\nzetta_ = 1e21\nexa_ = 1e18\npeta_ = 1e15\ntera_ = 1e12\ngiga_ = 1e9\nmega_ = 1e6\nmyria_ = 1e4\nkilo_ = 1e3\nhecto_ = 1e2\ndeca_ = 1e1\ndeka_ = deca\ndeci_ = 1e-1\ncenti_ = 1e-2\nmilli_ = 1e-3\nmicro_ = 1e-6\nnano_ = 1e-9\npico_ = 1e-12\nfemto_ = 1e-15\natto_ = 1e-18\nzepto_ = 1e-21\nyocto_ = 1e-24\nquarter_ = 1|4\nsemi_ = 0.5\ndemi_ = 0.5\nhemi_ = 0.5\nhalf_ = 0.5\ndouble_ = 2\ntriple_ = 3\ntreble_ = 3\nkibi_ = 2^10\nmebi_ = 2^20\ngibi_ = 2^30\ntebi_ = 2^40\npebi_ = 2^50\nexbi_ = 2^60\nKi_ = kibi\nMi_ = mebi\nGi_ = gibi\nTi_ = tebi\nPi_ = pebi\nEi_ = exbi\nY_ = yotta\nZ_ = zetta\nE_ = exa\nP_ = peta\nT_ = tera\nG_ = giga\nM_ = mega\nk_ = kilo\nh_ = hecto\nda_ = deka\nd_ = deci\nc_ = centi\nm_ = milli\nu_ = micro\nn_ = nano\np_ = pico\nf_ = femto\na_ = atto\nz_ = zepto\ny_ = yocto\none = 1\ntwo = 2\ndouble = 2\ncouple = 2\nthree = 3\ntriple = 3\nfour = 4\nquadruple = 4\nfive = 5\nquintuple = 5\nsix = 6\nseven = 7\neight = 8\nnine = 9\nten = 10\neleven = 11\ntwelve = 12\nthirteen = 13\nfourteen = 14\nfifteen = 15\nsixteen = 16\nseventeen = 17\neighteen = 18\nnineteen = 19\ntwenty = 20\nthirty = 30\nforty = 40\nfifty = 50\nsixty = 60\nseventy = 70\neighty = 80\nninety = 90\nhundred = 100\nthousand = 1000\nmillion = 1e6\nshortbillion = 1e9\nshorttrillion = 1e12\nshortquadrillion = 1e15\nshortquintillion = 1e18\nshortsextillion = 1e21\nshortseptillion = 1e24\nshortoctillion = 1e27\nshortnonillion = 1e30\nshortnoventillion = shortnonillion\nshortdecillion = 1e33\nshortundecillion = 1e36\nshortduodecillion = 1e39\nshorttredecillion = 1e42\nshortquattuordecillion = 1e45\nshortquindecillion = 1e48\nshortsexdecillion = 1e51\nshortseptendecillion = 1e54\nshortoctodecillion = 1e57\nshortnovemdecillion = 1e60\nshortvigintillion = 1e63\ncentillion = 1e303\ngoogol = 1e100\nlongbillion = million^2\nlongtrillion = million^3\nlongquadrillion = million^4\nlongquintillion = million^5\nlongsextillion = million^6\nlongseptillion = million^7\nlongoctillion = million^8\nlongnonillion = million^9\nlongnoventillion = longnonillion\nlongdecillion = million^10\nlongundecillion = million^11\nlongduodecillion = million^12\nlongtredecillion = million^13\nlongquattuordecillion = million^14\nlongquindecillion = million^15\nlongsexdecillion = million^16\nlongseptdecillion = million^17\nlongoctodecillion = million^18\nlongnovemdecillion = million^19\nlongvigintillion = million^20\nmilliard = 1000 million\nbilliard = 1000 million^2\ntrilliard = 1000 million^3\nquadrilliard = 1000 million^4\nquintilliard = 1000 million^5\nsextilliard = 1000 million^6\nseptilliard = 1000 million^7\noctilliard = 1000 million^8\nnonilliard = 1000 million^9\nnoventilliard = nonilliard\ndecilliard = 1000 million^10\nlongmilliard = milliard\nlongbilliard = billiard\nlongtrilliard = trilliard\nlongquadrilliard = quadrilliard\nlongquintilliard = quintilliard\nlongsextilliard = sextilliard\nlongseptilliard = septilliard\nlongoctilliard = octilliard\nlongnonilliard = nonilliard\nlongnoventilliard = noventilliard\nlongdecilliard = decilliard\nbillion = shortbillion\ntrillion = shorttrillion\nquadrillion = shortquadrillion\nquintillion = shortquintillion\nsextillion = shortsextillion\nseptillion = shortseptillion\noctillion = shortoctillion\nnonillion = shortnonillion\nnoventillion = shortnoventillion\ndecillion = shortdecillion\nundecillion = shortundecillion\nduodecillion = shortduodecillion\ntredecillion = shorttredecillion\nquattuordecillion = shortquattuordecillion\nquindecillion = shortquindecillion\nsexdecillion = shortsexdecillion\nseptendecillion = shortseptendecillion\noctodecillion = shortoctodecillion\nnovemdecillion = shortnovemdecillion\nvigintillion = shortvigintillion\nnewton = kg m / s^2\nN = newton\npascal = N/m^2\nPa = pascal\njoule = N m\nJ = joule\nwatt = J/s\nW = watt\ncoulomb = A s\nC = coulomb\nvolt = W/A\nV = volt\nohm = V/A\nsiemens = A/V\nS = siemens\nfarad = C/V\nF = farad\nweber = V s\nWb = weber\nhenry = Wb/A\nH = henry\ntesla = Wb/m^2\nT = tesla\nhertz = /s\nHz = hertz\nLENGTH = meter\nAREA = LENGTH^2\nVOLUME = LENGTH^3\nMASS = kilogram\nCURRENT = ampere\nAMOUNT = mole\nANGLE = radian\nSOLID_ANGLE = steradian\nMONEY = US$\nFORCE = newton\nPRESSURE = FORCE / AREA\nSTRESS = FORCE / AREA\nCHARGE = coulomb\nCAPACITANCE = farad\nRESISTANCE = ohm\nCONDUCTANCE = siemens\nINDUCTANCE = henry\nFREQUENCY = hertz\nVELOCITY = LENGTH / TIME\nACCELERATION = VELOCITY / TIME\nDENSITY = MASS / VOLUME\nLINEAR_DENSITY = MASS / LENGTH\nVISCOSITY = FORCE TIME / AREA\nKINEMATIC_VISCOSITY = VISCOSITY / DENSITY\ngram = millikg\ngm = gram\ng = gram\ntonne = 1000 kg\nt = tonne\nmetricton = tonne\nsthene = tonne m / s^2\nfunal = sthene\npieze = sthene / m^2\nquintal = 100 kg\nbar = 1e5 Pa\nb = bar\nvac = millibar\nmicron = micrometer\nbicron = picometer\ncc = cm^3\nare = 100 m^2\na = are\nliter = 1000 cc\noldliter = 1.000028 dm^3\nL = liter\nl = liter\nmho = siemens\ngalvat = ampere\nangstrom = 1e-10 m\nxunit = xunit_cu\nsiegbahn = xunit\nxunit_cu = 1.00207697e-13 m\nxunit_mo = 1.00209952e-13 m\nangstromstar = 1.00001495 angstrom\nfermi = 1e-15 m\nbarn = 1e-28 m^2\nshed = 1e-24 barn\nbrewster = micron^2/N\ndiopter = /m\nfresnel = 1e12 Hz\nshake = 1e-8 sec\nsvedberg = 1e-13 s\ngamma = microgram\nlambda = microliter\nspat = 1e12 m\npreece = 1e13 ohm m\nplanck = J s\nsturgeon = /henry\ndaraf = 1/farad\nleo = 10 m/s^2\npoiseuille = N s / m^2\nmayer = J/g K\nmired = / microK\ncrocodile = megavolt\nmetricounce = 25 g\nmounce = metricounce\nfinsenunit = 1e5 W/m^2\nfluxunit = 1e-26 W/m^2 Hz\njansky = fluxunit\nJy = jansky\nflick = W / cm^2 sr micrometer\npfu = / cm^2 sr s\npyron = cal_IT / cm^2 min\nkatal = mol/sec\nkat = katal\nsolarluminosity = 384.6e24 W\nsec = s\nminute = 60 s\nmin = minute\nhour = 60 min\nhr = hour\nday = 24 hr\nd = day\nda = day\nweek = 7 day\nwk = week\nsennight = 7 day\nfortnight = 14 day\nblink = 1e-5 day\nce = 1e-2 day\ncron = 1e6 years\nwatch = 4 hours\nbell = 1|8 watch\ncircle = 2 pi radian\ndegree = 1|360 circle\ndeg = degree\narcdeg = degree\narcmin = 1|60 degree\narcminute = arcmin\n' = arcmin\narcsec = 1|60 arcmin\narcsecond = arcsec\n\" = arcsec\n'' = \"\nrightangle = 90 degrees\nquadrant = 1|4 circle\nquintant = 1|5 circle\nsextant = 1|6 circle\nsign = 1|12 circle\nturn = circle\nrevolution = turn\nrev = turn\npulsatance = radian / sec\ngon = 1|100 rightangle\ngrade = gon\ncentesimalminute = 1|100 grade\ncentesimalsecond = 1|100 centesimalminute\nmilangle = 1|6400 circle\npointangle = 1|32 circle\ncentrad = 0.01 radian\nmas = milli arcsec\nseclongitude = circle (seconds/day)\ncirclearea = r => pi r^2 \ncirclearea^-1 = circlearea => sqrt(circlearea/pi)\nspherevolume = r => 4|3 pi r^3 \nspherevolume^-1 = spherevolume => cuberoot(spherevolume/4|3 pi)\nspherevol = spherevolume\nsquare = x => x^2 \nsquare^-1 = square => sqrt(square)\nsphere = 4 pi sr\nsquaredegree = 1|180^2 pi^2 sr\nsquareminute = 1|60^2 squaredegree\nsquaresecond = 1|60^2 squareminute\nsquarearcmin = squareminute\nsquarearcsec = squaresecond\nsphericalrightangle = 0.5 pi sr\noctant = 0.5 pi sr\npercent = 0.01\n% = percent\nmill = 0.001\nproof = 1|200\nppm = 1e-6\npartspermillion = ppm\nppb = 1e-9\npartsperbillion = ppb\nppt = 1e-12\npartspertrillion = ppt\nkarat = 1|24\ncaratgold = karat\ngammil = mg/l\nbasispoint = 0.01 %\nfine = 1|1000\npH = x => 10^(-x) mol/liter \npH^-1 = pH => (-log(pH liters/mol))\nTEMPERATURE = kelvin\nTEMPERATURE_DIFFERENCE = kelvin\ntempC = x => x K + stdtemp \ntempC^-1 = tempC => (tempC +(-stdtemp))/K\ntempcelsius = tempC\ndegcelsius = K\ndegC = K\ntempF = x => (x+(-32)) degF + stdtemp \ntempF^-1 = tempF => (tempF+(-stdtemp))/degF + 32\ntempfahrenheit = tempF\ndegfahrenheit = 5|9 degC\ndegF = 5|9 degC\ndegreesrankine = degF\ndegrankine = degreesrankine\ndegreerankine = degF\ndegR = degrankine\ntempR = degrankine\ntemprankine = degrankine\ntempreaumur = x => x degreaumur+stdtemp \ntempreaumur^-1 = tempreaumur => (tempreaumur+(-stdtemp))/degreaumur\ndegreaumur = 10|8 degC\ndegK = K\ntempK = K\ngasmark[degR] = .0625    634.67   .125     659.67   .25      684.67   .5       709.67   1        734.67   2        759.67   3        784.67   4        809.67   5        834.67   6        859.67   7        884.67   8        909.67   9        934.67   10       959.67\npi = 3.14159265358979323846\nc = 2.99792458e8 m/s\nlight = c\nmu0 = 4 pi 1e-7 H/m\nepsilon0 = 1/mu0 c^2\nenergy = c^2\ne = 1.602176565e-19 C\nh = 4.135667516e-15 eV s\nhbar = h / 2 pi\nspin = hbar\nG = 6.67384e-11 N m^2 / kg^2\ncoulombconst = 1/4 pi epsilon0\natomicmassunit = 1.660538921e-27 kg\nu = atomicmassunit\namu = atomicmassunit\namu_chem = 1.66026e-27 kg\namu_phys = 1.65981e-27 kg\ndalton = u\navogadro = grams/amu mol\nN_A = avogadro\ngasconstant = 8.3144621 J / mol K\nR = gasconstant\nboltzmann = R / N_A\nk = boltzmann\nkboltzmann = boltzmann\nmolarvolume = mol R stdtemp / atm\nloschmidt = avogadro mol / molarvolume\nstefanboltzmann = pi^2 k^4 / 60 hbar^3 c^2\nsigma = stefanboltzmann\nwiendisplacement = 2.8977721e-3 m K\nK_J90 = 483597.9 GHz/V\nK_J = 483597.870 GHz/V\nR_K90 = 25812.807 ohm\nR_K = 25812.8074434 ohm\ngravity = 9.80665 m/s^2\nforce = gravity\natm = 101325 Pa\natmosphere = atm\nHg = 13.5951 gram force / cm^3\nwater = gram force/cm^3\nwaterdensity = gram / cm^3\nH2O = water\nwc = water\nmach = 331.46 m/s\nstandardtemp = 273.15 K\nstdtemp = standardtemp\nnormaltemp = tempF(70)\nnormtemp = normaltemp\nHg10C = 13.5708 force gram / cm^3\nHg20C = 13.5462 force gram / cm^3\nHg23C = 13.5386 force gram / cm^3\nHg30C = 13.5217 force gram / cm^3\nHg40C = 13.4973 force gram / cm^3\nHg60F = 13.5574 force gram / cm^3\nH2O0C = 0.99987 force gram / cm^3\nH2O5C = 0.99999 force gram / cm^3\nH2O10C = 0.99973 force gram / cm^3\nH2O15C = 0.99913 force gram / cm^3\nH2O18C = 0.99862 force gram / cm^3\nH2O20C = 0.99823 force gram / cm^3\nH2O25C = 0.99707 force gram / cm^3\nH2O50C = 0.98807 force gram / cm^3\nH2O100C = 0.95838 force gram / cm^3\nRinfinity = 10973731.568539 /m\nR_H = 10967760 /m\nalpha = 7.2973525698e-3\nbohrradius = alpha / 4 pi Rinfinity\nprout = 185.5 keV\nplanckmass = 2.17651e-8 kg\nm_P = planckmass\nplancktime = hbar / planckmass c^2\nt_P = plancktime\nplancklength = plancktime c\nl_P = plancklength\nelectronradius = (1/4 pi epsilon0) e^2 / electronmass c^2\ndeuteronchargeradius = 2.1424e-15 m\nprotonchargeradius = 0.8775e-15\nelectronmass = 5.4857990946e-4 u\nm_e = electronmass\nprotonmass = 1.007276466812 u\nm_p = protonmass\nneutronmass = 1.00866491600 u\nm_n = neutronmass\nmuonmass = 0.1134289267 u\nm_mu = muonmass\ndeuteronmass = 2.013553212712 u\nm_d = deuteronmass\nalphaparticlemass = 4.001506179125 u\nm_alpha = alphaparticlemass\ntaumass = 1.90749 u\nm_tau = taumass\ntritonmass = 3.0155007134 u\nm_t = tritonmass\nhelionmass = 3.0149322468 u\nm_h = helionmass\nelectronwavelength = h / m_e c\nlambda_C = electronwavelength\nprotonwavelength = h / m_p c\nlambda_C,p = protonwavelength\nneutronwavelength = h / m_n c\nlambda_C,n = neutronwavelength\nbohrmagneton = e hbar / 2 electronmass\nmu_B = bohrmagneton\nnuclearmagneton = e hbar /  2 protonmass\nmu_N = nuclearmagneton\nmu_mu = -4.49044807e-26 J/T\nmu_p = 1.410606743e-26 J/T\nmu_e = -928.476430e-26 J/T\nmu_n = -0.96623647e-26\nmu_d = 0.433073489e-26 J/T\nmu_t = 1.504609447e-26 J/T\nmu_h = -1.074617486e-26 J/T\nkgf = kg force\ntechnicalatmosphere = kgf / cm^2\nat = technicalatmosphere\nhyl = kgf s^2 / m\nmmHg = mm Hg\ntorr = mmHg\ntor = Pa\ninHg = inch Hg\ninH2O = inch water\nmmH2O = mm water\neV = e V\nelectronvolt = eV\nlightyear = c julianyear\nly = lightyear\nlightsecond = c s\nlightminute = c min\nparsec = au / tan(arcsec)\npc = parsec\nrydberg = h c Rinfinity\ncrith = 0.089885 gram\namagatvolume = molarvolume\namagat = mol/amagatvolume\nlorentz = bohrmagneton / h c\ncminv = h c / cm\ninvcm = cminv\nwavenumber = cminv\nkcal_mol = kcal_th / mol N_A\ndyne = cm gram / s^2\ndyn = dyne\nerg = cm dyne\npoise = gram / cm s\nP = poise\nrhe = /poise\nstokes = cm^2 / s\nSt = stokes\nstoke = stokes\nlentor = stokes\nGal = cm / s^2\ngalileo = Gal\nbarye = dyne/cm^2\nbarad = barye\nkayser = 1/cm\nbalmer = kayser\nkine = cm/s\nbole = g cm / s\npond = gram force\nglug = gram force s^2 / cm\ndarcy = centipoise cm^2 / s atm\nmobileohm = cm / dyn s\nmechanicalohm = dyn s / cm\nacousticalohm = dyn s / cm^5\nray = acousticalohm\nrayl = dyn s / cm^3\neotvos = 1e-9 Gal/cm\nabampere = 10 A\nabamp = abampere\naA = abampere\nbiot = aA\nBi = biot\nabcoulomb = abamp sec\nabcoul = abcoulomb\nabfarad = abampere sec / abvolt\nabhenry = abvolt sec / abamp\nabvolt = dyne cm  / abamp sec\nabohm = abvolt / abamp\nabmho = /abohm\ngauss = abvolt sec / cm^2\nGs = gauss\nmaxwell = abvolt sec\nMx = maxwell\noersted = gauss / mu0\nOe = oersted\ngilbert = gauss cm / mu0\nGb = gilbert\nGi = gilbert\nunitpole = 4 pi maxwell\nemu = erg/gauss\nstatampere = 10 A cm / s c\nstatamp = statampere\nstatvolt = dyne cm / statamp sec\nstatcoulomb = statamp s\nesu = statcoulomb\nstatcoul = statcoulomb\nstatfarad = statamp sec / statvolt\ncmcapacitance = statfarad\nstathenry = statvolt sec / statamp\nstatohm = statvolt / statamp\nstatmho = /statohm\nstatmaxwell = statvolt sec\nfranklin = statcoulomb\ndebye = 1e-18 statcoul cm\nhelmholtz = debye/angstrom^2\njar = 1000 statfarad\nintampere = 0.999835 A\nintamp = intampere\nintfarad = 0.999505 F\nintvolt = 1.00033 V\nintohm = 1.000495 ohm\ndaniell = 1.042 V\nfaraday = N_A e mol\nfaraday_phys = 96521.9 C\nfaraday_chem = 96495.7 C\nkappline = 6000 maxwell\nsiemensunit = 0.9534 ohm\ncopperconductivity = 58 siemens m / mm^2\nIACS = copperconductivity\ncopperdensity = 8.89 g/cm^3\nouncecopper = oz / ft^2 copperdensity\nozcu = ouncecopper\nLUMINOUS_INTENSITY = candela\nLUMINOUS_FLUX = lumen\nLUMINOUS_ENERGY = talbot\nILLUMINANCE = lux\nEXITANCE = lux\ncandle = 1.02 candela\nhefnerunit = 0.9 candle\nhefnercandle = hefnerunit\nviolle = 20.17 cd\nlumen = cd sr\nlm = lumen\ntalbot = lumen s\nlumberg = talbot\nlumerg = talbot\nlux = lm/m^2\nlx = lux\nphot = lumen / cm^2\nph = phot\nfootcandle = lumen/ft^2\nmetercandle = lumen/m^2\nmcs = metercandle s\nnox = 1e-3 lux\nskot = 1e-3 apostilb\nLUMINANCE = nit\nnit = cd/m^2\nstilb = cd / cm^2\nsb = stilb\napostilb = cd/pi m^2\nasb = apostilb\nblondel = apostilb\nequivalentlux = cd / pi m^2\nequivalentphot = cd / pi cm^2\nlambert = cd / pi cm^2\nfootlambert = cd / pi ft^2\nbril = x => 2^(x+-100) lamberts \nbril^-1 = bril => log2(bril/lambert)+100\nsunlum = 1.6e9 cd/m^2\nsunillum = 100e3 lux\nsunillum_o = 10e3 lux\nsunlum_h = 6e6 cd/m^2\nskylum = 8000 cd/m^2\nskylum_o = 2000 cd/m^2\nmoonlum = 2500 cd/m^2\ns100 = 100 / lx s\niso100 = s100\nk1250 = 12.5 (cd/m^2) / lx s\nk1400 = 14   (cd/m^2) / lx s\nc250 = 250 lx / lx s\nev100 = x => 2^x k1250 / s100\nev100^-1 = ev100 => log2(ev100 s100/k1250)\nEV100 = ev100\niv100 = x => 2^x c250 / s100\niv100^-1 = iv100 => log2(iv100 s100 / c250)\nN_exif = 1|3.125 lx s\nK_apex1961 = 11.4 (cd/m^2) / lx s\nK_apex1971 = 12.5 (cd/m^2) / lx s\nC_apex1961 = 224 lx / lx s\nC_apex1971 = 322 lx / lx s\nN_speed = N_exif\nK_lum = K_apex1971\nC_illum = C_apex1961\nAv = A => 2^(A/2)\nAv^-1 = Av => 2 log2(Av)\nTv = t => 2^(-t) s\nTv^-1 = Tv => log2(s / Tv)\nSval = S => 2^S / (N_speed/lx s)\nSval^-1 = Sval => log2((N_speed/lx s) Sval)\nBv = x => 2^x K_lum N_speed \nBv^-1 = Bv => log2(Bv / (K_lum N_speed))\nIv = x => 2^x C_illum N_speed \nIv^-1 = Iv => log2(Iv / (C_illum N_speed))\nSx = S => log2((N_speed/lx s) S)\nSx^-1 = Sx => 2^Sx / (N_speed/lx s)\nSdeg = S => 10^((S - 1) / 10) \nSdeg^-1 = Sdeg => (1 + 10 log(Sdeg))\nSdin = Sdeg\nnumericalaperture = x => 0.5 / x \nnumericalaperture^-1 = numericalaperture => 0.5 / numericalaperture\nNA = numericalaperture\nfnumber = x => x \nfnumber^-1 = fnumber => fnumber\nTIME = second\nanomalisticyear = 365.2596 days\nsiderealyear = 365.256360417 day\ntropicalyear = 365.242198781 day\neclipseyear = 346.62 days\nsaros = 223 synodicmonth\nsiderealday = 86164.09054 s\nsiderealhour = 1|24 siderealday\nsiderealminute = 1|60 siderealhour\nsiderealsecond = 1|60 siderealminute\nanomalisticmonth = 27.55454977 day\nnodicalmonth = 27.2122199 day\ndraconicmonth = nodicalmonth\ndraconiticmonth = nodicalmonth\nsiderealmonth = 27.321661 day\nlunarmonth = 29 days + 12 hours + 44 minutes + 2.8 seconds\nsynodicmonth = lunarmonth\nlunation = synodicmonth\nlune = 1|30 lunation\nlunour = 1|24 lune\nyear = tropicalyear\nyr = year\nmonth = 1|12 year\nmo = month\nlustrum = 5 years\ndecade = 10 years\ncentury = 100 years\nmillennium = 1000 years\nmillennia = millennium\nsolaryear = year\nlunaryear = 12 lunarmonth\ncalendaryear = 365 day\ncommonyear = 365 day\nleapyear = 366 day\njulianyear = 365.25 day\ngregorianyear = 365.2425 day\nislamicyear = 354 day\nislamicleapyear = 355 day\nislamicmonth = 1|12 islamicyear\nmercuryday = 58.6462 day\nvenusday = 243.01 day\nearthday = siderealday\nmarsday = 1.02595675 day\njupiterday = 0.41354 day\nsaturnday = 0.4375 day\nuranusday = 0.65 day\nneptuneday = 0.768 day\nplutoday = 6.3867 day\nmercuryyear = 0.2408467 julianyear\nvenusyear = 0.61519726 julianyear\nearthyear = siderealyear\nmarsyear = 1.8808476 julianyear\njupiteryear = 11.862615 julianyear\nsaturnyear = 29.447498 julianyear\nuranusyear = 84.016846 julianyear\nneptuneyear = 164.79132 julianyear\nplutoyear = 247.92065 julianyear\nearthflattening = 1|298.25642\nearthradius_equatorial = 6378136.49 m\nearthradius_polar = (-earthflattening+1) earthradius_equatorial\nlandarea = 148.847e6 km^2\noceanarea = 361.254e6 km^2\nmoonradius = 1738 km\nsunradius = 6.96e8 m\ngauss_k = 0.01720209895\ngaussianyear = (2 pi / gauss_k) days\nastronomicalunit = 149597870700 m\nau = astronomicalunit\nsolarmass = 1.9891e30 kg\nsunmass = solarmass\nsundist = 1.0000010178 au\nmoondist = 3.844e8 m\nsundist_near = 1.471e11 m\nsundist_far = 1.521e11 m\nmercurymass = solarmass / 6023600\nvenusmass = solarmass / 408523.71\nearthmoonmass = solarmass / 328900.56\nmarsmass = solarmass / 3098708\njupitermass = solarmass / 1047.3486\nsaturnmass = solarmass / 3497.898\nuranusmass = solarmass / 22902.98\nneptunemass = solarmass / 19412.24\nplutomass = solarmass / 1.35e8\nmoonearthmassratio = 0.012300034\nearthmass = earthmoonmass / ( 1 + moonearthmassratio)\nmoonmass = moonearthmassratio earthmass\noldmercurymass = 0.33022e24 kg\noldvenusmass = 4.8690e24 kg\noldmarsmass = 0.64191e24 kg\noldjupitermass = 1898.8e24 kg\noldsaturnmass = 568.5e24 kg\nolduranusmass = 86.625e24 kg\noldneptunemass = 102.78e24 kg\noldplutomass = 0.015e24 kg\nmercuryradius = 2440 km\nvenusradius = 6051.84 km\nearthradius = 6371.01 km\nmarsradius = 3389.92 km\njupiterradius = 69911 km\nsaturnradius = 58232 km\nuranusradius = 25362 km\nneptuneradius = 24624 km\nplutoradius = 1151 km\nmoongravity = 1.62 m/s^2\natomicmass = electronmass\natomiccharge = e\natomicaction = hbar\natomiclength = bohrradius\natomictime = hbar^3/coulombconst^2 atomicmass e^4\natomicvelocity = atomiclength / atomictime\natomicenergy = hbar / atomictime\nhartree = atomicenergy\nthermalcoulomb = J/K\nthermalampere = W/K\nthermalfarad = J/K^2\nthermalohm = K^2/W\nfourier = thermalohm\nthermalhenry = J K^2/W^2\nthermalvolt = K\nUS = 1200|3937 m/ft\nUS_ = US\nsurvey_ = US\ngeodetic_ = US\nint = 3937|1200 ft/m\nint_ = int\ninch = 2.54 cm\nin = inch\nfoot = 12 inch\nfeet = foot\nft = foot\nyard = 3 ft\nyd = yard\nmile = 5280 ft\nline = 1|12 inch\nrod = 5.5 yard\nperch = rod\nfurlong = 40 rod\nstatutemile = mile\nleague = 3 mile\nsurveyorschain = 66 surveyft\nsurveychain = surveyorschain\nsurveyorspole = 1|4 surveyorschain\nsurveyorslink = 1|100 surveyorschain\nchain = 66 ft\nlink = 1|100 chain\nch = chain\nUSacre = 10 surveychain^2\nintacre = 10 chain^2\nintacrefoot = acre foot\nUSacrefoot = USacre surveyfoot\nacrefoot = intacrefoot\nacre = intacre\nsection = mile^2\ntownship = 36 section\nhomestead = 160 acre\ngunterschain = surveyorschain\nengineerschain = 100 ft\nengineerslink = 1|100 engineerschain\nramsdenschain = engineerschain\nramsdenslink = engineerslink\ngurleychain = 33 feet\ngurleylink = 1|50 gurleychain\nwingchain = 66 feet\nwinglink = 1|80 wingchain\ntroughtonyard = 914.42190 mm\nbronzeyard11 = 914.39980 mm\nmendenhallyard = surveyyard\ninternationalyard = yard\nfathom = 6 ft\nnauticalmile = 1852 m\ncable = 1|10 nauticalmile\nintcable = cable\ncablelength = cable\nUScable = 100 USfathom\nnavycablelength = 720 USft\nmarineleague = 3 nauticalmile\ngeographicalmile = brnauticalmile\nknot = nauticalmile / hr\nclick = km\nklick = click\npound = 0.45359237 kg\nlb = pound\ngrain = 1|7000 pound\nounce = 1|16 pound\noz = ounce\ndram = 1|16 ounce\ndr = dram\nushundredweight = 100 pounds\ncwt = hundredweight\nshorthundredweight = ushundredweight\nuston = shortton\nshortton = 2000 lb\nquarterweight = 1|4 uston\nshortquarterweight = 1|4 shortton\nshortquarter = shortquarterweight\ntroypound = 5760 grain\ntroyounce = 1|12 troypound\nozt = troyounce\npennyweight = 1|20 troyounce\ndwt = pennyweight\nassayton = mg ton / troyounce\nusassayton = mg uston / troyounce\nbrassayton = mg brton / troyounce\nfineounce = troyounce\nmetriccarat = 0.2 gram\nmetricgrain = 50 mg\ncarat = metriccarat\nct = carat\njewelerspoint = 1|100 carat\nsilversmithpoint = 1|4000 inch\nmomme = 3.75 grams\nappound = troypound\napounce = troyounce\napdram = 1|8 apounce\napscruple = 1|3 apdram\nusgallon = 231 in^3\ngal = gallon\nquart = 1|4 gallon\npint = 1|2 quart\ngill = 1|4 pint\nusquart = 1|4 usgallon\nuspint = 1|2 usquart\nusgill = 1|4 uspint\nusfluidounce = 1|16 uspint\nfluiddram = 1|8 usfloz\nminimvolume = 1|60 fluiddram\nqt = quart\npt = pint\nfloz = fluidounce\nusfloz = usfluidounce\nfldr = fluiddram\nliquidbarrel = 31.5 usgallon\nusbeerbarrel = 2 beerkegs\nbeerkeg = 15.5 usgallon\nponykeg = 1|2 beerkeg\nwinekeg = 12 usgallon\npetroleumbarrel = 42 usgallon\nbarrel = petroleumbarrel\nbbl = barrel\nushogshead = 2 liquidbarrel\nusfirkin = 9 usgallon\nusbushel = 2150.42 in^3\nbu = bushel\npeck = 1|4 bushel\nuspeck = 1|4 usbushel\nbrpeck = 1|4 brbushel\npk = peck\ndrygallon = 1|2 uspeck\ndryquart = 1|4 drygallon\ndrypint = 1|2 dryquart\ndrybarrel = 7056 in^3\ncranberrybarrel = 5826 in^3\nheapedbushel = 1.278 usbushel\nwheatbushel = 60 lb\nsoybeanbushel = 60 lb\ncornbushel = 56 lb\nryebushel = 56 lb\nbarleybushel = 48 lb\noatbushel = 32 lb\nricebushel = 45 lb\ncanada_oatbushel = 34 lb\nponyvolume = 1 usfloz\njigger = 1.5 usfloz\nshot = jigger\neushot = 25 ml\nfifth = 1|5 usgallon\nwinebottle = 750 ml\nwinesplit = 1|4 winebottle\nwineglass = 4 usfloz\nmagnum = 1.5 liter\nmetrictenth = 375 ml\nmetricfifth = 750 ml\nmetricquart = 1 liter\nreputedquart = 1|6 brgallon\nreputedpint = 1|2 reputedquart\nbrwinebottle = reputedquart\nsplit = 200 ml\njeroboam = 2 magnum\nrehoboam = 3 magnum\nmethuselah = 4 magnum\nsalmanazar = 6 magnum\nbalthazar = 8 magnum\nnebuchadnezzar = 10 magnum\nclarkdegree = grains/brgallon\ngpg = grains/usgallon\nshoeiron = 1|48 inch\nshoeounce = 1|64 inch\nshoesize_delta = 1|3 inch\nshoe_men0 = 8.25 inch\nshoe_women0 = (7+11|12) inch\nshoe_boys0 = (3+11|12) inch\nshoe_girls0 = (3+7|12) inch\nshoesize_men = n => shoe_men0 + n shoesize_delta \nshoesize_men^-1 = shoesize_men => (shoesize_men+(-shoe_men0))/shoesize_delta\nshoesize_women = n => shoe_women0 + n shoesize_delta \nshoesize_women^-1 = shoesize_women => (shoesize_women+(-shoe_women0))/shoesize_delta\nshoesize_boys = n => shoe_boys0 + n shoesize_delta \nshoesize_boys^-1 = shoesize_boys => (shoesize_boys+(-shoe_boys0))/shoesize_delta\nshoesize_girls = n => shoe_girls0 + n shoesize_delta \nshoesize_girls^-1 = shoesize_girls => (shoesize_girls+(-shoe_girls0))/shoesize_delta\neuropeshoesize = 2|3 cm\nbuck = US$\nfin = 5 US$\nsawbuck = 10 US$\nusgrand = 1000 US$\ngreenback = US$\nkey = kg\nlid = 1 oz\nfootballfield = usfootballfield\nusfootballfield = 100 yards\ncanadafootballfield = 110 yards\nmarathon = 26 miles + 385 yards\nUK = UKlength_SJJ\nUK_ = UK\nbritish_ = UK\nUKlength_B = 0.9143992 meter / yard\nUKlength_SJJ = 0.91439841 meter / yard\nUKlength_K = meter / 39.37079 inch\nUKlength_C = meter / 1.09362311 yard\nbrnauticalmile = 6080 ft\nbrknot = brnauticalmile / hr\nbrcable = 1|10 brnauticalmile\nadmiraltymile = brnauticalmile\nadmiraltyknot = brknot\nadmiraltycable = brcable\nseamile = 6000 ft\nshackle = 15 fathoms\nclove = 7 lb\nstone = 14 lb\ntod = 28 lb\nbrquarterweight = 1|4 brhundredweight\nbrhundredweight = 8 stone\nlonghundredweight = brhundredweight\nlongton = 20 brhundredweight\nbrton = longton\nbrminim = 1|60 brdram\nbrscruple = 1|3 brdram\nfluidscruple = brscruple\nbrdram = 1|8 brfloz\nbrfluidounce = 1|20 brpint\nbrfloz = brfluidounce\nbrgill = 1|4 brpint\nbrpint = 1|2 brquart\nbrquart = 1|4 brgallon\nbrgallon = 4.54609 l\nbrbarrel = 36 brgallon\nbrbushel = 8 brgallon\nbrheapedbushel = 1.278 brbushel\nbrquarter = 8 brbushel\nbrchaldron = 36 brbushel\nbag = 4 brbushel\nbucket = 4 brgallon\nkilderkin = 2 brfirkin\nlast = 40 brbushel\nnoggin = brgill\npottle = 0.5 brgallon\npin = 4.5 brgallon\npuncheon = 72 brgallon\nseam = 8 brbushel\ncoomb = 4 brbushel\nboll = 6 brbushel\nfirlot = 1|4 boll\nbrfirkin = 9 brgallon\ncran = 37.5 brgallon\nbrwinehogshead = 52.5 brgallon\nbrhogshead = brwinehogshead\nbrbeerhogshead = 54 brgallon\nbrbeerbutt = 2 brbeerhogshead\nregisterton = 100 ft^3\nshippington = 40 ft^3\nbrshippington = 42 ft^3\nfreightton = shippington\ndisplacementton = 35 ft^3\nwaterton = 224 brgallon\nstrike = 70.5 l\namber = 4 brbushel\nimperialminim = brminim\nimperialscruple = brscruple\nimperialdram = brdram\nimperialfluidounce = brfluidounce\nimperialfloz = brfloz\nimperialgill = brgill\nimperialpint = brpint\nimperialquart = brquart\nimperialgallon = brgallon\nimperialbarrel = brbarrel\nimperialbushel = brbushel\nimperialheapedbushel = brheapedbushel\nimperialquarter = brquarter\nimperialchaldron = brchaldron\nimperialwinehogshead = brwinehogshead\nimperialhogshead = brhogshead\nimperialbeerhogshead = brbeerhogshead\nimperialbeerbutt = brbeerbutt\nimperialfirkin = brfirkin\nbarleycorn = 1|3 UKinch\nnail = 1|16 UKyard\npole = 16.5 UKft\nrope = 20 UKft\nenglishell = 45 UKinch\nflemishell = 27 UKinch\nell = englishell\nspan = 9 UKinch\ngoad = 4.5 UKft\nhide = 120 acre\nvirgate = 1|4 hide\nnook = 1|2 virgate\nrood = furlong rod\nenglishcarat = troyounce/151.5\nmancus = 2 oz\nmast = 2.5 lb\nnailkeg = 100 lbs\nbasebox = 31360 in^2\nmetre = meter\ngramme = gram\nlitre = liter\ndioptre = diopter\naluminium = aluminum\nsulphur = sulfur\ngeometricpace = 5 ft\npace = 2.5 ft\nUSmilitarypace = 30 in\nUSdoubletimepace = 36 in\nfingerbreadth = 7|8 in\nfingerlength = 4.5 in\nfinger = fingerbreadth\npalmwidth = hand\npalmlength = 8 in\nhand = 4 inch\nshaftment = 6 inch\nsmoot = 5 ft + 7 in\ntbl = tablespoon\ntbsp = tablespoon\ntblsp = tablespoon\nTb = tablespoon\ntsp = teaspoon\nsaltspoon = 1|4 tsp\nuscup = 8 usfloz\nustablespoon = 1|16 uscup\nusteaspoon = 1|3 ustablespoon\nustbl = ustablespoon\nustbsp = ustablespoon\nustblsp = ustablespoon\nustsp = usteaspoon\nmetriccup = 250 ml\nstickbutter = 1|4 lb\nlegalcup = 240 ml\nlegaltablespoon = 1|16 legalcup\nlegaltbsp = legaltablespoon\nscoop = n => 32 usfloz / n \nscoop^-1 = scoop => 32 usfloz / scoop\nnumber1can = 10 usfloz\nnumber2can = 19 usfloz\nnumber2.5can = 3.5 uscups\nnumber3can = 4 uscups\nnumber5can = 7 uscups\nnumber10can = 105 usfloz\nbrcup = 1|2 brpint\nbrteacup = 1|3 brpint\nbrtablespoon = 15 ml\nbrteaspoon = 1|3 brtablespoon\nbrdessertspoon = 2 brteaspoon\ndessertspoon = brdessertspoon\ndsp = dessertspoon\nbrtsp = brteaspoon\nbrtbl = brtablespoon\nbrtbsp = brtablespoon\nbrtblsp = brtablespoon\naustraliatablespoon = 20 ml\naustbl = australiatablespoon\naustbsp = australiatablespoon\naustblsp = australiatablespoon\naustraliateaspoon = 1|4 australiatablespoon\naustsp = australiateaspoon\netto = 100 g\netti = etto\ncatty = 0.5 kg\noldcatty = 4|3 lbs\ntael = 1|16 oldcatty\nmace = 0.1 tael\noldpicul = 100 oldcatty\npicul = 100 catty\nseer = 14400 grain\nser = seer\nmaund = 40 seer\npakistanseer = 1 kg\npakistanmaund = 40 pakistanseer\nchittak = 1|16 seer\ntola = 1|5 chittak\nollock = 1|4 liter\njapancup = 200 ml\nbutter = 8 oz/uscup\nbutter_clarified = 6.8 oz/uscup\ncocoa_butter = 9 oz/uscup\nshortening = 6.75 oz/uscup\noil = 7.5 oz/uscup\ncakeflour_sifted = 3.5 oz/uscup\ncakeflour_spooned = 4 oz/uscup\ncakeflour_scooped = 4.5 oz/uscup\nflour_sifted = 4 oz/uscup\nflour_spooned = 4.25 oz/uscup\nflour_scooped = 5 oz/uscup\nbreadflour_sifted = 4.25 oz/uscup\nbreadflour_spooned = 4.5 oz/uscup\nbreadflour_scooped = 5.5 oz/uscup\ncornstarch = 120 grams/uscup\ndutchcocoa_sifted = 75 g/uscup\ndutchcocoa_spooned = 92 g/uscup\ndutchcocoa_scooped = 95 g/uscup\ncocoa_sifted = 75 g/uscup\ncocoa_spooned = 82 g/uscup\ncocoa_scooped = 95 g/uscup\nheavycream = 232 g/uscup\nmilk = 242 g/uscup\nsourcream = 242 g/uscup\nmolasses = 11.25 oz/uscup\ncornsyrup = 11.5 oz/uscup\nhoney = 11.75 oz/uscup\nsugar = 200 g/uscup\npowdered_sugar = 4 oz/uscup\nbrownsugar_light = 217 g/uscup\nbrownsugar_dark = 239 g/uscup\nbaking_powder = 4.6 grams / ustsp\nsalt = 6 g / ustsp\nkoshersalt = 2.8 g / ustsp\nkoshersalt_morton = 4.8 g / ustsp\negg = 50 grams\neggwhite = 30 grams\neggyolk = 18.6 grams\neggvolume = 3 ustablespoons + 1|2 ustsp\neggwhitevolume = 2 ustablespoons\neggyolkvolume = 3.5 ustsp\nsugar_conc_bpe[K] = 0 0.0000   5 0.0788  10 0.1690  15 0.2729  20 0.3936  25 0.5351  30 0.7027  35 0.9036  40 1.1475  42 1.2599  44 1.3825  46 1.5165  48 1.6634  50 1.8249  52 2.0031  54 2.2005  56 2.4200  58 2.6651  60 2.9400  61 3.0902  62 3.2499  63 3.4198  64 3.6010  65 3.7944  66 4.0012  67 4.2227  68 4.4603  69 4.7156  70 4.9905  71 5.2870  72 5.6075  73 5.9546  74 6.3316  75 6.7417  76 7.1892  77 7.6786  78.0  8.2155  79.0  8.8061  80.0  9.4578  80.5  9.8092  81.0 10.1793  81.5 10.5693  82.0 10.9807  82.5 11.4152  83.0 11.8743  83.5 12.3601  84.0 12.8744  84.5 13.4197  85.0 13.9982  85.5 14.6128  86.0 15.2663  86.5 15.9620  87.0 16.7033  87.5 17.4943  88.0 18.3391  88.5 19.2424  89.0 20.2092  89.5 21.2452  90.0 22.3564  90.5 23.5493  91.0 24.8309  91.5 26.2086  92.0 27.6903  92.5 29.2839  93.0 30.9972  93.5 32.8374  94.0 34.8104  94.5 36.9195  95.0 39.1636  95.5 41.5348  96.0 44.0142  96.5 46.5668  97.0 49.1350  97.5 51.6347  98.0 53.9681  98.1 54.4091  98.2 54.8423  98.3 55.2692  98.4 55.6928  98.5 56.1174  98.6 56.5497  98.7 56.9999  98.8 57.4828  98.9 58.0206  99.0 58.6455  99.1 59.4062  99.2 60.3763  99.3 61.6706  99.4 63.4751  99.5 66.1062  99.6 70.1448  99.7 76.7867\nsugar_bpe = T => brix(~sugar_conc_bpe(T))\nsugar_bpe^-1 = sugar_bpe => sugar_conc_bpe(~brix(sugar_bpe))\nsugar_bp = T => brix(~sugar_conc_bpe(T-tempC(100))) \nsugar_bp^-1 = sugar_bp => sugar_conc_bpe(~brix(sugar_bp))+tempC(100)\nsugar_bpF = T => brix(~sugar_conc_bpe(tempF(T)+-tempC(100))) \nsugar_bpF^-1 = sugar_bpF => ~tempF(sugar_conc_bpe(~brix(sugar_bpF))+tempC(100))\nsugar_bpC = T => brix(~sugar_conc_bpe(tempC(T)+-tempC(100))) \nsugar_bpC^-1 = sugar_bpC => ~tempC(sugar_conc_bpe(~brix(sugar_bpC))+tempC(100))\nbaumeconst = 145\nbaume = d => (baumeconst/(baumeconst+-d)) g/cm^3 \nbaume^-1 = baume => (baume+((-g)/cm^3)) baumeconst / baume\ntwaddell = x => (1 + 0.005 x) g / cm^3 \ntwaddell^-1 = twaddell => 200 (twaddell / (g/cm^3) +- 1)\nquevenne = x => (1 + 0.001 x) g / cm^3 \nquevenne^-1 = quevenne => 1000 (quevenne / (g/cm^3) +- 1)\nbrix[0.99717g/cm^3] = 0 1.00000  1 1.00390  2 1.00780  3 1.01173  4 1.01569  5 1.01968     6 1.02369  7 1.02773  8 1.03180  9 1.03590 10 1.04003 11 1.04418    12 1.04837 13 1.05259 14 1.05683 15 1.06111 16 1.06542 17 1.06976    18 1.07413 19 1.07853 20 1.08297 21 1.08744 22 1.09194 23 1.09647    24 1.10104 25 1.10564 26 1.11027 27 1.11493 28 1.11963 29 1.12436    30 1.12913 31 1.13394 32 1.13877 33 1.14364 34 1.14855 35 1.15350    36 1.15847 37 1.16349 38 1.16853 39 1.17362 40 1.17874 41 1.18390    42 1.18910 43 1.19434 44 1.19961 45 1.20491 46 1.21026 47 1.21564    48 1.22106 49 1.22652 50 1.23202 51 1.23756 52 1.24313 53 1.24874    54 1.25439 55 1.26007 56 1.26580 57 1.27156 58 1.27736 59 1.28320    60 1.28909 61 1.29498 62 1.30093 63 1.30694 64 1.31297 65 1.31905    66 1.32516 67 1.33129 68 1.33748 69 1.34371 70 1.34997 71 1.35627    72 1.36261 73 1.36900 74 1.37541 75 1.38187 76 1.38835 77 1.39489    78 1.40146 79 1.40806 80 1.41471 81 1.42138 82 1.42810 83 1.43486    84 1.44165 85 1.44848 86 1.45535 87 1.46225 88 1.46919 89 1.47616    90 1.48317 91 1.49022 92 1.49730 93 1.50442 94 1.51157 95 1.51876\napidegree = x => 141.5 g/cm^3 / (x+131.5) \napidegree^-1 = apidegree => 141.5 (g/cm^3) / apidegree + (-131.5)\nouncedal = oz ft / s^2\npoundal = lb ft / s^2\ntondal = longton ft / s^2\npdl = poundal\nosi = ounce force / inch^2\npsi = pound force / inch^2\npsia = psi\ntsi = ton force / inch^2\nreyn = psi sec\nslug = lbf s^2 / ft\nslugf = slug force\nslinch = lbf s^2 / inch\nslinchf = slinch force\ngeepound = slug\nlbf = lb force\ntonf = ton force\nlbm = lb\nkip = 1000 lbf\nksi = kip / in^2\nmil = 0.001 inch\nthou = 0.001 inch\ntenth = 0.0001 inch\nmillionth = 1e-6 inch\ncircularinch = 1|4 pi in^2\ncircleinch = circularinch\ncylinderinch = circleinch inch\ncircularmil = 1|4 pi mil^2\ncmil = circularmil\ncental = 100 pound\ncentner = cental\ncaliber = 0.01 inch\nduty = ft lbf\ncelo = ft / s^2\njerk = ft / s^3\naustraliapoint = 0.01 inch\nsabin = ft^2\nstandardgauge = 4 ft + 8.5 in\nflag = 5 ft^2\nrollwallpaper = 30 ft^2\nfillpower = in^3 / ounce\npinlength = 1|16 inch\nbuttonline = 1|40 inch\nbeespace = 1|4 inch\ndiamond = 8|5 ft\nretmaunit = 1.75 in\nU = retmaunit\nRU = U\ncount = / pound\nENERGY = joule\nWORK = joule\ncal_IT = 4.1868 J\ncal_th = 4.184 J\ncal_fifteen = 4.18580 J\ncal_twenty = 4.18190 J\ncal_mean = 4.19002 J\ncalorie = cal_IT\ncal = calorie\ncalorie_IT = cal_IT\nthermcalorie = cal_th\ncalorie_th = thermcalorie\nCalorie = kilocalorie\nthermie = 1e6 cal_fifteen\nbtu = cal lb degF / gram K\nbritishthermalunit = btu\nbtu_IT = btu\nbtu_th = cal_th lb degF / gram K\nbtu_mean = cal_mean lb degF / gram K\nquad = quadrillion btu\nECtherm = 1.05506e8 J\nUStherm = 1.054804e8 J\ntherm = UStherm\nwater_fusion_heat = 79.8 calorie/g\nwater_vaporization_heat = 1160 J/g\nspecificheat_water = calorie / g K\nwater_specificheat = specificheat_water\nspecificheat_aluminum = 0.91 J/g K\nspecificheat_antimony = 0.21 J/g K\nspecificheat_barium = 0.20 J/g K\nspecificheat_beryllium = 1.83 J/g K\nspecificheat_bismuth = 0.13 J/g K\nspecificheat_cadmium = 0.23 J/g K\nspecificheat_cesium = 0.24 J/g K\nspecificheat_chromium = 0.46 J/g K\nspecificheat_cobalt = 0.42 J/g K\nspecificheat_copper = 0.39 J/g K\nspecificheat_gallium = 0.37 J/g K\nspecificheat_germanium = 0.32 J/g K\nspecificheat_gold = 0.13 J/g K\nspecificheat_hafnium = 0.14 J/g K\nspecificheat_indium = 0.24 J/g K\nspecificheat_iridium = 0.13 J/g K\nspecificheat_iron = 0.45 J/g K\nspecificheat_lanthanum = 0.195 J/g K\nspecificheat_lead = 0.13 J/g K\nspecificheat_lithium = 3.57 J/g K\nspecificheat_lutetium = 0.15 J/g K\nspecificheat_magnesium = 1.05 J/g K\nspecificheat_manganese = 0.48 J/g K\nspecificheat_mercury = 0.14 J/g K\nspecificheat_molybdenum = 0.25 J/g K\nspecificheat_nickel = 0.44 J/g K\nspecificheat_osmium = 0.13 J/g K\nspecificheat_palladium = 0.24 J/g K\nspecificheat_platinum = 0.13 J/g K\nspecificheat_plutonum = 0.13 J/g K\nspecificheat_potassium = 0.75 J/g K\nspecificheat_rhenium = 0.14 J/g K\nspecificheat_rhodium = 0.24 J/g K\nspecificheat_rubidium = 0.36 J/g K\nspecificheat_ruthenium = 0.24 J/g K\nspecificheat_scandium = 0.57  J/g K\nspecificheat_selenium = 0.32 J/g K\nspecificheat_silicon = 0.71 J/g K\nspecificheat_silver = 0.23 J/g K\nspecificheat_sodium = 1.21 J/g K\nspecificheat_strontium = 0.30 J/g K\nspecificheat_tantalum = 0.14 J/g K\nspecificheat_thallium = 0.13 J/g K\nspecificheat_thorium = 0.13 J/g K\nspecificheat_tin = 0.21 J/g K\nspecificheat_titanium = 0.54 J/g K\nspecificheat_tungsten = 0.13 J/g K\nspecificheat_uranium = 0.12 J/g K\nspecificheat_vanadium = 0.39 J/g K\nspecificheat_yttrium = 0.30 J/g K\nspecificheat_zinc = 0.39 J/g K\nspecificheat_zirconium = 0.27 J/g K\nspecificheat_ethanol = 2.3  J/g K\nspecificheat_ammonia = 4.6 J/g K\nspecificheat_freon = 0.91 J/g K\nspecificheat_gasoline = 2.22 J/g K\nspecificheat_iodine = 2.15 J/g K\nspecificheat_oliveoil = 1.97 J/g K\nspecificheat_hydrogen = 14.3 J/g K\nspecificheat_helium = 5.1932 J/g K\nspecificheat_argon = 0.5203 J/g K\nspecificheat_tissue = 3.5 J/g K\nspecificheat_diamond = 0.5091 J/g K\nspecificheat_granite = 0.79 J/g K\nspecificheat_graphite = 0.71 J/g K\nspecificheat_ice = 2.11 J/g K\nspecificheat_asphalt = 0.92 J/g K\nspecificheat_brick = 0.84 J/g K\nspecificheat_concrete = 0.88 J/g K\nspecificheat_glass_silica = 0.84 J/g K\nspecificheat_glass_flint = 0.503 J/g K\nspecificheat_glass_pyrex = 0.753 J/g K\nspecificheat_gypsum = 1.09 J/g K\nspecificheat_marble = 0.88 J/g K\nspecificheat_sand = 0.835 J/g K\nspecificheat_soil = 0.835 J/g K\nspecificheat_wood = 1.7 J/g K\nspecificheat_sucrose = 1.244 J/g K\ntonoil = 1e10 cal_IT\ntoe = tonoil\ntoncoal = 7e9 cal_IT\nbarreloil = 5.8 Mbtu\nnaturalgas_HHV = 1027 btu/ft^3\nnaturalgas_LHV = 930 btu/ft^3\nnaturalgas = naturalgas_HHV\ncharcoal = 30 GJ/tonne\nwoodenergy_dry = 20 GJ/tonne\nwoodenergy_airdry = 15 GJ/tonne\ncoal_bituminous = 27 GJ / tonne\ncoal_lignite = 15 GJ / tonne\ncoal_US = 22 GJ / uston\nethanol_HHV = 84000 btu/usgallon\nethanol_LHV = 75700 btu/usgallon\ndiesel = 130500 btu/usgallon\ngasoline_LHV = 115000 btu/usgallon\ngasoline_HHV = 125000 btu/usgallon\ngasoline = gasoline_HHV\nheating = 37.3 MJ/liter\nfueloil = 39.7 MJ/liter\npropane = 93.3 MJ/m^3\nbutane = 124 MJ/m^3\nuranium_pure = 200 MeV avogadro / (235.0439299 g/mol)\nuranium_natural = 0.7% uranium_pure\ncelsiusheatunit = cal lb degC / gram K\nchu = celsiusheatunit\nPOWER = watt\nhorsepower = 550 foot pound force / sec\nmechanicalhorsepower = horsepower\nhp = horsepower\nmetrichorsepower = 75 kilogram force meter / sec\nelectrichorsepower = 746 W\nboilerhorsepower = 9809.50 W\nwaterhorsepower = 746.043 W\nbrhorsepower = 745.70 W\ndonkeypower = 250 W\nchevalvapeur = metrichorsepower\nTHERMAL_CONDUCTIVITY = POWER / AREA (TEMPERATURE_DIFFERENCE/LENGTH)\nTHERMAL_RESISTIVITY = 1/THERMAL_CONDUCTIVITY\nTHERMAL_CONDUCTANCE = POWER / TEMPERATURE_DIFFERENCE\nTHERMAL_RESISTANCE = 1/THERMAL_CONDUCTANCE\nTHERMAL_ADMITTANCE = THERMAL_CONDUCTIVITY / LENGTH\nTHERMAL_INSULANCE = THERMAL_RESISTIVITY LENGTH\nTHERMAL_INSULATION = THERMAL_RESISTIVITY LENGTH\nRvalue = degF ft^2 hr / btu\nUvalue = 1/Rvalue\neuropeanUvalue = watt / m^2 K\nRSI = degC m^2 / W\nclo = 0.155 degC m^2 / W\ntog = 0.1 degC m^2 / W\nbel = x => 10^(x)\nbel^-1 = bel => log(bel)\ndecibel = x => 10^(x/10)\ndecibel^-1 = decibel => 10 log(decibel)\ndB = decibel\ndBW = x => dB(x) W \ndBW^-1 = dBW => ~dB(dBW/W)\ndBk = x => dB(x) kW \ndBk^-1 = dBk => ~dB(dBk/kW)\ndBf = x => dB(x) fW \ndBf^-1 = dBf => ~dB(dBf/fW)\ndBm = x => dB(x) mW \ndBm^-1 = dBm => ~dB(dBm/mW)\ndBmW = x => dBm(x) \ndBmW^-1 = dBmW => ~dBm(dBmW)\ndBJ = x => dB(x) J\ndBJ^-1 = dBJ => ~dB(dBJ/J)\ndBV = x => dB(0.5 x) V\ndBV^-1 = dBV => ~dB(dBV^2 / V^2)\ndBmV = x => dB(0.5 x) mV\ndBmV^-1 = dBmV => ~dB(dBmV^2/mV^2)\ndBuV = x => dB(0.5 x) microV \ndBuV^-1 = dBuV => ~dB(dBuV^2 / microV^2)\ndBu = x => dB(0.5 x) sqrt(mW 600 ohm) \ndBu^-1 = dBu => ~dB(dBu^2 / mW 600 ohm)\ndBv = x => dBu(x) \ndBv^-1 = dBv => ~dBu(dBv)\ndBSPL = x => dB(0.5 x) 20 microPa \ndBSPL^-1 = dBSPL => ~dB(dBSPL^2 / (20 microPa)^2)\ndBSIL = x => dB(x) 1e-12 W/m^2\ndBSIL^-1 = dBSIL => ~dB(dBSIL / (1e-12 W/m^2))\ndBSWL = x => dB(x) 1e-12 W\ndBSWL^-1 = dBSWL => ~dB(dBSWL/1e-12 W)\nENTROPY = ENERGY / TEMPERATURE\nclausius = 1e3 cal/K\nlangley = thermcalorie/cm^2\nponcelet = 100 kg force m / s\ntonrefrigeration = uston 144 btu / lb day\ntonref = tonrefrigeration\nrefrigeration = tonref / ton\nfrigorie = 1000 cal_fifteen\ntnt = 1e9 cal_th / ton\nairwatt = 8.5 (ft^3/min) inH2O\nperm_0C = grain / hr ft^2 inHg\nperm_zero = perm_0C\nperm_0 = perm_0C\nperm = perm_0C\nperm_23C = grain / hr ft^2 in Hg23C\nperm_twentythree = perm_23C\npair = 2\nbrace = 2\nnest = 3\nhattrick = 3\ndicker = 10\ndozen = 12\nbakersdozen = 13\nscore = 20\nflock = 40\ntimer = 40\nshock = 60\ntoncount = 100\nlonghundred = 120\ngross = 144\ngreatgross = 12 gross\ntithe = 1|10\nshortquire = 24\nquire = 25\nshortream = 480\nream = 500\nperfectream = 516\nbundle = 2 reams\nbale = 5 bundles\nlettersize = 8.5 inch 11 inch\nlegalsize = 8.5 inch 14 inch\nledgersize = 11 inch 17 inch\nexecutivesize = 7.25 inch 10.5 inch\nApaper = 8.5 inch 11 inch\nBpaper = 11 inch 17 inch\nCpaper = 17 inch 22 inch\nDpaper = 22 inch 34 inch\nEpaper = 34 inch 44 inch\npointthickness = mil\nA0paper = 841 mm 1189 mm\nA1paper = 594 mm  841 mm\nA2paper = 420 mm  594 mm\nA3paper = 297 mm  420 mm\nA4paper = 210 mm  297 mm\nA5paper = 148 mm  210 mm\nA6paper = 105 mm  148 mm\nA7paper = 74 mm  105 mm\nA8paper = 52 mm   74 mm\nA9paper = 37 mm   52 mm\nA10paper = 26 mm   37 mm\nB0paper = 1000 mm 1414 mm\nB1paper = 707 mm 1000 mm\nB2paper = 500 mm  707 mm\nB3paper = 353 mm  500 mm\nB4paper = 250 mm  353 mm\nB5paper = 176 mm  250 mm\nB6paper = 125 mm  176 mm\nB7paper = 88 mm  125 mm\nB8paper = 62 mm   88 mm\nB9paper = 44 mm   62 mm\nB10paper = 31 mm   44 mm\nC0paper = 917 mm 1297 mm\nC1paper = 648 mm  917 mm\nC2paper = 458 mm  648 mm\nC3paper = 324 mm  458 mm\nC4paper = 229 mm  324 mm\nC5paper = 162 mm  229 mm\nC6paper = 114 mm  162 mm\nC7paper = 81 mm  114 mm\nC8paper = 57 mm   81 mm\nC9paper = 40 mm   57 mm\nC10paper = 28 mm   40 mm\ngsm = grams / meter^2\npoundbookpaper = lb / 25 inch 38 inch ream\nlbbook = poundbookpaper\npoundtextpaper = poundbookpaper\nlbtext = poundtextpaper\npoundoffsetpaper = poundbookpaper\nlboffset = poundoffsetpaper\npoundbiblepaper = poundbookpaper\nlbbible = poundbiblepaper\npoundtagpaper = lb / 24 inch 36 inch ream\nlbtag = poundtagpaper\npoundbagpaper = poundtagpaper\nlbbag = poundbagpaper\npoundnewsprintpaper = poundtagpaper\nlbnewsprint = poundnewsprintpaper\npoundposterpaper = poundtagpaper\nlbposter = poundposterpaper\npoundtissuepaper = poundtagpaper\nlbtissue = poundtissuepaper\npoundwrappingpaper = poundtagpaper\nlbwrapping = poundwrappingpaper\npoundwaxingpaper = poundtagpaper\nlbwaxing = poundwaxingpaper\npoundglassinepaper = poundtagpaper\nlbglassine = poundglassinepaper\npoundcoverpaper = lb / 20 inch 26 inch ream\nlbcover = poundcoverpaper\npoundindexpaper = lb / 25.5 inch 30.5 inch ream\nlbindex = poundindexpaper\npoundindexbristolpaper = poundindexpaper\nlbindexbristol = poundindexpaper\npoundbondpaper = lb / 17 inch 22 inch ream\nlbbond = poundbondpaper\npoundwritingpaper = poundbondpaper\nlbwriting = poundwritingpaper\npoundledgerpaper = poundbondpaper\nlbledger = poundledgerpaper\npoundcopypaper = poundbondpaper\nlbcopy = poundcopypaper\npoundblottingpaper = lb / 19 inch 24 inch ream\nlbblotting = poundblottingpaper\npoundblankspaper = lb / 22 inch 28 inch ream\nlbblanks = poundblankspaper\npoundpostcardpaper = lb / 22.5 inch 28.5 inch ream\nlbpostcard = poundpostcardpaper\npoundweddingbristol = poundpostcardpaper\nlbweddingbristol = poundweddingbristol\npoundbristolpaper = poundweddingbristol\nlbbristol = poundbristolpaper\npoundboxboard = lb / 1000 ft^2\nlbboxboard = poundboxboard\npoundpaperboard = poundboxboard\nlbpaperboard = poundpaperboard\npaperM = lb / 1000\npaperdensity = 0.8 g/cm^3\npapercaliper = in paperdensity\npaperpoint = 0.001 in paperdensity\nfournierpoint = 0.1648 inch / 12\nolddidotpoint = 1|72 frenchinch\nbertholdpoint = 1|2660 m\nINpoint = 0.4 mm\ngermandidotpoint = 0.376065 mm\nmetricpoint = 3|8 mm\noldpoint = 1|72.27 inch\nprinterspoint = oldpoint\ntexpoint = oldpoint\ntexscaledpoint = 1|65536 texpoint\ntexsp = texscaledpoint\ncomputerpoint = 1|72 inch\npoint = computerpoint\ncomputerpica = 12 computerpoint\npostscriptpoint = computerpoint\npspoint = postscriptpoint\ntwip = 1|20 point\nQ = 1|4 mm\nfrenchprinterspoint = olddidotpoint\ndidotpoint = germandidotpoint\neuropeanpoint = didotpoint\ncicero = 12 didotpoint\nstick = 2 inches\nexcelsior = 3 oldpoint\nbrilliant = 3.5 oldpoint\ndiamondtype = 4 oldpoint\npearl = 5 oldpoint\nagate = 5.5 oldpoint\nruby = agate\nnonpareil = 6 oldpoint\nmignonette = 6.5 oldpoint\nemerald = mignonette\nminion = 7 oldpoint\nbrevier = 8 oldpoint\nbourgeois = 9 oldpoint\nlongprimer = 10 oldpoint\nsmallpica = 11 oldpoint\npica = 12 oldpoint\nenglish = 14 oldpoint\ncolumbian = 16 oldpoint\ngreatprimer = 18 oldpoint\nparagon = 20 oldpoint\nmeridian = 44 oldpoint\ncanon = 48 oldpoint\nnonplusultra = 2 didotpoint\nbrillant = 3 didotpoint\ndiamant = 4 didotpoint\nperl = 5 didotpoint\nnonpareille = 6 didotpoint\nkolonel = 7 didotpoint\npetit = 8 didotpoint\nborgis = 9 didotpoint\nkorpus = 10 didotpoint\ncorpus = korpus\ngaramond = korpus\nmittel = 14 didotpoint\ntertia = 16 didotpoint\ntext = 18 didotpoint\nkleine_kanon = 32 didotpoint\nkanon = 36 didotpoint\ngrobe_kanon = 42 didotpoint\nmissal = 48 didotpoint\nkleine_sabon = 72 didotpoint\ngrobe_sabon = 84 didotpoint\nINFORMATION = bit\nnat = (1/ln(2)) bits\nhartley = log2(10) bits\nban = hartley\ndit = hartley\nbps = bit/sec\nbyte = 8 bit\nB = byte\noctet = 8 bits\nnybble = 4 bits\nnibble = nybble\nnyp = 2 bits\nmeg = megabyte\ngig = gigabyte\njiffy = 0.01 sec\njiffies = jiffy\ncdaudiospeed = 44.1 kHz 2*16 bits\ncdromspeed = 75 2048 bytes / sec\ndvdspeed = 1385 kB/s\noctave = 2\nmajorsecond = musicalfifth^2 / octave\nmajorthird = 5|4\nminorthird = 6|5\nmusicalfourth = 4|3\nmusicalfifth = 3|2\nmajorsixth = musicalfourth majorthird\nminorsixth = musicalfourth minorthird\nmajorseventh = musicalfifth majorthird\nminorseventh = musicalfifth minorthird\npythagoreanthird = majorsecond musicalfifth^2 / octave\nsyntoniccomma = pythagoreanthird / majorthird\npythagoreancomma = musicalfifth^12 / octave^7\nsemitone = octave^(1|12)\nmusicalcent = x => semitone^(x/100) \nmusicalcent^-1 = musicalcent => 100 log(musicalcent)/log(semitone)\nwholenote!\nMUSICAL_NOTE_LENGTH = wholenote\nhalfnote = 1|2 wholenote\nquarternote = 1|4 wholenote\neighthnote = 1|8 wholenote\nsixteenthnote = 1|16 wholenote\nthirtysecondnote = 1|32 wholenote\nsixtyfourthnote = 1|64 wholenote\ndotted = 3|2\ndoubledotted = 7|4\nbreve = doublewholenote\nsemibreve = wholenote\nminimnote = halfnote\ncrotchet = quarternote\nquaver = eighthnote\nsemiquaver = sixteenthnote\ndemisemiquaver = thirtysecondnote\nhemidemisemiquaver = sixtyfourthnote\nsemidemisemiquaver = hemidemisemiquaver\nwoolyarnrun = 1600 yard/pound\nyarncut = 300 yard/pound\ncottonyarncount = 840 yard/pound\nlinenyarncount = 300 yard/pound\nworstedyarncount = 1680 ft/pound\nmetricyarncount = meter/gram\ndenier = 1|9 tex\nmanchesteryarnnumber = drams/1000 yards\npli = lb/in\ntypp = 1000 yd/lb\nasbestoscut = 100 yd/lb\ntex = gram / km\ndrex = 0.1 tex\npoumar = lb / 1e6 yard\nskeincotton = 80*54 inch\ncottonbolt = 120 ft\nwoolbolt = 210 ft\nbolt = cottonbolt\nheer = 600 yards\ncut = 300 yards\nlea = 300 yards\nsailmakersyard = 28.5 in\nsailmakersounce = oz / sailmakersyard 36 inch\nsilkmomme = momme / 25 yards 1.49 inch\nsilkmm = silkmomme\nmcg = microgram\niudiptheria = 62.8 microgram\niupenicillin = 0.6 microgram\niuinsulin = 41.67 microgram\ndrop = 1|20 ml\nbloodunit = 450 ml\nfrenchcathetersize = 1|3 mm\ncharriere = frenchcathetersize\nhectare = hectoare\nmegohm = megaohm\nkilohm = kiloohm\nmicrohm = microohm\nmegalerg = megaerg\nunitedstatesdollar = US$\nusdollar = US$\n$ = dollar\nmark = germanymark\nbolivar = venezuelabolivar\nvenezuelanbolivarfuerte = venezuelabolivar\nbolivarfuerte = bolivar\noldbolivar = 1|1000 bolivar\npeseta = spainpeseta\nrand = southafricarand\nescudo = portugalescudo\nguilder = netherlandsguilder\nhollandguilder = netherlandsguilder\npeso = mexicopeso\nyen = japanyen\nlira = italylira\nrupee = indiarupee\ndrachma = greecedrachma\nfranc = francefranc\nmarkka = finlandmarkka\nbritainpound = unitedkingdompound\ngreatbritainpound = unitedkingdompound\nunitedkingdompound = ukpound\npoundsterling = britainpound\nyuan = chinayuan\naustriaschilling = 1|13.7603 euro\nbelgiumfranc = 1|40.3399 euro\nestoniakroon = 1|15.6466 euro\nfinlandmarkka = 1|5.94573 euro\nfrancefranc = 1|6.55957 euro\ngermanymark = 1|1.95583 euro\ngreecedrachma = 1|340.75 euro\nirelandpunt = 1|0.787564 euro\nitalylira = 1|1936.27 euro\nluxembourgfranc = 1|40.3399 euro\nnetherlandsguilder = 1|2.20371 euro\nportugalescudo = 1|200.482 euro\nspainpeseta = 1|166.386 euro\ncypruspound = 1|0.585274 euro\nmaltalira = 1|0.429300 euro\nsloveniatolar = 1|239.640 euro\nslovakiakoruna = 1|30.1260 euro\nUKP = GBP\nVEB = 1|1000 VEF\nicelandkróna = icelandkrona\npolandzłoty = polandzloty\ntongapa’anga = tongapa'anga\nvenezuelabolívar = venezuelabolivar\nvietnamđồng = vietnamdong\nAED = uaedirham\nAFN = afghanafghani\nALL = albanialek\nAMD = armeniadram\nAOA = angolakwanza\nARS = argentinapeso\nAUD = australiadollar\nAWG = arubaflorin\nAZN = azerbaijanmanat\nBAM = bosniaconvertiblemark\nBBD = barbadosdollar\nBDT = bangladeshtaka\nBGN = bulgarialev\nBHD = bahraindinar\nBIF = burundifranc\nBMD = bermudadollar\nBND = bruneidollar\nBOB = boliviaboliviano\nBRL = brazilreal\nBSD = bahamasdollar\nBTN = bhutanngultrum\nBWP = botswanapula\nBYR = belarusruble\nBZD = belizedollar\nCAD = canadadollar\nCDF = drcfranccongolais\nCHF = swissfranc\nCLP = chilepeso\nCMG = sintmaartencaribbeanguilder\nCNY = chinayuan\nCOP = colombiapeso\nCRC = costaricacolon\nCUP = cubapeso\nCVE = capeverdeescudo\nCZK = czechkoruna\nDJF = djiboutifranc\nDKK = denmarkkrona\nDOP = dominicanrepublicpeso\nDZD = algeriadinar\nEGP = egyptpound\nERN = eritreanakfa\nETB = ethiopianbirr\nEUR = euro\nFJD = fijidollar\nFKP = falklandislandspound\nGBP = ukpound\nGEL = georgialari\nGGP = guernseypound\nGHS = ghanacedi\nGIP = gibraltarpound\nGMD = gambiadalasi\nGNF = guineafranc\nGTQ = guatemalaquetzal\nGYD = guyanadollar\nHKD = hongkongdollar\nHNL = honduraslempira\nHRK = croatiakuna\nHTG = haitigourde\nHUF = hungariaforint\nIDR = indonesiarupiah\nILS = israelnewshekel\nIMP = manxpound\nINR = indiarupee\nIQD = iraqdinar\nIRR = iranrial\nISK = icelandkrona\nJEP = jerseypound\nJMD = jamaicadollar\nJOD = jordandinar\nJPY = japanyen\nKES = kenyaschilling\nKGS = kyrgyzstansom\nKHR = cambodiariel\nKMF = comorosfranc\nKPW = northkoreawon\nKRW = southkoreawon\nKWD = kuwaitdinar\nKYD = caymanislandsdollar\nKZT = kazakhstantenge\nLAK = laokip\nLBP = lebanonpound\nLKR = srilankanrupee\nLRD = liberiadollar\nLTL = lithuanialita\nLVL = latvialat\nLYD = libyadinar\nMAD = moroccodirham\nMDL = moldovaleu\nMGA = madagascarariary\nMKD = macedoniadenar\nMMK = myanmarkyat\nMNT = mongoliatugrik\nMOP = macaupataca\nMRO = mauritaniaouguiya\nMUR = mauritiusrupee\nMVR = maldiverufiyaa\nMWK = malawikwacha\nMXN = mexicopeso\nMYR = malaysiaringgit\nMZN = mozambicanmetical\nNAD = namibiadollar\nNGN = nigerianaira\nNIO = nicaraguacordobaoro\nNOK = norwaykrone\nNPR = nepalrupee\nNZD = newzealanddollar\nOMR = omanrial\nPAB = panamabalboa\nPEN = perunuevosol\nPGK = papuanewguineakina\nPHP = philippinepeso\nPKR = pakistanrupee\nPLN = polandzloty\nPYG = paraguayguarani\nQAR = qatarrial\nRON = romanianewlei\nRSD = serbiadinar\nRUB = russiarouble\nRWF = rwandafranc\nSAR = saudiarabiariyal\nSBD = solomonislandsdollar\nSCR = seychellesrupee\nSDG = sudanpound\nSEK = swedenkrona\nSGD = singaporedollar\nSHP = sainthelenapound\nSLL = sierraleoneleone\nSOS = somaliaschilling\nSRD = surinamedollar\nSTD = saotome&principedobra\nSVC = elsalvadorcolon\nSYP = syriapound\nSZL = swazilandlilangeni\nTHB = thailandbaht\nTJS = tajikistansomoni\nTMT = turkmenistanmanat\nTND = tunisiadinar\nTOP = tongapa'anga\nTRY = turkeylira\nTTD = trinidadandtobagodollar\nTVD = tuvaludollar\nTWD = taiwandollar\nTZS = tanzaniashilling\nUAH = ukrainehryvnia\nUGX = ugandaschilling\nUSD = usdollar\nUYU = uruguaypeso\nUZS = uzbekistansum\nVEF = venezuelabolivar\nVND = vietnamdong\nVUV = vanuatuvatu\nWST = samoatala\nXAF = centralafricancfafranc\nXAG = silverounce\nXAU = goldounce\nXCD = eastcaribbeandollar\nXDR = specialdrawingrights\nXOF = westafricanfranc\nXPD = palladiumounce\nXPF = cfpfranc\nXPT = platinumounce\nYER = yemenrial\nZAR = southafricarand\nZMW = zambiakwacha\nZWL = zimbabwedollar\nuaedirham = 1|5.0377227617117 euro\nafghanafghani = 1|79.188 euro\nalbanialek = 1|139.91 euro\narmeniadram = 1|566.72869147659 euro\nangolakwanza = 1|135.23 euro\nargentinapeso = 1|11.048888888889 euro\naustraliadollar = 1|1.4654 euro\narubaflorin = 1|2.454985 euro\nazerbaijanmanat = 1|1.0751624125307 euro\nbosniaconvertiblemark = 1|1.95583 euro\nbarbadosdollar = 1|2.743 euro\nbangladeshtaka = 1|107.48 euro\nbulgarialev = 1|1.9558 euro\nbahraindinar = 1|0.515684 euro\nburundifranc = 1|2167.6 euro\nbermudadollar = 1|1.3715 euro\nbruneidollar = 1|1.7393 euro\nboliviaboliviano = 1|9.5702 euro\nbrazilreal = 1|3.0395 euro\nbahamasdollar = 1|1.3715 euro\nbhutanngultrum = 1|80.2000 euro\nbotswanapula = 1|12.117 euro\nbelarusruble = 1|13743.377001456 euro\nbelizedollar = 1|2.743 euro\ncanadadollar = 1|1.4904 euro\ndrcfranccongolais = 1|1279.7 euro\nswissfranc = 1|1.2228 euro\nchilepeso = 1|753.71399696817 euro\nsintmaartencaribbeanguilder = 1|2.454985 euro\nchinayuan = 1|8.5545 euro\ncolombiapeso = 1|2640 euro\ncostaricacolon = 1|759.55 euro\ncubapeso = 1|1.385 euro\ncapeverdeescudo = 1|110.265 euro\nczechkoruna = 1|27.474 euro\ndjiboutifranc = 1|243.7443515 euro\ndenmarkkrona = 1|7.4645 euro\ndominicanrepublicpeso = 1|59.871 euro\nalgeriadinar = 1|108.83 euro\negyptpound = 1|9.7628759785744 euro\neritreanakfa = 1|20.5725 euro\nethiopianbirr = 1|27.187 euro\neuro = 1.3715 US$\nfijidollar = 1|0.40088973625675 euro\nfalklandislandspound = 1|0.81460 euro\nukpound = 1|0.81460 euro\ngeorgialari = 1|2.4036608495309 euro\nguernseypound = 1|0.81460 euro\nghanacedi = 1|4.0499592723323 euro\ngibraltarpound = 1|0.81460 euro\ngambiadalasi = 1|54.846 euro\nguineafranc = 1|9771.5 euro\nguatemalaquetzal = 1|10.777456647399 euro\nguyanadollar = 1|286 euro\nhongkongdollar = 1|10.6317 euro\nhonduraslempira = 1|28.25 euro\ncroatiakuna = 1|7.6100 euro\nhaitigourde = 1|62.949 euro\nhungariaforint = 1|305.38 euro\nindonesiarupiah = 1|15656.47 euro\nisraelnewshekel = 1|4.7382 euro\nmanxpound = 1|0.81460 euro\nindiarupee = 1|80.2000 euro\niraqdinar = 1|1669 euro\niranrial = 1|0.0406 euro\nicelandkrona = 1|154.38966560379 euro\njerseypound = 1|0.81460 euro\njamaicadollar = 1|151.50837988827 euro\njordandinar = 1|0.9723935 euro\njapanyen = 1|138.79 euro\nkenyaschilling = 1|120.5 euro\nkyrgyzstansom = 1|71.43873188817 euro\ncambodiariel = 1|5565.7 euro\ncomorosfranc = 1|491.96775 euro\nnorthkoreawon = 1|179.78 euro\nsouthkoreawon = 1|1401.67 euro\nkuwaitdinar = 1|0.38659921506647 euro\ncaymanislandsdollar = 1|1.1429166666667 euro\nkazakhstantenge = 1|249.97881916865 euro\nlaokip = 1|11132 euro\nlebanonpound = 1|2067.53625 euro\nsrilankanrupee = 1|0.0056092800327238 euro\nliberiadollar = 1|98.42 euro\nlithuanialita = 1|3.4528 euro\nlatvialat = 1|0.702804 euro\nlibyadinar = 1|1.72 euro\nmoroccodirham = 1|11.223476297968 euro\nmoldovaleu = 1|18.8834 euro\nmadagascarariary = 1|3303.2 euro\nmacedoniadenar = 1|61.577 euro\nmyanmarkyat = 1|1320 euro\nmongoliatugrik = 1|0.0286 euro\nmacaupataca = 1|10.950651 euro\nmauritaniaouguiya = 1|414.82 euro\nmauritiusrupee = 1|41.412 euro\nmaldiverufiyaa = 1|21.343 euro\nmalawikwacha = 1|543.61 euro\nmexicopeso = 1|17.7157 euro\nmalaysiaringgit = 1|4.4036 euro\nmozambicanmetical = 1|43.559 euro\nnamibiadollar = 1|14.2635 euro\nnigerianaira = 1|222.5 euro\nnicaraguacordobaoro = 1|35.733 euro\nnorwaykrone = 1|8.1355 euro\nnepalrupee = 1|128.32 euro\nnewzealanddollar = 1|1.5872 euro\nomanrial = 1|0.52733774223316 euro\npanamabalboa = 1|1.3715 euro\nperunuevosol = 1|3.8167860798362 euro\npapuanewguineakina = 1|0.25982370870747 euro\nphilippinepeso = 1|59.862 euro\npakistanrupee = 1|0.0074127346739243 euro\npolandzloty = 1|4.1868 euro\nparaguayguarani = 1|6132.8 euro\nqatarrial = 1|4.99226 euro\nromanianewlei = 1|4.4319 euro\nserbiadinar = 1|115.62209159931 euro\nrussiarouble = 1|47.3682 euro\nrwandafranc = 1|947.37 euro\nsaudiarabiariyal = 1|5.143125 euro\nsolomonislandsdollar = 1|0.099813285230545 euro\nseychellesrupee = 1|16.862 euro\nsudanpound = 1|7.9621 euro\nswedenkrona = 1|9.0461 euro\nsingaporedollar = 1|1.7136 euro\nsainthelenapound = 1|0.81460 euro\nsierraleoneleone = 1|5995 euro\nsomaliaschilling = 1|1327.5 euro\nsurinamedollar = 1|4.6752 euro\nsaotome&principedobra = 1|24474 euro\nelsalvadorcolon = 1|12.118 euro\nsyriapound = 1|205.8 euro\nswazilandlilangeni = 1|14.2635 euro\nthailandbaht = 1|44.534 euro\ntajikistansomoni = 1|6.7255760943121 euro\nturkmenistanmanat = 1|3.908959178604 euro\ntunisiadinar = 1|2.227931292009 euro\ntongapa'anga = 1|0.41317875155564 euro\nturkeylira = 1|2.8791 euro\ntrinidadandtobagodollar = 1|8.57256075 euro\ntuvaludollar = 1|1.4654 euro\ntaiwandollar = 1|41.318559556787 euro\ntanzaniashilling = 1|2281.1 euro\nukrainehryvnia = 1|16.300632612596 euro\nugandaschilling = 1|3492.7 euro\nuruguaypeso = 1|31.758 euro\nuzbekistansum = 1|3127.4263000994 euro\nvenezuelabolivar = 1|8.6369426751592 euro\nvietnamdong = 1|29247.058823529 euro\nvanuatuvatu = 1|0.007705076824795 euro\nsamoatala = 1|0.32456907640854 euro\ncentralafricancfafranc = 1|655.957 euro\nsilverounce = 1|0.44837 euro\ngoldounce = 1|30.046 euro\neastcaribbeandollar = 1|3.70305 euro\nspecialdrawingrights = 1|1.6300632612596 euro\nwestafricanfranc = 1|655.957 euro\npalladiumounce = 1|18.608 euro\ncfpfranc = 1|119.33 euro\nplatinumounce = 1|33.044 euro\nyemenrial = 1|297.64 euro\nsouthafricarand = 1|14.2635 euro\nzambiakwacha = 1|8.7394 euro\nzimbabwedollar = 1|518.68 euro\ngoldprice = 1300.76 US$/troyounce\nplatinumprice = 1420.00 US$/troyounce\nsilverprice = 20.44 US$/troyounce\nolddollargold = 23.22 grains goldprice\nnewdollargold = 96|7 grains goldprice\ndollargold = newdollargold\npoundgold = 113 grains goldprice\nUSpennyweight = 2.5 grams\nUSnickelweight = 5 grams\nUSdimeweight = US$ 0.10 / (20 US$ / lb)\nUSquarterweight = US$ 0.25 / (20 US$ / lb)\nUShalfdollarweight = US$ 0.50 / (20 US$ / lb)\nUSdollarmass = 8.1 grams\nquid = britainpound\nfiver = 5 quid\ntenner = 10 quid\nmonkey = 500 quid\nbrgrand = 1000 quid\nbob = shilling\nshilling = 1|20 britainpound\noldpence = 1|12 shilling\nfarthing = 1|4 oldpence\nguinea = 21 shilling\ncrown = 5 shilling\nflorin = 2 shilling\ngroat = 4 oldpence\ntanner = 6 oldpence\nbrpenny = 0.01 britainpound\npence = brpenny\ntuppence = 2 pence\ntuppenny = tuppence\nha'penny = halfbrpenny\nhapenny = ha'penny\noldpenny = oldpence\noldtuppence = 2 oldpence\noldtuppenny = oldtuppence\nthreepence = 3 oldpence\nthreepenny = threepence\noldthreepence = threepence\noldthreepenny = threepence\noldhalfpenny = halfoldpenny\noldha'penny = oldhalfpenny\noldhapenny = oldha'penny\nbrpony = 25 britainpound\nloony = 1 canadadollar\ntoony = 2 canadadollar\ncord = 4*4*8 ft^3\nfacecord = 1|2 cord\ncordfoot = 1|8 cord\ncordfeet = cordfoot\nhousecord = 1|3 cord\nboardfoot = ft^2 inch\nboardfeet = boardfoot\nfbm = boardfoot\nstack = 4 yard^3\nrick = 4 ft 8 ft 16 inches\nstere = m^3\ntimberfoot = ft^3\nstandard = 120 12 ft 11 in 1.5 in\nhoppusfoot = (4/pi) ft^3\nhoppusboardfoot = 1|12 hoppusfoot\nhoppuston = 50 hoppusfoot\ndeal = 12 ft 11 in 2.5 in\nwholedeal = 12 ft 11 in 1.25 in\nsplitdeal = 12 ft 11 in 5|8 in\npoundcut = pound / gallon\nlbcut = poundcut\nFLUID_FLOW = VOLUME / TIME\ncumec = m^3/s\ncusec = ft^3/s\ngph = gal/hr\ngpm = gal/min\nmgd = megagal/day\ncfs = ft^3/s\ncfh = ft^3/hour\ncfm = ft^3/min\nlpm = liter/min\nlfm = ft/min\npru = mmHg / (ml/min)\nminersinchAZ = 1.5 ft^3/min\nminersinchCA = 1.5 ft^3/min\nminersinchMT = 1.5 ft^3/min\nminersinchNV = 1.5 ft^3/min\nminersinchOR = 1.5 ft^3/min\nminersinchID = 1.2 ft^3/min\nminersinchKS = 1.2 ft^3/min\nminersinchNE = 1.2 ft^3/min\nminersinchNM = 1.2 ft^3/min\nminersinchND = 1.2 ft^3/min\nminersinchSD = 1.2 ft^3/min\nminersinchUT = 1.2 ft^3/min\nminersinchCO = 1 ft^3/sec / 38.4\nminersinchBC = 1.68 ft^3/min\nsverdrup = 1e6 m^3 / sec\nGAS_FLOW = PRESSURE FLUID_FLOW\nsccm = atm cc/min\nsccs = atm cc/sec\nscfh = atm ft^3/hour\nscfm = atm ft^3/min\nslpm = atm liter/min\nslph = atm liter/hour\nlusec = liter micron Hg / s\ng00 = (-1)\ng000 = (-2)\ng0000 = (-3)\ng00000 = (-4)\ng000000 = (-5)\ng0000000 = (-6)\nwiregauge = g => 1|200 92^((36+(-g))/39) in\nwiregauge^-1 = wiregauge => 36+(-39)ln(200 wiregauge/in)/ln(92)\nawg = wiregauge\nbrwiregauge[in] = -6 0.5           -5 0.464         -3 0.4           -2 0.372          3 0.252          6 0.192         10 0.128         14 0.08          19 0.04          23 0.024         26 0.018         28 0.0148        30 0.0124        39 0.0052        49 0.0012        50 0.001\nplategauge[(oz/ft^2)/ = 480*lb/ft^3 => -5 300          1 180         14  50         16  40         17  36         20  24         26  12         31   7         36   4.5       38   4\nstdgauge[(oz/ft^2)/ = 501.84*lb/ft^3 => -5 300          1 180         14  50         16  40         17  36         20  24         26  12         31   7         36   4.5       38   4\nzincgauge[in] = 1 0.002         10 0.02          15 0.04          19 0.06          23 0.1           24 0.125         27 0.5           28 1\nscrewgauge = g => (.06 + .013 g) in \nscrewgauge^-1 = screwgauge => (screwgauge/in + (-.06)) / .013\ngrit_P[micron] = 12 1815         16 1324         20 1000         24 764         30 642         36 538         40 425         50 336         60 269         80 201         100 162         120 125         150 100         180 82         220 68         240 58.5         280 52.2         320 46.2         360 40.5         400 35         500 30.2         600 25.8         800 21.8         1000 18.3         1200 15.3         1500 12.6         2000 10.3         2500 8.4\ngrit_F[micron] = 4 4890         5 4125         6 3460         7 2900         8 2460         10 2085         12 1765         14 1470         16 1230         20 1040         22 885         24 745         30 625         36 525         40 438         46 370         54 310         60 260         70 218         80 185         90 154         100 129         120 109         150 82         180 69         220 58         230 53         240 44.5         280 36.5         320 29.2         360 22.8         400 17.3         500 12.8         600 9.3         800 6.5         1000 4.5         1200 3         1500 2.0         2000 1.2\nansibonded[micron] = 4 4890     5 4125     6 3460     7 2900     8 2460     10 2085     12 1765     14 1470     16 1230     20 1040     22 885     24 745     30 625     36 525     40 438     46 370     54 310     60 260     70 218     80 185     90 154     100 129     120 109     150 82     180 69     220 58     240 50     280 39.5     320 29.5     360 23     400 18.25     500 13.9     600 10.55     800 7.65     1000 5.8     1200 3.8\ngrit_ansibonded = ansibonded\nansicoated[micron] = noerror     4 4890     5 4125     6 3460     7 2900     8 2460     10 2085     12 1765     14 1470     16 1230     20 1040     22 885     24 745     30 625     36 525     40 438     46 370     54 310     60 260     70 218     80 185     90 154     100 129     120 109     150 82     180 69     220 58     240 50     280 39.5     320 29.5     360 23     400 18.25     500 13.9     600 10.55     800 11.5     1000 9.5     2000 7.2     2500 5.5     3000 4     4000 3     6000 2     8000 1.2\ngrit_ansicoated = ansicoated\njisgrit[micron] = 150 75      180 63      220 53      280 48      320 40      360 35      400 30      600 20      700 17      800 14      1000 11.5      1200 9.5      1500 8      2000 6.7      2500 5.5      3000 4      4000 3      6000 2      8000 1.2\ngrit_A[micron] = 16 15.3      25 21.8      30 23.6      35 25.75      45 35      60 46.2      65 53.5      75 58.5      90 65      110 78      130 93      160 127      200 156\ndmtxxcoarse = 120 micron\ndmtsilver = dmtxxcoarse\ndmtxx = dmtxxcoarse\ndmtxcoarse = 60 micron\ndmtx = dmtxcoarse\ndmtblack = dmtxcoarse\ndmtcoarse = 45 micron\ndmtc = dmtcoarse\ndmtblue = dmtcoarse\ndmtfine = 25 micron\ndmtred = dmtfine\ndmtf = dmtfine\ndmtefine = 9 micron\ndmte = dmtefine\ndmtgreen = dmtefine\ndmtceramic = 7 micron\ndmtcer = dmtceramic\ndmtwhite = dmtceramic\ndmteefine = 3 micron\ndmttan = dmteefine\ndmtee = dmteefine\nhardtranslucentarkansas = 6 micron\nsoftarkansas = 22 micron\nextrafineindia = 22 micron\nfineindia = 35 micron\nmediumindia = 53.5 micron\ncoarseindia = 97 micron\nfinecrystolon = 45 micron\nmediumcrystalon = 78 micron\ncoarsecrystalon = 127 micron\nhardblackarkansas = 6 micron\nhardwhitearkansas = 11 micron\nwashita = 35 micron\nringsize = n => (1.4216+.1018 n) in \nringsize^-1 = ringsize => (ringsize/in + (-1.4216))/.1018\nsizeAring = 37.50 mm\nsizeBring = 38.75 mm\nsizeCring = 40.00 mm\nsizeDring = 41.25 mm\nsizeEring = 42.50 mm\nsizeFring = 43.75 mm\nsizeGring = 45.00 mm\nsizeHring = 46.25 mm\nsizeIring = 47.50 mm\nsizeJring = 48.75 mm\nsizeKring = 50.00 mm\nsizeLring = 51.25 mm\nsizeMring = 52.50 mm\nsizeNring = 53.75 mm\nsizeOring = 55.00 mm\nsizePring = 56.25 mm\nsizeQring = 57.50 mm\nsizeRring = 58.75 mm\nsizeSring = 60.00 mm\nsizeTring = 61.25 mm\nsizeUring = 62.50 mm\nsizeVring = 63.75 mm\nsizeWring = 65.00 mm\nsizeXring = 66.25 mm\nsizeYring = 67.50 mm\nsizeZring = 68.75 mm\njpringsize = n => (38|3 + n/3) pi mm \njpringsize^-1 = jpringsize => 3 jpringsize/ pi mm + (-38)\neuringsize = n => (n+40) mm \neuringsize^-1 = euringsize => euringsize/mm + (-40)\nmph = mile/hr\nmpg = mile/gal\nkph = km/hr\nfL = footlambert\nfpm = ft/min\nfps = ft/s\nrpm = rev/min\nrps = rev/sec\nmi = mile\nsmi = mile\nnmi = nauticalmile\nmbh = 1e3 btu/hour\nmcm = 1e3 circularmil\nipy = inch/year\nccf = 100 ft^3\nMcf = 1000 ft^3\nkp = kilopond\nkpm = kp meter\nWh = W hour\nhph = hp hour\nplf = lb / foot\npa = Pa\nev = eV\nhg = Hg\noe = Oe\nmh = mH\nrd = rod\npf = pF\ngr = grain\nnt = N\nhz = Hz\nhd = hogshead\ndry = drygallon/gallon\nnmile = nauticalmile\nbeV = GeV\nbev = beV\ncoul = C\nbecquerel = /s\nBq = becquerel\ncurie = 3.7e10 Bq\nCi = curie\nrutherford = 1e6 Bq\nRADIATION_DOSE = gray\ngray = J/kg\nGy = gray\nrad = 1e-2 Gy\nrep = 8.38 mGy\nsievert = J/kg\nSv = sievert\nrem = 1e-2 Sv\nroentgen = 2.58e-4 C / kg\nrontgen = roentgen\nsievertunit = 8.38 rontgen\neman = 1e-7 Ci/m^3\nmache = 3.7e-7 Ci/m^3\nactinium = 227.0278\naluminum = 26.981539\namericium = 243.0614\nantimony = 121.760\nargon = 39.948\narsenic = 74.92159\nastatine = 209.9871\nbarium = 137.327\nberkelium = 247.0703\nberyllium = 9.012182\nbismuth = 208.98037\nboron = 10.811\nbromine = 79.904\ncadmium = 112.411\ncalcium = 40.078\ncalifornium = 251.0796\ncarbon = 12.011\ncerium = 140.115\ncesium = 132.90543\nchlorine = 35.4527\nchromium = 51.9961\ncobalt = 58.93320\ncopper = 63.546\ncurium = 247.0703\ndysprosium = 162.50\neinsteinium = 252.083\nerbium = 167.26\neuropium = 151.965\nfermium = 257.0951\nfluorine = 18.9984032\nfrancium = 223.0197\ngadolinium = 157.25\ngallium = 69.723\ngermanium = 72.61\ngold = 196.96654\nhafnium = 178.49\nhelium = 4.002602\nholmium = 164.93032\nhydrogen = 1.00794\nindium = 114.818\niodine = 126.90447\niridium = 192.217\niron = 55.845\nkrypton = 83.80\nlanthanum = 138.9055\nlawrencium = 262.11\nlead = 207.2\nlithium = 6.941\nlutetium = 174.967\nmagnesium = 24.3050\nmanganese = 54.93805\nmendelevium = 258.10\nmercury = 200.59\nmolybdenum = 95.94\nneodymium = 144.24\nneon = 20.1797\nneptunium = 237.0482\nnickel = 58.6934\nniobium = 92.90638\nnitrogen = 14.00674\nnobelium = 259.1009\nosmium = 190.23\noxygen = 15.9994\npalladium = 106.42\nphosphorus = 30.973762\nplatinum = 195.08\nplutonium = 244.0642\npolonium = 208.9824\npotassium = 39.0983\npraseodymium = 140.90765\npromethium = 144.9127\nprotactinium = 231.03588\nradium = 226.0254\nradon = 222.0176\nrhenium = 186.207\nrhodium = 102.90550\nrubidium = 85.4678\nruthenium = 101.07\nsamarium = 150.36\nscandium = 44.955910\nselenium = 78.96\nsilicon = 28.0855\nsilver = 107.8682\nsodium = 22.989768\nstrontium = 87.62\nsulfur = 32.066\ntantalum = 180.9479\ntechnetium = 97.9072\ntellurium = 127.60\nterbium = 158.92534\nthallium = 204.3833\nthorium = 232.0381\nthullium = 168.93421\ntin = 118.710\ntitanium = 47.867\ntungsten = 183.84\nuranium = 238.0289\nvanadium = 50.9415\nxenon = 131.29\nytterbium = 173.04\nyttrium = 88.90585\nzinc = 65.39\nzirconium = 91.224\nair = 28.967\npeople = 1\nperson = people\ndeath = people\ncapita = people\npercapita = / capita\nTim = 12^-4 hour\nGrafut = gravity Tim^2\nSurf = Grafut^2\nVolm = Grafut^3\nVlos = Grafut/Tim\nDenz = Maz/Volm\nMag = Maz gravity\nMaz = Volm kg / oldliter\nTm = Tim\nGf = Grafut\nSf = Surf\nVm = Volm\nVl = Vlos\nMz = Maz\nDz = Denz\nZena_ = 12\nDuna_ = 12^2\nTrina_ = 12^3\nQuedra_ = 12^4\nQuena_ = 12^5\nHesa_ = 12^6\nSeva_ = 12^7\nAka_ = 12^8\nNeena_ = 12^9\nDexa_ = 12^10\nLefa_ = 12^11\nZennila_ = 12^12\nZeni_ = 12^-1\nDuni_ = 12^-2\nTrini_ = 12^-3\nQuedri_ = 12^-4\nQueni_ = 12^-5\nHesi_ = 12^-6\nSevi_ = 12^-7\nAki_ = 12^-8\nNeeni_ = 12^-9\nDexi_ = 12^-10\nLefi_ = 12^-11\nZennili_ = 12^-12\nwari_proportion = 1|10\nwari = wari_proportion\nbu_proportion = 1|100\nrin_proportion = 1|1000\nmou_proportion = 1|10000\nshaku = 1|3.3 m\nmou = 1|10000 shaku\nrin = 1|1000 shaku\nbu_distance = 1|100 shaku\nsun = 1|10 shaku\njou_distance = 10 shaku\njou = jou_distance\nkanejakusun = sun\nkanejaku = shaku\nkanejakujou = jou\ntaichi = shaku\ntaicun = sun\n台尺 = taichi\n台寸 = taicun\nkujirajaku = 10|8 shaku\nkujirajakusun = 1|10 kujirajaku\nkujirajakubu = 1|100 kujirajaku\nkujirajakujou = 10 kujirajaku\ntan_distance = 3 kujirajakujou\nken = 6 shaku\nchou_distance = 60 ken\nchou = chou_distance\nri = 36 chou\ngou_area = 1|10 tsubo\ntsubo = 36 shaku^2\nse = 30 tsubo\ntan_area = 10 se\nchou_area = 10 tan_area\nping = tsubo\njia = 2934 ping\nfen = 1|10 jia\nfen_area = 1|10 jia\n坪 = ping\n甲 = jia\n分 = fen\n分地 = fen_area\nedoma = (5.8*2.9) shaku^2\nkyouma = (6.3*3.15) shaku^2\nchuukyouma = (6*3) shaku^2\njou_area = edoma\ntatami = jou_area\nshaku_volume = 1|10 gou_volume\ngou_volume = 1|10 shou\ngou = gou_volume\nshou = (4.9*4.9*2.7) sun^3\nkoku = 10 to\nrin_weight = 1|10 bu_weight\nbu_weight = 1|10 monme\nfun = 1|10 monme\nmonme = momme\nkin = 160 monme\nkan = 1000 monme\nkwan = kan\ntaijin = kin\ntailiang = 10 monme\ntaiqian = monme\n台斤 = taijin\n台兩 = tailiang\n台錢 = taiqian\naustraliasquare = (10 ft)^2\nzentner = 50 kg\ndoppelzentner = 2 zentner\npfund = 500 g\ndessiatine = 2400 sazhen^2\ndessjatine = dessiatine\nfunt = 409.51718 grams\nzolotnik = 1|96 funt\npood = 40 funt\narshin = (2 + 1|3) feet\nsazhen = 3 arshin\nverst = 500 sazhen\nversta = verst\nborderverst = 1000 sazhen\nrussianmile = 7 verst\nfrenchfoot = 144|443.296 m\npied = frenchfoot\nfrenchfeet = frenchfoot\nfrenchinch = 1|12 frenchfoot\nfrenchthumb = frenchinch\npouce = frenchthumb\nfrenchline = 1|12 frenchinch\nligne = frenchline\nfrenchpoint = 1|12 frenchline\ntoise = 6 frenchfeet\narpent = 180^2 pied^2\nfrenchgrain = 1|18827.15 kg\nfrenchpound = 9216 frenchgrain\nscotsinch = 1.00540054 UKinch\nscotslink = 1|100 scotschain\nscotsfoot = 12 scotsinch\nscotsfeet = scotsfoot\nscotsell = 37 scotsinch\nscotsfall = 6 scotsell\nscotschain = 4 scotsfall\nscotsfurlong = 10 scotschain\nscotsmile = 8 scotsfurlong\nscotsrood = 40 scotsfall^2\nscotsacre = 4 scotsrood\nirishinch = UKinch\nirishpalm = 3 irishinch\nirishspan = 3 irishpalm\nirishfoot = 12 irishinch\nirishfeet = irishfoot\nirishcubit = 18 irishinch\nirishyard = 3 irishfeet\nirishpace = 5 irishfeet\nirishfathom = 6 irishfeet\nirishpole = 7 irishyard\nirishperch = irishpole\nirishchain = 4 irishperch\nirishlink = 1|100 irishchain\nirishfurlong = 10 irishchain\nirishmile = 8 irishfurlong\nirishrood = 40 irishpole^2\nirishacre = 4 irishrood\nwinepint = 1|2 winequart\nwinequart = 1|4 winegallon\nwinegallon = 231 UKinch^3\nwinerundlet = 18 winegallon\nwinebarrel = 31.5 winegallon\nwinetierce = 42 winegallon\nwinehogshead = 2 winebarrel\nwinepuncheon = 2 winetierce\nwinebutt = 2 winehogshead\nwinepipe = winebutt\nwinetun = 2 winebutt\nbeerpint = 1|2 beerquart\nbeerquart = 1|4 beergallon\nbeergallon = 282 UKinch^3\nbeerbarrel = 36 beergallon\nbeerhogshead = 1.5 beerbarrel\nalepint = 1|2 alequart\nalequart = 1|4 alegallon\nalegallon = beergallon\nalebarrel = 34 alegallon\nalehogshead = 1.5 alebarrel\nscotsgill = 1|4 mutchkin\nmutchkin = 1|2 choppin\nchoppin = 1|2 scotspint\nscotspint = 1|2 scotsquart\nscotsquart = 1|4 scotsgallon\nscotsgallon = 827.232 UKinch^3\nscotsbarrel = 8 scotsgallon\njug = scotspint\nscotswheatlippy = 137.333 UKinch^3\nscotswheatlippies = scotswheatlippy\nscotswheatpeck = 4 scotswheatlippy\nscotswheatfirlot = 4 scotswheatpeck\nscotswheatboll = 4 scotswheatfirlot\nscotswheatchalder = 16 scotswheatboll\nscotsoatlippy = 200.345 UKinch^3\nscotsoatlippies = scotsoatlippy\nscotsoatpeck = 4 scotsoatlippy\nscotsoatfirlot = 4 scotsoatpeck\nscotsoatboll = 4 scotsoatfirlot\nscotsoatchalder = 16 scotsoatboll\ntrondrop = 1|16 tronounce\ntronounce = 1|20 tronpound\ntronpound = 9520 grain\ntronstone = 16 tronpound\nirishnoggin = 1|4 irishpint\nirishpint = 1|2 irishquart\nirishquart = 1|2 irishpottle\nirishpottle = 1|2 irishgallon\nirishgallon = 217.6 UKinch^3\nirishrundlet = 18 irishgallon\nirishbarrel = 31.5 irishgallon\nirishtierce = 42 irishgallon\nirishhogshead = 2 irishbarrel\nirishpuncheon = 2 irishtierce\nirishpipe = 2 irishhogshead\nirishtun = 2 irishpipe\nirishpeck = 2 irishgallon\nirishbushel = 4 irishpeck\nirishstrike = 2 irishbushel\nirishdrybarrel = 2 irishstrike\nirishquarter = 2 irishbarrel\ntowerpound = 5400 grain\ntowerounce = 1|12 towerpound\ntowerpennyweight = 1|20 towerounce\ntowergrain = 1|32 towerpennyweight\nmercpound = 6750 grain\nmercounce = 1|15 mercpound\nmercpennyweight = 1|20 mercounce\nleadstone = 12.5 lb\nfotmal = 70 lb\nleadwey = 14 leadstone\nfothers = 12 leadwey\nnewhaytruss = 60 lb\nnewhayload = 36 newhaytruss\noldhaytruss = 56 lb\noldhayload = 36 oldhaytruss\nwoolclove = 7 lb\nwoolstone = 2 woolclove\nwooltod = 2 woolstone\nwoolwey = 13 woolstone\nwoolsack = 2 woolwey\nwoolsarpler = 2 woolsack\nwoollast = 6 woolsarpler\nromanfoot = 296 mm\nromanfeet = romanfoot\npes = romanfoot\npedes = romanfoot\nromaninch = 1|12 romanfoot\nromandigit = 1|16 romanfoot\nromanpalm = 1|4 romanfoot\nromancubit = 18 romaninch\nromanpace = 5 romanfeet\npassus = romanpace\nromanperch = 10 romanfeet\nstade = 125 romanpaces\nstadia = stade\nstadium = stade\nromanmile = 8 stadia\nromanleague = 1.5 romanmile\nschoenus = 4 romanmile\nearlyromanfoot = 29.73 cm\npesdrusianus = 33.3 cm\nlateromanfoot = 29.42 cm\nactuslength = 120 romanfeet\nactus = 120*4 romanfeet^2\nsquareactus = 120^2 romanfeet^2\nacnua = squareactus\niugerum = 2 squareactus\niugera = iugerum\njugerum = iugerum\njugera = iugerum\nheredium = 2 iugera\nheredia = heredium\ncenturia = 100 heredia\ncenturium = centuria\nsextarius = 35.4 in^3\nsextarii = sextarius\ncochlearia = 1|48 sextarius\ncyathi = 1|12 sextarius\nacetabula = 1|8 sextarius\nquartaria = 1|4 sextarius\nquartarius = quartaria\nheminae = 1|2 sextarius\nhemina = heminae\ncheonix = 1.5 sextarii\nsemodius = 8 sextarius\nsemodii = semodius\nmodius = 16 sextarius\nmodii = modius\ncongius = 12 heminae\ncongii = congius\namphora = 8 congii\namphorae = amphora\nculleus = 20 amphorae\nquadrantal = amphora\nlibra = 5052 grain\nlibrae = libra\nromanpound = libra\nuncia = 1|12 libra\nunciae = uncia\nromanounce = uncia\ndeunx = 11 uncia\ndextans = 10 uncia\ndodrans = 9 uncia\nbes = 8 uncia\nseprunx = 7 uncia\nsemis = 6 uncia\nquincunx = 5 uncia\ntriens = 4 uncia\nquadrans = 3 uncia\nsextans = 2 uncia\nsescuncia = 1.5 uncia\nsemuncia = 1|2 uncia\nsiscilius = 1|4 uncia\nsextula = 1|6 uncia\nsemisextula = 1|12 uncia\nscriptulum = 1|24 uncia\nscrupula = scriptulum\nromanobol = 1|2 scrupula\nromanaspound = 4210 grain\negyptianroyalcubit = 20.63 in\negyptianpalm = 1|7 egyptianroyalcubit\negyptiandigit = 1|4 egyptianpalm\negyptianshortcubit = 6 egyptianpalm\ndoubleremen = 29.16 in\nremendigit = 1|40 doubleremen\ngreekfoot = 12.45 in\ngreekfeet = greekfoot\ngreekcubit = 1.5 greekfoot\npous = greekfoot\npodes = greekfoot\norguia = 6 greekfoot\ngreekfathom = orguia\nstadion = 100 orguia\nakaina = 10 greekfeet\nplethron = 10 akaina\ngreekfinger = 1|16 greekfoot\nhomericcubit = 20 greekfingers\nshortgreekcubit = 18 greekfingers\nionicfoot = 296 mm\ndoricfoot = 326 mm\nolympiccubit = 25 remendigit\nolympicfoot = 2|3 olympiccubit\nolympicfinger = 1|16 olympicfoot\nolympicfeet = olympicfoot\nolympicdakylos = olympicfinger\nolympicpalm = 1|4 olympicfoot\nolympicpalestra = olympicpalm\nolympicspithame = 3|4 foot\nolympicspan = olympicspithame\nolympicbema = 2.5 olympicfeet\nolympicpace = olympicbema\nolympicorguia = 6 olympicfeet\nolympicfathom = olympicorguia\nolympiccord = 60 olympicfeet\nolympicamma = olympiccord\nolympicplethron = 100 olympicfeet\nolympicstadion = 600 olympicfeet\ngreekkotyle = 270 ml\nxestes = 2 greekkotyle\nkhous = 12 greekkotyle\nmetretes = 12 khous\nchoinix = 4 greekkotyle\nhekteos = 8 choinix\nmedimnos = 6 hekteos\naeginastater = 192 grain\naeginadrachmae = 1|2 aeginastater\naeginaobol = 1|6 aeginadrachmae\naeginamina = 50 aeginastaters\naeginatalent = 60 aeginamina\natticstater = 135 grain\natticdrachmae = 1|2 atticstater\natticobol = 1|6 atticdrachmae\natticmina = 50 atticstaters\nattictalent = 60 atticmina\nnortherncubit = 26.6 in\nnorthernfoot = 1|2 northerncubit\nsumeriancubit = 495 mm\nkus = sumeriancubit\nsumerianfoot = 2|3 sumeriancubit\nassyriancubit = 21.6 in\nassyrianfoot = 1|2 assyriancubit\nassyrianpalm = 1|3 assyrianfoot\nassyriansusi = 1|20 assyrianpalm\nsusi = assyriansusi\npersianroyalcubit = 7 assyrianpalm\nhashimicubit = 25.56 in\nblackcubit = 21.28 in\narabicfeet = 1|2 blackcubit\narabicfoot = arabicfeet\narabicinch = 1|12 arabicfoot\narabicmile = 4000 blackcubit\nsilverdirhem = 45 grain\ntradedirhem = 48 grain\nsilverkirat = 1|16 silverdirhem\nsilverwukiyeh = 10 silverdirhem\nsilverrotl = 12 silverwukiyeh\narabicsilverpound = silverrotl\ntradekirat = 1|16 tradedirhem\ntradewukiyeh = 10 tradedirhem\ntraderotl = 12 tradewukiyeh\narabictradepound = traderotl\nparasang = 3.5 mile\nbiblicalcubit = 21.8 in\nhebrewcubit = 17.58 in\nli = 10|27.8 mile\nliang = 11|3 oz\ntimepoint = 1|5 hour\ntimeminute = 1|10 hour\ntimeostent = 1|60 hour\ntimeounce = 1|8 timeostent\ntimeatom = 1|47 timeounce\nmite = 1|20 grain\ndroit = 1|24 mite\nperiot = 1|20 droit\nblanc = 1|24 periot\nhundredweight = ushundredweight\nton = uston\nscruple = apscruple\nfluidounce = usfluidounce\ngallon = usgallon\nbushel = usbushel\nquarter = quarterweight\ncup = uscup\ntablespoon = ustablespoon\nteaspoon = usteaspoon\ndollar = US$\ncent = $ 0.01\npenny = cent\nminim = minimvolume\npony = ponyvolume\ngrand = usgrand\nfirkin = usfirkin\nhogshead = ushogshead\n⅛_ = 1|8\n¼_ = 1|4\n⅜_ = 3|8\n½_ = 1|2\n⅝_ = 5|8\n¾_ = 3|4\n⅞_ = 7|8\n⅙_ = 1|6\n⅓_ = 1|3\n⅔_ = 2|3\n⅚_ = 5|6\n⅕_ = 1|5\n⅖_ = 2|5\n⅗_ = 3|5\n⅘_ = 4|5\nℯ = exp(1)\nµ_ = micro\nμ_ = micro\nångström = angstrom\nÅ = angstrom\nÅ = angstrom\nröntgen = roentgen\n°C = degC\n°F = degF\n°K = K\n°R = degR\n° = degree\n℃ = degC\n℉ = degF\nK = K\nℓ = liter\n¢ = cent\n£ = britainpound\n¥ = japanyen\n€ = euro\n₩ = southkoreawon\n₪ = israelnewshekel\n₤ = lira\n₨ = rupee\nΩ = ohm\nΩ = ohm\n℧ = mho\nʒ = dram\n℈ = scruple\n℥ = ounce\n℔ = lb\nℎ = h\nℏ = hbar\n‰ = 1|1000\n‱ = 1|10000\n′ = '\n″ = \"\n㍱ = hPa\n㍲ = da\n㍳ = au\n㍴ = bar\n㍶ = pc\n㎀ = pA\n㎁ = nA\n㎂ = µA\n㎃ = mA\n㎄ = kA\n㎅ = kB\n㎆ = MB\n㎇ = GB\n㎈ = cal\n㎉ = kcal\n㎊ = pF\n㎋ = nF\n㎌ = µF\n㎍ = µg\n㎎ = mg\n㎏ = kg\n㎐ = Hz\n㎑ = kHz\n㎒ = MHz\n㎓ = GHz\n㎔ = THz\n㎕ = µL\n㎖ = mL\n㎗ = dL\n㎘ = kL\n㎙ = fm\n㎚ = nm\n㎛ = µm\n㎜ = mm\n㎝ = cm\n㎞ = km\n㎟ = mm^2\n㎠ = cm^2\n㎡ = m^2\n㎢ = km^2\n㎣ = mm^3\n㎤ = cm^3\n㎥ = m^3\n㎦ = km^3\n㎧ = m/s\n㎨ = m/s^2\n㎩ = Pa\n㎪ = kPa\n㎫ = MPa\n㎬ = GPa\n㎭ = rad\n㎮ = rad/s\n㎯ = rad/s^2\n㎰ = ps\n㎱ = ns\n㎲ = µs\n㎳ = ms\n㎴ = pV\n㎵ = nV\n㎶ = µV\n㎷ = mV\n㎸ = kV\n㎹ = MV\n㎺ = pW\n㎻ = nW\n㎼ = µW\n㎽ = mW\n㎾ = kW\n㎿ = MW\n㏀ = kΩ\n㏁ = MΩ\n㏃ = Bq\n㏄ = cc\n㏅ = cd\n㏆ = C/kg\n㏈ = dB\n㏉ = Gy\n㏊ = ha\n㏌ = in\n㏏ = kt\n㏐ = lm\n㏓ = lx\n㏔ = mb\n㏕ = mil\n㏖ = mol\n㏗ = pH\n㏙ = ppm\n㏛ = sr\n㏜ = Sv\n㏝ = Wb\n";
+define("a3", [], function() {
+  return "# source: GNU Units\nkg!\nkilogram = kg\ns!\nsecond = s\nm!\nmeter = m\nA!\nampere = A\namp = ampere\ncd!\ncandela = cd\nmol!\nmole = mol\nK!\nkelvin = K\nradian = 1\nsr = 1\nsteradian = sr\nUS$!\nbit!\nyotta_ = 1e24\nzetta_ = 1e21\nexa_ = 1e18\npeta_ = 1e15\ntera_ = 1e12\ngiga_ = 1e9\nmega_ = 1e6\nmyria_ = 1e4\nkilo_ = 1e3\nhecto_ = 1e2\ndeca_ = 1e1\ndeka_ = deca\ndeci_ = 1e-1\ncenti_ = 1e-2\nmilli_ = 1e-3\nmicro_ = 1e-6\nnano_ = 1e-9\npico_ = 1e-12\nfemto_ = 1e-15\natto_ = 1e-18\nzepto_ = 1e-21\nyocto_ = 1e-24\nquarter_ = 1|4\nsemi_ = 0.5\ndemi_ = 0.5\nhemi_ = 0.5\nhalf_ = 0.5\ndouble_ = 2\ntriple_ = 3\ntreble_ = 3\nkibi_ = 2^10\nmebi_ = 2^20\ngibi_ = 2^30\ntebi_ = 2^40\npebi_ = 2^50\nexbi_ = 2^60\nKi_ = kibi\nMi_ = mebi\nGi_ = gibi\nTi_ = tebi\nPi_ = pebi\nEi_ = exbi\nY_ = yotta\nZ_ = zetta\nE_ = exa\nP_ = peta\nT_ = tera\nG_ = giga\nM_ = mega\nk_ = kilo\nh_ = hecto\nda_ = deka\nd_ = deci\nc_ = centi\nm_ = milli\nu_ = micro\nn_ = nano\np_ = pico\nf_ = femto\na_ = atto\nz_ = zepto\ny_ = yocto\none = 1\ntwo = 2\ndouble = 2\ncouple = 2\nthree = 3\ntriple = 3\nfour = 4\nquadruple = 4\nfive = 5\nquintuple = 5\nsix = 6\nseven = 7\neight = 8\nnine = 9\nten = 10\neleven = 11\ntwelve = 12\nthirteen = 13\nfourteen = 14\nfifteen = 15\nsixteen = 16\nseventeen = 17\neighteen = 18\nnineteen = 19\ntwenty = 20\nthirty = 30\nforty = 40\nfifty = 50\nsixty = 60\nseventy = 70\neighty = 80\nninety = 90\nhundred = 100\nthousand = 1000\nmillion = 1e6\nshortbillion = 1e9\nshorttrillion = 1e12\nshortquadrillion = 1e15\nshortquintillion = 1e18\nshortsextillion = 1e21\nshortseptillion = 1e24\nshortoctillion = 1e27\nshortnonillion = 1e30\nshortnoventillion = shortnonillion\nshortdecillion = 1e33\nshortundecillion = 1e36\nshortduodecillion = 1e39\nshorttredecillion = 1e42\nshortquattuordecillion = 1e45\nshortquindecillion = 1e48\nshortsexdecillion = 1e51\nshortseptendecillion = 1e54\nshortoctodecillion = 1e57\nshortnovemdecillion = 1e60\nshortvigintillion = 1e63\ncentillion = 1e303\ngoogol = 1e100\nlongbillion = million^2\nlongtrillion = million^3\nlongquadrillion = million^4\nlongquintillion = million^5\nlongsextillion = million^6\nlongseptillion = million^7\nlongoctillion = million^8\nlongnonillion = million^9\nlongnoventillion = longnonillion\nlongdecillion = million^10\nlongundecillion = million^11\nlongduodecillion = million^12\nlongtredecillion = million^13\nlongquattuordecillion = million^14\nlongquindecillion = million^15\nlongsexdecillion = million^16\nlongseptdecillion = million^17\nlongoctodecillion = million^18\nlongnovemdecillion = million^19\nlongvigintillion = million^20\nmilliard = 1000 million\nbilliard = 1000 million^2\ntrilliard = 1000 million^3\nquadrilliard = 1000 million^4\nquintilliard = 1000 million^5\nsextilliard = 1000 million^6\nseptilliard = 1000 million^7\noctilliard = 1000 million^8\nnonilliard = 1000 million^9\nnoventilliard = nonilliard\ndecilliard = 1000 million^10\nlongmilliard = milliard\nlongbilliard = billiard\nlongtrilliard = trilliard\nlongquadrilliard = quadrilliard\nlongquintilliard = quintilliard\nlongsextilliard = sextilliard\nlongseptilliard = septilliard\nlongoctilliard = octilliard\nlongnonilliard = nonilliard\nlongnoventilliard = noventilliard\nlongdecilliard = decilliard\nbillion = shortbillion\ntrillion = shorttrillion\nquadrillion = shortquadrillion\nquintillion = shortquintillion\nsextillion = shortsextillion\nseptillion = shortseptillion\noctillion = shortoctillion\nnonillion = shortnonillion\nnoventillion = shortnoventillion\ndecillion = shortdecillion\nundecillion = shortundecillion\nduodecillion = shortduodecillion\ntredecillion = shorttredecillion\nquattuordecillion = shortquattuordecillion\nquindecillion = shortquindecillion\nsexdecillion = shortsexdecillion\nseptendecillion = shortseptendecillion\noctodecillion = shortoctodecillion\nnovemdecillion = shortnovemdecillion\nvigintillion = shortvigintillion\nnewton = kg m / s^2\nN = newton\npascal = N/m^2\nPa = pascal\njoule = N m\nJ = joule\nwatt = J/s\nW = watt\ncoulomb = A s\nC = coulomb\nvolt = W/A\nV = volt\nohm = V/A\nsiemens = A/V\nS = siemens\nfarad = C/V\nF = farad\nweber = V s\nWb = weber\nhenry = Wb/A\nH = henry\ntesla = Wb/m^2\nT = tesla\nhertz = /s\nHz = hertz\nLENGTH = meter\nAREA = LENGTH^2\nVOLUME = LENGTH^3\nMASS = kilogram\nCURRENT = ampere\nAMOUNT = mole\nANGLE = radian\nSOLID_ANGLE = steradian\nMONEY = US$\nFORCE = newton\nPRESSURE = FORCE / AREA\nSTRESS = FORCE / AREA\nCHARGE = coulomb\nCAPACITANCE = farad\nRESISTANCE = ohm\nCONDUCTANCE = siemens\nINDUCTANCE = henry\nFREQUENCY = hertz\nVELOCITY = LENGTH / TIME\nACCELERATION = VELOCITY / TIME\nDENSITY = MASS / VOLUME\nLINEAR_DENSITY = MASS / LENGTH\nVISCOSITY = FORCE TIME / AREA\nKINEMATIC_VISCOSITY = VISCOSITY / DENSITY\ngram = millikg\ngm = gram\ng = gram\ntonne = 1000 kg\nt = tonne\nmetricton = tonne\nsthene = tonne m / s^2\nfunal = sthene\npieze = sthene / m^2\nquintal = 100 kg\nbar = 1e5 Pa\nb = bar\nvac = millibar\nmicron = micrometer\nbicron = picometer\ncc = cm^3\nare = 100 m^2\na = are\nliter = 1000 cc\noldliter = 1.000028 dm^3\nL = liter\nl = liter\nmho = siemens\ngalvat = ampere\nangstrom = 1e-10 m\nxunit = xunit_cu\nsiegbahn = xunit\nxunit_cu = 1.00207697e-13 m\nxunit_mo = 1.00209952e-13 m\nangstromstar = 1.00001495 angstrom\nfermi = 1e-15 m\nbarn = 1e-28 m^2\nshed = 1e-24 barn\nbrewster = micron^2/N\ndiopter = /m\nfresnel = 1e12 Hz\nshake = 1e-8 sec\nsvedberg = 1e-13 s\ngamma = microgram\nlambda = microliter\nspat = 1e12 m\npreece = 1e13 ohm m\nplanck = J s\nsturgeon = /henry\ndaraf = 1/farad\nleo = 10 m/s^2\npoiseuille = N s / m^2\nmayer = J/g K\nmired = / microK\ncrocodile = megavolt\nmetricounce = 25 g\nmounce = metricounce\nfinsenunit = 1e5 W/m^2\nfluxunit = 1e-26 W/m^2 Hz\njansky = fluxunit\nJy = jansky\nflick = W / cm^2 sr micrometer\npfu = / cm^2 sr s\npyron = cal_IT / cm^2 min\nkatal = mol/sec\nkat = katal\nsolarluminosity = 384.6e24 W\nsec = s\nminute = 60 s\nmin = minute\nhour = 60 min\nhr = hour\nday = 24 hr\nd = day\nda = day\nweek = 7 day\nwk = week\nsennight = 7 day\nfortnight = 14 day\nblink = 1e-5 day\nce = 1e-2 day\ncron = 1e6 years\nwatch = 4 hours\nbell = 1|8 watch\ncircle = 2 pi radian\ndegree = 1|360 circle\ndeg = degree\narcdeg = degree\narcmin = 1|60 degree\narcminute = arcmin\n' = arcmin\narcsec = 1|60 arcmin\narcsecond = arcsec\n\" = arcsec\n'' = \"\nrightangle = 90 degrees\nquadrant = 1|4 circle\nquintant = 1|5 circle\nsextant = 1|6 circle\nsign = 1|12 circle\nturn = circle\nrevolution = turn\nrev = turn\npulsatance = radian / sec\ngon = 1|100 rightangle\ngrade = gon\ncentesimalminute = 1|100 grade\ncentesimalsecond = 1|100 centesimalminute\nmilangle = 1|6400 circle\npointangle = 1|32 circle\ncentrad = 0.01 radian\nmas = milli arcsec\nseclongitude = circle (seconds/day)\ncirclearea = r => pi r^2 \ncirclearea^-1 = circlearea => sqrt(circlearea/pi)\nspherevolume = r => 4|3 pi r^3 \nspherevolume^-1 = spherevolume => cuberoot(spherevolume/4|3 pi)\nspherevol = spherevolume\nsquare = x => x^2 \nsquare^-1 = square => sqrt(square)\nsphere = 4 pi sr\nsquaredegree = 1|180^2 pi^2 sr\nsquareminute = 1|60^2 squaredegree\nsquaresecond = 1|60^2 squareminute\nsquarearcmin = squareminute\nsquarearcsec = squaresecond\nsphericalrightangle = 0.5 pi sr\noctant = 0.5 pi sr\npercent = 0.01\n% = percent\nmill = 0.001\nproof = 1|200\nppm = 1e-6\npartspermillion = ppm\nppb = 1e-9\npartsperbillion = ppb\nppt = 1e-12\npartspertrillion = ppt\nkarat = 1|24\ncaratgold = karat\ngammil = mg/l\nbasispoint = 0.01 %\nfine = 1|1000\npH = x => 10^(-x) mol/liter \npH^-1 = pH => (-log(pH liters/mol))\nTEMPERATURE = kelvin\nTEMPERATURE_DIFFERENCE = kelvin\ntempC = x => x K + stdtemp \ntempC^-1 = tempC => (tempC +(-stdtemp))/K\ntempcelsius = tempC\ndegcelsius = K\ndegC = K\ntempF = x => (x+(-32)) degF + stdtemp \ntempF^-1 = tempF => (tempF+(-stdtemp))/degF + 32\ntempfahrenheit = tempF\ndegfahrenheit = 5|9 degC\ndegF = 5|9 degC\ndegreesrankine = degF\ndegrankine = degreesrankine\ndegreerankine = degF\ndegR = degrankine\ntempR = degrankine\ntemprankine = degrankine\ntempreaumur = x => x degreaumur+stdtemp \ntempreaumur^-1 = tempreaumur => (tempreaumur+(-stdtemp))/degreaumur\ndegreaumur = 10|8 degC\ndegK = K\ntempK = K\ngasmark[degR] = .0625    634.67   .125     659.67   .25      684.67   .5       709.67   1        734.67   2        759.67   3        784.67   4        809.67   5        834.67   6        859.67   7        884.67   8        909.67   9        934.67   10       959.67\npi = 3.14159265358979323846\nc = 2.99792458e8 m/s\nlight = c\nmu0 = 4 pi 1e-7 H/m\nepsilon0 = 1/mu0 c^2\nenergy = c^2\ne = 1.602176565e-19 C\nh = 4.135667516e-15 eV s\nhbar = h / 2 pi\nspin = hbar\nG = 6.67384e-11 N m^2 / kg^2\ncoulombconst = 1/4 pi epsilon0\natomicmassunit = 1.660538921e-27 kg\nu = atomicmassunit\namu = atomicmassunit\namu_chem = 1.66026e-27 kg\namu_phys = 1.65981e-27 kg\ndalton = u\navogadro = grams/amu mol\nN_A = avogadro\ngasconstant = 8.3144621 J / mol K\nR = gasconstant\nboltzmann = R / N_A\nk = boltzmann\nkboltzmann = boltzmann\nmolarvolume = mol R stdtemp / atm\nloschmidt = avogadro mol / molarvolume\nstefanboltzmann = pi^2 k^4 / 60 hbar^3 c^2\nsigma = stefanboltzmann\nwiendisplacement = 2.8977721e-3 m K\nK_J90 = 483597.9 GHz/V\nK_J = 483597.870 GHz/V\nR_K90 = 25812.807 ohm\nR_K = 25812.8074434 ohm\ngravity = 9.80665 m/s^2\nforce = gravity\natm = 101325 Pa\natmosphere = atm\nHg = 13.5951 gram force / cm^3\nwater = gram force/cm^3\nwaterdensity = gram / cm^3\nH2O = water\nwc = water\nmach = 331.46 m/s\nstandardtemp = 273.15 K\nstdtemp = standardtemp\nnormaltemp = tempF(70)\nnormtemp = normaltemp\nHg10C = 13.5708 force gram / cm^3\nHg20C = 13.5462 force gram / cm^3\nHg23C = 13.5386 force gram / cm^3\nHg30C = 13.5217 force gram / cm^3\nHg40C = 13.4973 force gram / cm^3\nHg60F = 13.5574 force gram / cm^3\nH2O0C = 0.99987 force gram / cm^3\nH2O5C = 0.99999 force gram / cm^3\nH2O10C = 0.99973 force gram / cm^3\nH2O15C = 0.99913 force gram / cm^3\nH2O18C = 0.99862 force gram / cm^3\nH2O20C = 0.99823 force gram / cm^3\nH2O25C = 0.99707 force gram / cm^3\nH2O50C = 0.98807 force gram / cm^3\nH2O100C = 0.95838 force gram / cm^3\nRinfinity = 10973731.568539 /m\nR_H = 10967760 /m\nalpha = 7.2973525698e-3\nbohrradius = alpha / 4 pi Rinfinity\nprout = 185.5 keV\nplanckmass = 2.17651e-8 kg\nm_P = planckmass\nplancktime = hbar / planckmass c^2\nt_P = plancktime\nplancklength = plancktime c\nl_P = plancklength\nelectronradius = (1/4 pi epsilon0) e^2 / electronmass c^2\ndeuteronchargeradius = 2.1424e-15 m\nprotonchargeradius = 0.8775e-15\nelectronmass = 5.4857990946e-4 u\nm_e = electronmass\nprotonmass = 1.007276466812 u\nm_p = protonmass\nneutronmass = 1.00866491600 u\nm_n = neutronmass\nmuonmass = 0.1134289267 u\nm_mu = muonmass\ndeuteronmass = 2.013553212712 u\nm_d = deuteronmass\nalphaparticlemass = 4.001506179125 u\nm_alpha = alphaparticlemass\ntaumass = 1.90749 u\nm_tau = taumass\ntritonmass = 3.0155007134 u\nm_t = tritonmass\nhelionmass = 3.0149322468 u\nm_h = helionmass\nelectronwavelength = h / m_e c\nlambda_C = electronwavelength\nprotonwavelength = h / m_p c\nlambda_C,p = protonwavelength\nneutronwavelength = h / m_n c\nlambda_C,n = neutronwavelength\nbohrmagneton = e hbar / 2 electronmass\nmu_B = bohrmagneton\nnuclearmagneton = e hbar /  2 protonmass\nmu_N = nuclearmagneton\nmu_mu = -4.49044807e-26 J/T\nmu_p = 1.410606743e-26 J/T\nmu_e = -928.476430e-26 J/T\nmu_n = -0.96623647e-26\nmu_d = 0.433073489e-26 J/T\nmu_t = 1.504609447e-26 J/T\nmu_h = -1.074617486e-26 J/T\nkgf = kg force\ntechnicalatmosphere = kgf / cm^2\nat = technicalatmosphere\nhyl = kgf s^2 / m\nmmHg = mm Hg\ntorr = mmHg\ntor = Pa\ninHg = inch Hg\ninH2O = inch water\nmmH2O = mm water\neV = e V\nelectronvolt = eV\nlightyear = c julianyear\nly = lightyear\nlightsecond = c s\nlightminute = c min\nparsec = au / tan(arcsec)\npc = parsec\nrydberg = h c Rinfinity\ncrith = 0.089885 gram\namagatvolume = molarvolume\namagat = mol/amagatvolume\nlorentz = bohrmagneton / h c\ncminv = h c / cm\ninvcm = cminv\nwavenumber = cminv\nkcal_mol = kcal_th / mol N_A\ndyne = cm gram / s^2\ndyn = dyne\nerg = cm dyne\npoise = gram / cm s\nP = poise\nrhe = /poise\nstokes = cm^2 / s\nSt = stokes\nstoke = stokes\nlentor = stokes\nGal = cm / s^2\ngalileo = Gal\nbarye = dyne/cm^2\nbarad = barye\nkayser = 1/cm\nbalmer = kayser\nkine = cm/s\nbole = g cm / s\npond = gram force\nglug = gram force s^2 / cm\ndarcy = centipoise cm^2 / s atm\nmobileohm = cm / dyn s\nmechanicalohm = dyn s / cm\nacousticalohm = dyn s / cm^5\nray = acousticalohm\nrayl = dyn s / cm^3\neotvos = 1e-9 Gal/cm\nabampere = 10 A\nabamp = abampere\naA = abampere\nbiot = aA\nBi = biot\nabcoulomb = abamp sec\nabcoul = abcoulomb\nabfarad = abampere sec / abvolt\nabhenry = abvolt sec / abamp\nabvolt = dyne cm  / abamp sec\nabohm = abvolt / abamp\nabmho = /abohm\ngauss = abvolt sec / cm^2\nGs = gauss\nmaxwell = abvolt sec\nMx = maxwell\noersted = gauss / mu0\nOe = oersted\ngilbert = gauss cm / mu0\nGb = gilbert\nGi = gilbert\nunitpole = 4 pi maxwell\nemu = erg/gauss\nstatampere = 10 A cm / s c\nstatamp = statampere\nstatvolt = dyne cm / statamp sec\nstatcoulomb = statamp s\nesu = statcoulomb\nstatcoul = statcoulomb\nstatfarad = statamp sec / statvolt\ncmcapacitance = statfarad\nstathenry = statvolt sec / statamp\nstatohm = statvolt / statamp\nstatmho = /statohm\nstatmaxwell = statvolt sec\nfranklin = statcoulomb\ndebye = 1e-18 statcoul cm\nhelmholtz = debye/angstrom^2\njar = 1000 statfarad\nintampere = 0.999835 A\nintamp = intampere\nintfarad = 0.999505 F\nintvolt = 1.00033 V\nintohm = 1.000495 ohm\ndaniell = 1.042 V\nfaraday = N_A e mol\nfaraday_phys = 96521.9 C\nfaraday_chem = 96495.7 C\nkappline = 6000 maxwell\nsiemensunit = 0.9534 ohm\ncopperconductivity = 58 siemens m / mm^2\nIACS = copperconductivity\ncopperdensity = 8.89 g/cm^3\nouncecopper = oz / ft^2 copperdensity\nozcu = ouncecopper\nLUMINOUS_INTENSITY = candela\nLUMINOUS_FLUX = lumen\nLUMINOUS_ENERGY = talbot\nILLUMINANCE = lux\nEXITANCE = lux\ncandle = 1.02 candela\nhefnerunit = 0.9 candle\nhefnercandle = hefnerunit\nviolle = 20.17 cd\nlumen = cd sr\nlm = lumen\ntalbot = lumen s\nlumberg = talbot\nlumerg = talbot\nlux = lm/m^2\nlx = lux\nphot = lumen / cm^2\nph = phot\nfootcandle = lumen/ft^2\nmetercandle = lumen/m^2\nmcs = metercandle s\nnox = 1e-3 lux\nskot = 1e-3 apostilb\nLUMINANCE = nit\nnit = cd/m^2\nstilb = cd / cm^2\nsb = stilb\napostilb = cd/pi m^2\nasb = apostilb\nblondel = apostilb\nequivalentlux = cd / pi m^2\nequivalentphot = cd / pi cm^2\nlambert = cd / pi cm^2\nfootlambert = cd / pi ft^2\nbril = x => 2^(x+-100) lamberts \nbril^-1 = bril => log2(bril/lambert)+100\nsunlum = 1.6e9 cd/m^2\nsunillum = 100e3 lux\nsunillum_o = 10e3 lux\nsunlum_h = 6e6 cd/m^2\nskylum = 8000 cd/m^2\nskylum_o = 2000 cd/m^2\nmoonlum = 2500 cd/m^2\ns100 = 100 / lx s\niso100 = s100\nk1250 = 12.5 (cd/m^2) / lx s\nk1400 = 14   (cd/m^2) / lx s\nc250 = 250 lx / lx s\nev100 = x => 2^x k1250 / s100\nev100^-1 = ev100 => log2(ev100 s100/k1250)\nEV100 = ev100\niv100 = x => 2^x c250 / s100\niv100^-1 = iv100 => log2(iv100 s100 / c250)\nN_exif = 1|3.125 lx s\nK_apex1961 = 11.4 (cd/m^2) / lx s\nK_apex1971 = 12.5 (cd/m^2) / lx s\nC_apex1961 = 224 lx / lx s\nC_apex1971 = 322 lx / lx s\nN_speed = N_exif\nK_lum = K_apex1971\nC_illum = C_apex1961\nAv = A => 2^(A/2)\nAv^-1 = Av => 2 log2(Av)\nTv = t => 2^(-t) s\nTv^-1 = Tv => log2(s / Tv)\nSval = S => 2^S / (N_speed/lx s)\nSval^-1 = Sval => log2((N_speed/lx s) Sval)\nBv = x => 2^x K_lum N_speed \nBv^-1 = Bv => log2(Bv / (K_lum N_speed))\nIv = x => 2^x C_illum N_speed \nIv^-1 = Iv => log2(Iv / (C_illum N_speed))\nSx = S => log2((N_speed/lx s) S)\nSx^-1 = Sx => 2^Sx / (N_speed/lx s)\nSdeg = S => 10^((S - 1) / 10) \nSdeg^-1 = Sdeg => (1 + 10 log(Sdeg))\nSdin = Sdeg\nnumericalaperture = x => 0.5 / x \nnumericalaperture^-1 = numericalaperture => 0.5 / numericalaperture\nNA = numericalaperture\nfnumber = x => x \nfnumber^-1 = fnumber => fnumber\nTIME = second\nanomalisticyear = 365.2596 days\nsiderealyear = 365.256360417 day\ntropicalyear = 365.242198781 day\neclipseyear = 346.62 days\nsaros = 223 synodicmonth\nsiderealday = 86164.09054 s\nsiderealhour = 1|24 siderealday\nsiderealminute = 1|60 siderealhour\nsiderealsecond = 1|60 siderealminute\nanomalisticmonth = 27.55454977 day\nnodicalmonth = 27.2122199 day\ndraconicmonth = nodicalmonth\ndraconiticmonth = nodicalmonth\nsiderealmonth = 27.321661 day\nlunarmonth = 29 days + 12 hours + 44 minutes + 2.8 seconds\nsynodicmonth = lunarmonth\nlunation = synodicmonth\nlune = 1|30 lunation\nlunour = 1|24 lune\nyear = tropicalyear\nyr = year\nmonth = 1|12 year\nmo = month\nlustrum = 5 years\ndecade = 10 years\ncentury = 100 years\nmillennium = 1000 years\nmillennia = millennium\nsolaryear = year\nlunaryear = 12 lunarmonth\ncalendaryear = 365 day\ncommonyear = 365 day\nleapyear = 366 day\njulianyear = 365.25 day\ngregorianyear = 365.2425 day\nislamicyear = 354 day\nislamicleapyear = 355 day\nislamicmonth = 1|12 islamicyear\nmercuryday = 58.6462 day\nvenusday = 243.01 day\nearthday = siderealday\nmarsday = 1.02595675 day\njupiterday = 0.41354 day\nsaturnday = 0.4375 day\nuranusday = 0.65 day\nneptuneday = 0.768 day\nplutoday = 6.3867 day\nmercuryyear = 0.2408467 julianyear\nvenusyear = 0.61519726 julianyear\nearthyear = siderealyear\nmarsyear = 1.8808476 julianyear\njupiteryear = 11.862615 julianyear\nsaturnyear = 29.447498 julianyear\nuranusyear = 84.016846 julianyear\nneptuneyear = 164.79132 julianyear\nplutoyear = 247.92065 julianyear\nearthflattening = 1|298.25642\nearthradius_equatorial = 6378136.49 m\nearthradius_polar = (-earthflattening+1) earthradius_equatorial\nlandarea = 148.847e6 km^2\noceanarea = 361.254e6 km^2\nmoonradius = 1738 km\nsunradius = 6.96e8 m\ngauss_k = 0.01720209895\ngaussianyear = (2 pi / gauss_k) days\nastronomicalunit = 149597870700 m\nau = astronomicalunit\nsolarmass = 1.9891e30 kg\nsunmass = solarmass\nsundist = 1.0000010178 au\nmoondist = 3.844e8 m\nsundist_near = 1.471e11 m\nsundist_far = 1.521e11 m\nmercurymass = solarmass / 6023600\nvenusmass = solarmass / 408523.71\nearthmoonmass = solarmass / 328900.56\nmarsmass = solarmass / 3098708\njupitermass = solarmass / 1047.3486\nsaturnmass = solarmass / 3497.898\nuranusmass = solarmass / 22902.98\nneptunemass = solarmass / 19412.24\nplutomass = solarmass / 1.35e8\nmoonearthmassratio = 0.012300034\nearthmass = earthmoonmass / ( 1 + moonearthmassratio)\nmoonmass = moonearthmassratio earthmass\noldmercurymass = 0.33022e24 kg\noldvenusmass = 4.8690e24 kg\noldmarsmass = 0.64191e24 kg\noldjupitermass = 1898.8e24 kg\noldsaturnmass = 568.5e24 kg\nolduranusmass = 86.625e24 kg\noldneptunemass = 102.78e24 kg\noldplutomass = 0.015e24 kg\nmercuryradius = 2440 km\nvenusradius = 6051.84 km\nearthradius = 6371.01 km\nmarsradius = 3389.92 km\njupiterradius = 69911 km\nsaturnradius = 58232 km\nuranusradius = 25362 km\nneptuneradius = 24624 km\nplutoradius = 1151 km\nmoongravity = 1.62 m/s^2\natomicmass = electronmass\natomiccharge = e\natomicaction = hbar\natomiclength = bohrradius\natomictime = hbar^3/coulombconst^2 atomicmass e^4\natomicvelocity = atomiclength / atomictime\natomicenergy = hbar / atomictime\nhartree = atomicenergy\nthermalcoulomb = J/K\nthermalampere = W/K\nthermalfarad = J/K^2\nthermalohm = K^2/W\nfourier = thermalohm\nthermalhenry = J K^2/W^2\nthermalvolt = K\nUS = 1200|3937 m/ft\nUS_ = US\nsurvey_ = US\ngeodetic_ = US\nint = 3937|1200 ft/m\nint_ = int\ninch = 2.54 cm\nin = inch\nfoot = 12 inch\nfeet = foot\nft = foot\nyard = 3 ft\nyd = yard\nmile = 5280 ft\nline = 1|12 inch\nrod = 5.5 yard\nperch = rod\nfurlong = 40 rod\nstatutemile = mile\nleague = 3 mile\nsurveyorschain = 66 surveyft\nsurveychain = surveyorschain\nsurveyorspole = 1|4 surveyorschain\nsurveyorslink = 1|100 surveyorschain\nchain = 66 ft\nlink = 1|100 chain\nch = chain\nUSacre = 10 surveychain^2\nintacre = 10 chain^2\nintacrefoot = acre foot\nUSacrefoot = USacre surveyfoot\nacrefoot = intacrefoot\nacre = intacre\nsection = mile^2\ntownship = 36 section\nhomestead = 160 acre\ngunterschain = surveyorschain\nengineerschain = 100 ft\nengineerslink = 1|100 engineerschain\nramsdenschain = engineerschain\nramsdenslink = engineerslink\ngurleychain = 33 feet\ngurleylink = 1|50 gurleychain\nwingchain = 66 feet\nwinglink = 1|80 wingchain\ntroughtonyard = 914.42190 mm\nbronzeyard11 = 914.39980 mm\nmendenhallyard = surveyyard\ninternationalyard = yard\nfathom = 6 ft\nnauticalmile = 1852 m\ncable = 1|10 nauticalmile\nintcable = cable\ncablelength = cable\nUScable = 100 USfathom\nnavycablelength = 720 USft\nmarineleague = 3 nauticalmile\ngeographicalmile = brnauticalmile\nknot = nauticalmile / hr\nclick = km\nklick = click\npound = 0.45359237 kg\nlb = pound\ngrain = 1|7000 pound\nounce = 1|16 pound\noz = ounce\ndram = 1|16 ounce\ndr = dram\nushundredweight = 100 pounds\ncwt = hundredweight\nshorthundredweight = ushundredweight\nuston = shortton\nshortton = 2000 lb\nquarterweight = 1|4 uston\nshortquarterweight = 1|4 shortton\nshortquarter = shortquarterweight\ntroypound = 5760 grain\ntroyounce = 1|12 troypound\nozt = troyounce\npennyweight = 1|20 troyounce\ndwt = pennyweight\nassayton = mg ton / troyounce\nusassayton = mg uston / troyounce\nbrassayton = mg brton / troyounce\nfineounce = troyounce\nmetriccarat = 0.2 gram\nmetricgrain = 50 mg\ncarat = metriccarat\nct = carat\njewelerspoint = 1|100 carat\nsilversmithpoint = 1|4000 inch\nmomme = 3.75 grams\nappound = troypound\napounce = troyounce\napdram = 1|8 apounce\napscruple = 1|3 apdram\nusgallon = 231 in^3\ngal = gallon\nquart = 1|4 gallon\npint = 1|2 quart\ngill = 1|4 pint\nusquart = 1|4 usgallon\nuspint = 1|2 usquart\nusgill = 1|4 uspint\nusfluidounce = 1|16 uspint\nfluiddram = 1|8 usfloz\nminimvolume = 1|60 fluiddram\nqt = quart\npt = pint\nfloz = fluidounce\nusfloz = usfluidounce\nfldr = fluiddram\nliquidbarrel = 31.5 usgallon\nusbeerbarrel = 2 beerkegs\nbeerkeg = 15.5 usgallon\nponykeg = 1|2 beerkeg\nwinekeg = 12 usgallon\npetroleumbarrel = 42 usgallon\nbarrel = petroleumbarrel\nbbl = barrel\nushogshead = 2 liquidbarrel\nusfirkin = 9 usgallon\nusbushel = 2150.42 in^3\nbu = bushel\npeck = 1|4 bushel\nuspeck = 1|4 usbushel\nbrpeck = 1|4 brbushel\npk = peck\ndrygallon = 1|2 uspeck\ndryquart = 1|4 drygallon\ndrypint = 1|2 dryquart\ndrybarrel = 7056 in^3\ncranberrybarrel = 5826 in^3\nheapedbushel = 1.278 usbushel\nwheatbushel = 60 lb\nsoybeanbushel = 60 lb\ncornbushel = 56 lb\nryebushel = 56 lb\nbarleybushel = 48 lb\noatbushel = 32 lb\nricebushel = 45 lb\ncanada_oatbushel = 34 lb\nponyvolume = 1 usfloz\njigger = 1.5 usfloz\nshot = jigger\neushot = 25 ml\nfifth = 1|5 usgallon\nwinebottle = 750 ml\nwinesplit = 1|4 winebottle\nwineglass = 4 usfloz\nmagnum = 1.5 liter\nmetrictenth = 375 ml\nmetricfifth = 750 ml\nmetricquart = 1 liter\nreputedquart = 1|6 brgallon\nreputedpint = 1|2 reputedquart\nbrwinebottle = reputedquart\nsplit = 200 ml\njeroboam = 2 magnum\nrehoboam = 3 magnum\nmethuselah = 4 magnum\nsalmanazar = 6 magnum\nbalthazar = 8 magnum\nnebuchadnezzar = 10 magnum\nclarkdegree = grains/brgallon\ngpg = grains/usgallon\nshoeiron = 1|48 inch\nshoeounce = 1|64 inch\nshoesize_delta = 1|3 inch\nshoe_men0 = 8.25 inch\nshoe_women0 = (7+11|12) inch\nshoe_boys0 = (3+11|12) inch\nshoe_girls0 = (3+7|12) inch\nshoesize_men = n => shoe_men0 + n shoesize_delta \nshoesize_men^-1 = shoesize_men => (shoesize_men+(-shoe_men0))/shoesize_delta\nshoesize_women = n => shoe_women0 + n shoesize_delta \nshoesize_women^-1 = shoesize_women => (shoesize_women+(-shoe_women0))/shoesize_delta\nshoesize_boys = n => shoe_boys0 + n shoesize_delta \nshoesize_boys^-1 = shoesize_boys => (shoesize_boys+(-shoe_boys0))/shoesize_delta\nshoesize_girls = n => shoe_girls0 + n shoesize_delta \nshoesize_girls^-1 = shoesize_girls => (shoesize_girls+(-shoe_girls0))/shoesize_delta\neuropeshoesize = 2|3 cm\nbuck = US$\nfin = 5 US$\nsawbuck = 10 US$\nusgrand = 1000 US$\ngreenback = US$\nkey = kg\nlid = 1 oz\nfootballfield = usfootballfield\nusfootballfield = 100 yards\ncanadafootballfield = 110 yards\nmarathon = 26 miles + 385 yards\nUK = UKlength_SJJ\nUK_ = UK\nbritish_ = UK\nUKlength_B = 0.9143992 meter / yard\nUKlength_SJJ = 0.91439841 meter / yard\nUKlength_K = meter / 39.37079 inch\nUKlength_C = meter / 1.09362311 yard\nbrnauticalmile = 6080 ft\nbrknot = brnauticalmile / hr\nbrcable = 1|10 brnauticalmile\nadmiraltymile = brnauticalmile\nadmiraltyknot = brknot\nadmiraltycable = brcable\nseamile = 6000 ft\nshackle = 15 fathoms\nclove = 7 lb\nstone = 14 lb\ntod = 28 lb\nbrquarterweight = 1|4 brhundredweight\nbrhundredweight = 8 stone\nlonghundredweight = brhundredweight\nlongton = 20 brhundredweight\nbrton = longton\nbrminim = 1|60 brdram\nbrscruple = 1|3 brdram\nfluidscruple = brscruple\nbrdram = 1|8 brfloz\nbrfluidounce = 1|20 brpint\nbrfloz = brfluidounce\nbrgill = 1|4 brpint\nbrpint = 1|2 brquart\nbrquart = 1|4 brgallon\nbrgallon = 4.54609 l\nbrbarrel = 36 brgallon\nbrbushel = 8 brgallon\nbrheapedbushel = 1.278 brbushel\nbrquarter = 8 brbushel\nbrchaldron = 36 brbushel\nbag = 4 brbushel\nbucket = 4 brgallon\nkilderkin = 2 brfirkin\nlast = 40 brbushel\nnoggin = brgill\npottle = 0.5 brgallon\npin = 4.5 brgallon\npuncheon = 72 brgallon\nseam = 8 brbushel\ncoomb = 4 brbushel\nboll = 6 brbushel\nfirlot = 1|4 boll\nbrfirkin = 9 brgallon\ncran = 37.5 brgallon\nbrwinehogshead = 52.5 brgallon\nbrhogshead = brwinehogshead\nbrbeerhogshead = 54 brgallon\nbrbeerbutt = 2 brbeerhogshead\nregisterton = 100 ft^3\nshippington = 40 ft^3\nbrshippington = 42 ft^3\nfreightton = shippington\ndisplacementton = 35 ft^3\nwaterton = 224 brgallon\nstrike = 70.5 l\namber = 4 brbushel\nimperialminim = brminim\nimperialscruple = brscruple\nimperialdram = brdram\nimperialfluidounce = brfluidounce\nimperialfloz = brfloz\nimperialgill = brgill\nimperialpint = brpint\nimperialquart = brquart\nimperialgallon = brgallon\nimperialbarrel = brbarrel\nimperialbushel = brbushel\nimperialheapedbushel = brheapedbushel\nimperialquarter = brquarter\nimperialchaldron = brchaldron\nimperialwinehogshead = brwinehogshead\nimperialhogshead = brhogshead\nimperialbeerhogshead = brbeerhogshead\nimperialbeerbutt = brbeerbutt\nimperialfirkin = brfirkin\nbarleycorn = 1|3 UKinch\nnail = 1|16 UKyard\npole = 16.5 UKft\nrope = 20 UKft\nenglishell = 45 UKinch\nflemishell = 27 UKinch\nell = englishell\nspan = 9 UKinch\ngoad = 4.5 UKft\nhide = 120 acre\nvirgate = 1|4 hide\nnook = 1|2 virgate\nrood = furlong rod\nenglishcarat = troyounce/151.5\nmancus = 2 oz\nmast = 2.5 lb\nnailkeg = 100 lbs\nbasebox = 31360 in^2\nmetre = meter\ngramme = gram\nlitre = liter\ndioptre = diopter\naluminium = aluminum\nsulphur = sulfur\ngeometricpace = 5 ft\npace = 2.5 ft\nUSmilitarypace = 30 in\nUSdoubletimepace = 36 in\nfingerbreadth = 7|8 in\nfingerlength = 4.5 in\nfinger = fingerbreadth\npalmwidth = hand\npalmlength = 8 in\nhand = 4 inch\nshaftment = 6 inch\nsmoot = 5 ft + 7 in\ntbl = tablespoon\ntbsp = tablespoon\ntblsp = tablespoon\nTb = tablespoon\ntsp = teaspoon\nsaltspoon = 1|4 tsp\nuscup = 8 usfloz\nustablespoon = 1|16 uscup\nusteaspoon = 1|3 ustablespoon\nustbl = ustablespoon\nustbsp = ustablespoon\nustblsp = ustablespoon\nustsp = usteaspoon\nmetriccup = 250 ml\nstickbutter = 1|4 lb\nlegalcup = 240 ml\nlegaltablespoon = 1|16 legalcup\nlegaltbsp = legaltablespoon\nscoop = n => 32 usfloz / n \nscoop^-1 = scoop => 32 usfloz / scoop\nnumber1can = 10 usfloz\nnumber2can = 19 usfloz\nnumber2.5can = 3.5 uscups\nnumber3can = 4 uscups\nnumber5can = 7 uscups\nnumber10can = 105 usfloz\nbrcup = 1|2 brpint\nbrteacup = 1|3 brpint\nbrtablespoon = 15 ml\nbrteaspoon = 1|3 brtablespoon\nbrdessertspoon = 2 brteaspoon\ndessertspoon = brdessertspoon\ndsp = dessertspoon\nbrtsp = brteaspoon\nbrtbl = brtablespoon\nbrtbsp = brtablespoon\nbrtblsp = brtablespoon\naustraliatablespoon = 20 ml\naustbl = australiatablespoon\naustbsp = australiatablespoon\naustblsp = australiatablespoon\naustraliateaspoon = 1|4 australiatablespoon\naustsp = australiateaspoon\netto = 100 g\netti = etto\ncatty = 0.5 kg\noldcatty = 4|3 lbs\ntael = 1|16 oldcatty\nmace = 0.1 tael\noldpicul = 100 oldcatty\npicul = 100 catty\nseer = 14400 grain\nser = seer\nmaund = 40 seer\npakistanseer = 1 kg\npakistanmaund = 40 pakistanseer\nchittak = 1|16 seer\ntola = 1|5 chittak\nollock = 1|4 liter\njapancup = 200 ml\nbutter = 8 oz/uscup\nbutter_clarified = 6.8 oz/uscup\ncocoa_butter = 9 oz/uscup\nshortening = 6.75 oz/uscup\noil = 7.5 oz/uscup\ncakeflour_sifted = 3.5 oz/uscup\ncakeflour_spooned = 4 oz/uscup\ncakeflour_scooped = 4.5 oz/uscup\nflour_sifted = 4 oz/uscup\nflour_spooned = 4.25 oz/uscup\nflour_scooped = 5 oz/uscup\nbreadflour_sifted = 4.25 oz/uscup\nbreadflour_spooned = 4.5 oz/uscup\nbreadflour_scooped = 5.5 oz/uscup\ncornstarch = 120 grams/uscup\ndutchcocoa_sifted = 75 g/uscup\ndutchcocoa_spooned = 92 g/uscup\ndutchcocoa_scooped = 95 g/uscup\ncocoa_sifted = 75 g/uscup\ncocoa_spooned = 82 g/uscup\ncocoa_scooped = 95 g/uscup\nheavycream = 232 g/uscup\nmilk = 242 g/uscup\nsourcream = 242 g/uscup\nmolasses = 11.25 oz/uscup\ncornsyrup = 11.5 oz/uscup\nhoney = 11.75 oz/uscup\nsugar = 200 g/uscup\npowdered_sugar = 4 oz/uscup\nbrownsugar_light = 217 g/uscup\nbrownsugar_dark = 239 g/uscup\nbaking_powder = 4.6 grams / ustsp\nsalt = 6 g / ustsp\nkoshersalt = 2.8 g / ustsp\nkoshersalt_morton = 4.8 g / ustsp\negg = 50 grams\neggwhite = 30 grams\neggyolk = 18.6 grams\neggvolume = 3 ustablespoons + 1|2 ustsp\neggwhitevolume = 2 ustablespoons\neggyolkvolume = 3.5 ustsp\nsugar_conc_bpe[K] = 0 0.0000   5 0.0788  10 0.1690  15 0.2729  20 0.3936  25 0.5351  30 0.7027  35 0.9036  40 1.1475  42 1.2599  44 1.3825  46 1.5165  48 1.6634  50 1.8249  52 2.0031  54 2.2005  56 2.4200  58 2.6651  60 2.9400  61 3.0902  62 3.2499  63 3.4198  64 3.6010  65 3.7944  66 4.0012  67 4.2227  68 4.4603  69 4.7156  70 4.9905  71 5.2870  72 5.6075  73 5.9546  74 6.3316  75 6.7417  76 7.1892  77 7.6786  78.0  8.2155  79.0  8.8061  80.0  9.4578  80.5  9.8092  81.0 10.1793  81.5 10.5693  82.0 10.9807  82.5 11.4152  83.0 11.8743  83.5 12.3601  84.0 12.8744  84.5 13.4197  85.0 13.9982  85.5 14.6128  86.0 15.2663  86.5 15.9620  87.0 16.7033  87.5 17.4943  88.0 18.3391  88.5 19.2424  89.0 20.2092  89.5 21.2452  90.0 22.3564  90.5 23.5493  91.0 24.8309  91.5 26.2086  92.0 27.6903  92.5 29.2839  93.0 30.9972  93.5 32.8374  94.0 34.8104  94.5 36.9195  95.0 39.1636  95.5 41.5348  96.0 44.0142  96.5 46.5668  97.0 49.1350  97.5 51.6347  98.0 53.9681  98.1 54.4091  98.2 54.8423  98.3 55.2692  98.4 55.6928  98.5 56.1174  98.6 56.5497  98.7 56.9999  98.8 57.4828  98.9 58.0206  99.0 58.6455  99.1 59.4062  99.2 60.3763  99.3 61.6706  99.4 63.4751  99.5 66.1062  99.6 70.1448  99.7 76.7867\nsugar_bpe = T => brix(~sugar_conc_bpe(T))\nsugar_bpe^-1 = sugar_bpe => sugar_conc_bpe(~brix(sugar_bpe))\nsugar_bp = T => brix(~sugar_conc_bpe(T-tempC(100))) \nsugar_bp^-1 = sugar_bp => sugar_conc_bpe(~brix(sugar_bp))+tempC(100)\nsugar_bpF = T => brix(~sugar_conc_bpe(tempF(T)+-tempC(100))) \nsugar_bpF^-1 = sugar_bpF => ~tempF(sugar_conc_bpe(~brix(sugar_bpF))+tempC(100))\nsugar_bpC = T => brix(~sugar_conc_bpe(tempC(T)+-tempC(100))) \nsugar_bpC^-1 = sugar_bpC => ~tempC(sugar_conc_bpe(~brix(sugar_bpC))+tempC(100))\nbaumeconst = 145\nbaume = d => (baumeconst/(baumeconst+-d)) g/cm^3 \nbaume^-1 = baume => (baume+((-g)/cm^3)) baumeconst / baume\ntwaddell = x => (1 + 0.005 x) g / cm^3 \ntwaddell^-1 = twaddell => 200 (twaddell / (g/cm^3) +- 1)\nquevenne = x => (1 + 0.001 x) g / cm^3 \nquevenne^-1 = quevenne => 1000 (quevenne / (g/cm^3) +- 1)\nbrix[0.99717g/cm^3] = 0 1.00000  1 1.00390  2 1.00780  3 1.01173  4 1.01569  5 1.01968     6 1.02369  7 1.02773  8 1.03180  9 1.03590 10 1.04003 11 1.04418    12 1.04837 13 1.05259 14 1.05683 15 1.06111 16 1.06542 17 1.06976    18 1.07413 19 1.07853 20 1.08297 21 1.08744 22 1.09194 23 1.09647    24 1.10104 25 1.10564 26 1.11027 27 1.11493 28 1.11963 29 1.12436    30 1.12913 31 1.13394 32 1.13877 33 1.14364 34 1.14855 35 1.15350    36 1.15847 37 1.16349 38 1.16853 39 1.17362 40 1.17874 41 1.18390    42 1.18910 43 1.19434 44 1.19961 45 1.20491 46 1.21026 47 1.21564    48 1.22106 49 1.22652 50 1.23202 51 1.23756 52 1.24313 53 1.24874    54 1.25439 55 1.26007 56 1.26580 57 1.27156 58 1.27736 59 1.28320    60 1.28909 61 1.29498 62 1.30093 63 1.30694 64 1.31297 65 1.31905    66 1.32516 67 1.33129 68 1.33748 69 1.34371 70 1.34997 71 1.35627    72 1.36261 73 1.36900 74 1.37541 75 1.38187 76 1.38835 77 1.39489    78 1.40146 79 1.40806 80 1.41471 81 1.42138 82 1.42810 83 1.43486    84 1.44165 85 1.44848 86 1.45535 87 1.46225 88 1.46919 89 1.47616    90 1.48317 91 1.49022 92 1.49730 93 1.50442 94 1.51157 95 1.51876\napidegree = x => 141.5 g/cm^3 / (x+131.5) \napidegree^-1 = apidegree => 141.5 (g/cm^3) / apidegree + (-131.5)\nouncedal = oz ft / s^2\npoundal = lb ft / s^2\ntondal = longton ft / s^2\npdl = poundal\nosi = ounce force / inch^2\npsi = pound force / inch^2\npsia = psi\ntsi = ton force / inch^2\nreyn = psi sec\nslug = lbf s^2 / ft\nslugf = slug force\nslinch = lbf s^2 / inch\nslinchf = slinch force\ngeepound = slug\nlbf = lb force\ntonf = ton force\nlbm = lb\nkip = 1000 lbf\nksi = kip / in^2\nmil = 0.001 inch\nthou = 0.001 inch\ntenth = 0.0001 inch\nmillionth = 1e-6 inch\ncircularinch = 1|4 pi in^2\ncircleinch = circularinch\ncylinderinch = circleinch inch\ncircularmil = 1|4 pi mil^2\ncmil = circularmil\ncental = 100 pound\ncentner = cental\ncaliber = 0.01 inch\nduty = ft lbf\ncelo = ft / s^2\njerk = ft / s^3\naustraliapoint = 0.01 inch\nsabin = ft^2\nstandardgauge = 4 ft + 8.5 in\nflag = 5 ft^2\nrollwallpaper = 30 ft^2\nfillpower = in^3 / ounce\npinlength = 1|16 inch\nbuttonline = 1|40 inch\nbeespace = 1|4 inch\ndiamond = 8|5 ft\nretmaunit = 1.75 in\nU = retmaunit\nRU = U\ncount = / pound\nENERGY = joule\nWORK = joule\ncal_IT = 4.1868 J\ncal_th = 4.184 J\ncal_fifteen = 4.18580 J\ncal_twenty = 4.18190 J\ncal_mean = 4.19002 J\ncalorie = cal_IT\ncal = calorie\ncalorie_IT = cal_IT\nthermcalorie = cal_th\ncalorie_th = thermcalorie\nCalorie = kilocalorie\nthermie = 1e6 cal_fifteen\nbtu = cal lb degF / gram K\nbritishthermalunit = btu\nbtu_IT = btu\nbtu_th = cal_th lb degF / gram K\nbtu_mean = cal_mean lb degF / gram K\nquad = quadrillion btu\nECtherm = 1.05506e8 J\nUStherm = 1.054804e8 J\ntherm = UStherm\nwater_fusion_heat = 79.8 calorie/g\nwater_vaporization_heat = 1160 J/g\nspecificheat_water = calorie / g K\nwater_specificheat = specificheat_water\nspecificheat_aluminum = 0.91 J/g K\nspecificheat_antimony = 0.21 J/g K\nspecificheat_barium = 0.20 J/g K\nspecificheat_beryllium = 1.83 J/g K\nspecificheat_bismuth = 0.13 J/g K\nspecificheat_cadmium = 0.23 J/g K\nspecificheat_cesium = 0.24 J/g K\nspecificheat_chromium = 0.46 J/g K\nspecificheat_cobalt = 0.42 J/g K\nspecificheat_copper = 0.39 J/g K\nspecificheat_gallium = 0.37 J/g K\nspecificheat_germanium = 0.32 J/g K\nspecificheat_gold = 0.13 J/g K\nspecificheat_hafnium = 0.14 J/g K\nspecificheat_indium = 0.24 J/g K\nspecificheat_iridium = 0.13 J/g K\nspecificheat_iron = 0.45 J/g K\nspecificheat_lanthanum = 0.195 J/g K\nspecificheat_lead = 0.13 J/g K\nspecificheat_lithium = 3.57 J/g K\nspecificheat_lutetium = 0.15 J/g K\nspecificheat_magnesium = 1.05 J/g K\nspecificheat_manganese = 0.48 J/g K\nspecificheat_mercury = 0.14 J/g K\nspecificheat_molybdenum = 0.25 J/g K\nspecificheat_nickel = 0.44 J/g K\nspecificheat_osmium = 0.13 J/g K\nspecificheat_palladium = 0.24 J/g K\nspecificheat_platinum = 0.13 J/g K\nspecificheat_plutonum = 0.13 J/g K\nspecificheat_potassium = 0.75 J/g K\nspecificheat_rhenium = 0.14 J/g K\nspecificheat_rhodium = 0.24 J/g K\nspecificheat_rubidium = 0.36 J/g K\nspecificheat_ruthenium = 0.24 J/g K\nspecificheat_scandium = 0.57  J/g K\nspecificheat_selenium = 0.32 J/g K\nspecificheat_silicon = 0.71 J/g K\nspecificheat_silver = 0.23 J/g K\nspecificheat_sodium = 1.21 J/g K\nspecificheat_strontium = 0.30 J/g K\nspecificheat_tantalum = 0.14 J/g K\nspecificheat_thallium = 0.13 J/g K\nspecificheat_thorium = 0.13 J/g K\nspecificheat_tin = 0.21 J/g K\nspecificheat_titanium = 0.54 J/g K\nspecificheat_tungsten = 0.13 J/g K\nspecificheat_uranium = 0.12 J/g K\nspecificheat_vanadium = 0.39 J/g K\nspecificheat_yttrium = 0.30 J/g K\nspecificheat_zinc = 0.39 J/g K\nspecificheat_zirconium = 0.27 J/g K\nspecificheat_ethanol = 2.3  J/g K\nspecificheat_ammonia = 4.6 J/g K\nspecificheat_freon = 0.91 J/g K\nspecificheat_gasoline = 2.22 J/g K\nspecificheat_iodine = 2.15 J/g K\nspecificheat_oliveoil = 1.97 J/g K\nspecificheat_hydrogen = 14.3 J/g K\nspecificheat_helium = 5.1932 J/g K\nspecificheat_argon = 0.5203 J/g K\nspecificheat_tissue = 3.5 J/g K\nspecificheat_diamond = 0.5091 J/g K\nspecificheat_granite = 0.79 J/g K\nspecificheat_graphite = 0.71 J/g K\nspecificheat_ice = 2.11 J/g K\nspecificheat_asphalt = 0.92 J/g K\nspecificheat_brick = 0.84 J/g K\nspecificheat_concrete = 0.88 J/g K\nspecificheat_glass_silica = 0.84 J/g K\nspecificheat_glass_flint = 0.503 J/g K\nspecificheat_glass_pyrex = 0.753 J/g K\nspecificheat_gypsum = 1.09 J/g K\nspecificheat_marble = 0.88 J/g K\nspecificheat_sand = 0.835 J/g K\nspecificheat_soil = 0.835 J/g K\nspecificheat_wood = 1.7 J/g K\nspecificheat_sucrose = 1.244 J/g K\ntonoil = 1e10 cal_IT\ntoe = tonoil\ntoncoal = 7e9 cal_IT\nbarreloil = 5.8 Mbtu\nnaturalgas_HHV = 1027 btu/ft^3\nnaturalgas_LHV = 930 btu/ft^3\nnaturalgas = naturalgas_HHV\ncharcoal = 30 GJ/tonne\nwoodenergy_dry = 20 GJ/tonne\nwoodenergy_airdry = 15 GJ/tonne\ncoal_bituminous = 27 GJ / tonne\ncoal_lignite = 15 GJ / tonne\ncoal_US = 22 GJ / uston\nethanol_HHV = 84000 btu/usgallon\nethanol_LHV = 75700 btu/usgallon\ndiesel = 130500 btu/usgallon\ngasoline_LHV = 115000 btu/usgallon\ngasoline_HHV = 125000 btu/usgallon\ngasoline = gasoline_HHV\nheating = 37.3 MJ/liter\nfueloil = 39.7 MJ/liter\npropane = 93.3 MJ/m^3\nbutane = 124 MJ/m^3\nuranium_pure = 200 MeV avogadro / (235.0439299 g/mol)\nuranium_natural = 0.7% uranium_pure\ncelsiusheatunit = cal lb degC / gram K\nchu = celsiusheatunit\nPOWER = watt\nhorsepower = 550 foot pound force / sec\nmechanicalhorsepower = horsepower\nhp = horsepower\nmetrichorsepower = 75 kilogram force meter / sec\nelectrichorsepower = 746 W\nboilerhorsepower = 9809.50 W\nwaterhorsepower = 746.043 W\nbrhorsepower = 745.70 W\ndonkeypower = 250 W\nchevalvapeur = metrichorsepower\nTHERMAL_CONDUCTIVITY = POWER / AREA (TEMPERATURE_DIFFERENCE/LENGTH)\nTHERMAL_RESISTIVITY = 1/THERMAL_CONDUCTIVITY\nTHERMAL_CONDUCTANCE = POWER / TEMPERATURE_DIFFERENCE\nTHERMAL_RESISTANCE = 1/THERMAL_CONDUCTANCE\nTHERMAL_ADMITTANCE = THERMAL_CONDUCTIVITY / LENGTH\nTHERMAL_INSULANCE = THERMAL_RESISTIVITY LENGTH\nTHERMAL_INSULATION = THERMAL_RESISTIVITY LENGTH\nRvalue = degF ft^2 hr / btu\nUvalue = 1/Rvalue\neuropeanUvalue = watt / m^2 K\nRSI = degC m^2 / W\nclo = 0.155 degC m^2 / W\ntog = 0.1 degC m^2 / W\nbel = x => 10^(x)\nbel^-1 = bel => log(bel)\ndecibel = x => 10^(x/10)\ndecibel^-1 = decibel => 10 log(decibel)\ndB = decibel\ndBW = x => dB(x) W \ndBW^-1 = dBW => ~dB(dBW/W)\ndBk = x => dB(x) kW \ndBk^-1 = dBk => ~dB(dBk/kW)\ndBf = x => dB(x) fW \ndBf^-1 = dBf => ~dB(dBf/fW)\ndBm = x => dB(x) mW \ndBm^-1 = dBm => ~dB(dBm/mW)\ndBmW = x => dBm(x) \ndBmW^-1 = dBmW => ~dBm(dBmW)\ndBJ = x => dB(x) J\ndBJ^-1 = dBJ => ~dB(dBJ/J)\ndBV = x => dB(0.5 x) V\ndBV^-1 = dBV => ~dB(dBV^2 / V^2)\ndBmV = x => dB(0.5 x) mV\ndBmV^-1 = dBmV => ~dB(dBmV^2/mV^2)\ndBuV = x => dB(0.5 x) microV \ndBuV^-1 = dBuV => ~dB(dBuV^2 / microV^2)\ndBu = x => dB(0.5 x) sqrt(mW 600 ohm) \ndBu^-1 = dBu => ~dB(dBu^2 / mW 600 ohm)\ndBv = x => dBu(x) \ndBv^-1 = dBv => ~dBu(dBv)\ndBSPL = x => dB(0.5 x) 20 microPa \ndBSPL^-1 = dBSPL => ~dB(dBSPL^2 / (20 microPa)^2)\ndBSIL = x => dB(x) 1e-12 W/m^2\ndBSIL^-1 = dBSIL => ~dB(dBSIL / (1e-12 W/m^2))\ndBSWL = x => dB(x) 1e-12 W\ndBSWL^-1 = dBSWL => ~dB(dBSWL/1e-12 W)\nENTROPY = ENERGY / TEMPERATURE\nclausius = 1e3 cal/K\nlangley = thermcalorie/cm^2\nponcelet = 100 kg force m / s\ntonrefrigeration = uston 144 btu / lb day\ntonref = tonrefrigeration\nrefrigeration = tonref / ton\nfrigorie = 1000 cal_fifteen\ntnt = 1e9 cal_th / ton\nairwatt = 8.5 (ft^3/min) inH2O\nperm_0C = grain / hr ft^2 inHg\nperm_zero = perm_0C\nperm_0 = perm_0C\nperm = perm_0C\nperm_23C = grain / hr ft^2 in Hg23C\nperm_twentythree = perm_23C\npair = 2\nbrace = 2\nnest = 3\nhattrick = 3\ndicker = 10\ndozen = 12\nbakersdozen = 13\nscore = 20\nflock = 40\ntimer = 40\nshock = 60\ntoncount = 100\nlonghundred = 120\ngross = 144\ngreatgross = 12 gross\ntithe = 1|10\nshortquire = 24\nquire = 25\nshortream = 480\nream = 500\nperfectream = 516\nbundle = 2 reams\nbale = 5 bundles\nlettersize = 8.5 inch 11 inch\nlegalsize = 8.5 inch 14 inch\nledgersize = 11 inch 17 inch\nexecutivesize = 7.25 inch 10.5 inch\nApaper = 8.5 inch 11 inch\nBpaper = 11 inch 17 inch\nCpaper = 17 inch 22 inch\nDpaper = 22 inch 34 inch\nEpaper = 34 inch 44 inch\npointthickness = mil\nA0paper = 841 mm 1189 mm\nA1paper = 594 mm  841 mm\nA2paper = 420 mm  594 mm\nA3paper = 297 mm  420 mm\nA4paper = 210 mm  297 mm\nA5paper = 148 mm  210 mm\nA6paper = 105 mm  148 mm\nA7paper = 74 mm  105 mm\nA8paper = 52 mm   74 mm\nA9paper = 37 mm   52 mm\nA10paper = 26 mm   37 mm\nB0paper = 1000 mm 1414 mm\nB1paper = 707 mm 1000 mm\nB2paper = 500 mm  707 mm\nB3paper = 353 mm  500 mm\nB4paper = 250 mm  353 mm\nB5paper = 176 mm  250 mm\nB6paper = 125 mm  176 mm\nB7paper = 88 mm  125 mm\nB8paper = 62 mm   88 mm\nB9paper = 44 mm   62 mm\nB10paper = 31 mm   44 mm\nC0paper = 917 mm 1297 mm\nC1paper = 648 mm  917 mm\nC2paper = 458 mm  648 mm\nC3paper = 324 mm  458 mm\nC4paper = 229 mm  324 mm\nC5paper = 162 mm  229 mm\nC6paper = 114 mm  162 mm\nC7paper = 81 mm  114 mm\nC8paper = 57 mm   81 mm\nC9paper = 40 mm   57 mm\nC10paper = 28 mm   40 mm\ngsm = grams / meter^2\npoundbookpaper = lb / 25 inch 38 inch ream\nlbbook = poundbookpaper\npoundtextpaper = poundbookpaper\nlbtext = poundtextpaper\npoundoffsetpaper = poundbookpaper\nlboffset = poundoffsetpaper\npoundbiblepaper = poundbookpaper\nlbbible = poundbiblepaper\npoundtagpaper = lb / 24 inch 36 inch ream\nlbtag = poundtagpaper\npoundbagpaper = poundtagpaper\nlbbag = poundbagpaper\npoundnewsprintpaper = poundtagpaper\nlbnewsprint = poundnewsprintpaper\npoundposterpaper = poundtagpaper\nlbposter = poundposterpaper\npoundtissuepaper = poundtagpaper\nlbtissue = poundtissuepaper\npoundwrappingpaper = poundtagpaper\nlbwrapping = poundwrappingpaper\npoundwaxingpaper = poundtagpaper\nlbwaxing = poundwaxingpaper\npoundglassinepaper = poundtagpaper\nlbglassine = poundglassinepaper\npoundcoverpaper = lb / 20 inch 26 inch ream\nlbcover = poundcoverpaper\npoundindexpaper = lb / 25.5 inch 30.5 inch ream\nlbindex = poundindexpaper\npoundindexbristolpaper = poundindexpaper\nlbindexbristol = poundindexpaper\npoundbondpaper = lb / 17 inch 22 inch ream\nlbbond = poundbondpaper\npoundwritingpaper = poundbondpaper\nlbwriting = poundwritingpaper\npoundledgerpaper = poundbondpaper\nlbledger = poundledgerpaper\npoundcopypaper = poundbondpaper\nlbcopy = poundcopypaper\npoundblottingpaper = lb / 19 inch 24 inch ream\nlbblotting = poundblottingpaper\npoundblankspaper = lb / 22 inch 28 inch ream\nlbblanks = poundblankspaper\npoundpostcardpaper = lb / 22.5 inch 28.5 inch ream\nlbpostcard = poundpostcardpaper\npoundweddingbristol = poundpostcardpaper\nlbweddingbristol = poundweddingbristol\npoundbristolpaper = poundweddingbristol\nlbbristol = poundbristolpaper\npoundboxboard = lb / 1000 ft^2\nlbboxboard = poundboxboard\npoundpaperboard = poundboxboard\nlbpaperboard = poundpaperboard\npaperM = lb / 1000\npaperdensity = 0.8 g/cm^3\npapercaliper = in paperdensity\npaperpoint = 0.001 in paperdensity\nfournierpoint = 0.1648 inch / 12\nolddidotpoint = 1|72 frenchinch\nbertholdpoint = 1|2660 m\nINpoint = 0.4 mm\ngermandidotpoint = 0.376065 mm\nmetricpoint = 3|8 mm\noldpoint = 1|72.27 inch\nprinterspoint = oldpoint\ntexpoint = oldpoint\ntexscaledpoint = 1|65536 texpoint\ntexsp = texscaledpoint\ncomputerpoint = 1|72 inch\npoint = computerpoint\ncomputerpica = 12 computerpoint\npostscriptpoint = computerpoint\npspoint = postscriptpoint\ntwip = 1|20 point\nQ = 1|4 mm\nfrenchprinterspoint = olddidotpoint\ndidotpoint = germandidotpoint\neuropeanpoint = didotpoint\ncicero = 12 didotpoint\nstick = 2 inches\nexcelsior = 3 oldpoint\nbrilliant = 3.5 oldpoint\ndiamondtype = 4 oldpoint\npearl = 5 oldpoint\nagate = 5.5 oldpoint\nruby = agate\nnonpareil = 6 oldpoint\nmignonette = 6.5 oldpoint\nemerald = mignonette\nminion = 7 oldpoint\nbrevier = 8 oldpoint\nbourgeois = 9 oldpoint\nlongprimer = 10 oldpoint\nsmallpica = 11 oldpoint\npica = 12 oldpoint\nenglish = 14 oldpoint\ncolumbian = 16 oldpoint\ngreatprimer = 18 oldpoint\nparagon = 20 oldpoint\nmeridian = 44 oldpoint\ncanon = 48 oldpoint\nnonplusultra = 2 didotpoint\nbrillant = 3 didotpoint\ndiamant = 4 didotpoint\nperl = 5 didotpoint\nnonpareille = 6 didotpoint\nkolonel = 7 didotpoint\npetit = 8 didotpoint\nborgis = 9 didotpoint\nkorpus = 10 didotpoint\ncorpus = korpus\ngaramond = korpus\nmittel = 14 didotpoint\ntertia = 16 didotpoint\ntext = 18 didotpoint\nkleine_kanon = 32 didotpoint\nkanon = 36 didotpoint\ngrobe_kanon = 42 didotpoint\nmissal = 48 didotpoint\nkleine_sabon = 72 didotpoint\ngrobe_sabon = 84 didotpoint\nINFORMATION = bit\nnat = (1/ln(2)) bits\nhartley = log2(10) bits\nban = hartley\ndit = hartley\nbps = bit/sec\nbyte = 8 bit\nB = byte\noctet = 8 bits\nnybble = 4 bits\nnibble = nybble\nnyp = 2 bits\nmeg = megabyte\ngig = gigabyte\njiffy = 0.01 sec\njiffies = jiffy\ncdaudiospeed = 44.1 kHz 2*16 bits\ncdromspeed = 75 2048 bytes / sec\ndvdspeed = 1385 kB/s\noctave = 2\nmajorsecond = musicalfifth^2 / octave\nmajorthird = 5|4\nminorthird = 6|5\nmusicalfourth = 4|3\nmusicalfifth = 3|2\nmajorsixth = musicalfourth majorthird\nminorsixth = musicalfourth minorthird\nmajorseventh = musicalfifth majorthird\nminorseventh = musicalfifth minorthird\npythagoreanthird = majorsecond musicalfifth^2 / octave\nsyntoniccomma = pythagoreanthird / majorthird\npythagoreancomma = musicalfifth^12 / octave^7\nsemitone = octave^(1|12)\nmusicalcent = x => semitone^(x/100) \nmusicalcent^-1 = musicalcent => 100 log(musicalcent)/log(semitone)\nwholenote!\nMUSICAL_NOTE_LENGTH = wholenote\nhalfnote = 1|2 wholenote\nquarternote = 1|4 wholenote\neighthnote = 1|8 wholenote\nsixteenthnote = 1|16 wholenote\nthirtysecondnote = 1|32 wholenote\nsixtyfourthnote = 1|64 wholenote\ndotted = 3|2\ndoubledotted = 7|4\nbreve = doublewholenote\nsemibreve = wholenote\nminimnote = halfnote\ncrotchet = quarternote\nquaver = eighthnote\nsemiquaver = sixteenthnote\ndemisemiquaver = thirtysecondnote\nhemidemisemiquaver = sixtyfourthnote\nsemidemisemiquaver = hemidemisemiquaver\nwoolyarnrun = 1600 yard/pound\nyarncut = 300 yard/pound\ncottonyarncount = 840 yard/pound\nlinenyarncount = 300 yard/pound\nworstedyarncount = 1680 ft/pound\nmetricyarncount = meter/gram\ndenier = 1|9 tex\nmanchesteryarnnumber = drams/1000 yards\npli = lb/in\ntypp = 1000 yd/lb\nasbestoscut = 100 yd/lb\ntex = gram / km\ndrex = 0.1 tex\npoumar = lb / 1e6 yard\nskeincotton = 80*54 inch\ncottonbolt = 120 ft\nwoolbolt = 210 ft\nbolt = cottonbolt\nheer = 600 yards\ncut = 300 yards\nlea = 300 yards\nsailmakersyard = 28.5 in\nsailmakersounce = oz / sailmakersyard 36 inch\nsilkmomme = momme / 25 yards 1.49 inch\nsilkmm = silkmomme\nmcg = microgram\niudiptheria = 62.8 microgram\niupenicillin = 0.6 microgram\niuinsulin = 41.67 microgram\ndrop = 1|20 ml\nbloodunit = 450 ml\nfrenchcathetersize = 1|3 mm\ncharriere = frenchcathetersize\nhectare = hectoare\nmegohm = megaohm\nkilohm = kiloohm\nmicrohm = microohm\nmegalerg = megaerg\nunitedstatesdollar = US$\nusdollar = US$\n$ = dollar\nmark = germanymark\nbolivar = venezuelabolivar\nvenezuelanbolivarfuerte = venezuelabolivar\nbolivarfuerte = bolivar\noldbolivar = 1|1000 bolivar\npeseta = spainpeseta\nrand = southafricarand\nescudo = portugalescudo\nguilder = netherlandsguilder\nhollandguilder = netherlandsguilder\npeso = mexicopeso\nyen = japanyen\nlira = italylira\nrupee = indiarupee\ndrachma = greecedrachma\nfranc = francefranc\nmarkka = finlandmarkka\nbritainpound = unitedkingdompound\ngreatbritainpound = unitedkingdompound\nunitedkingdompound = ukpound\npoundsterling = britainpound\nyuan = chinayuan\naustriaschilling = 1|13.7603 euro\nbelgiumfranc = 1|40.3399 euro\nestoniakroon = 1|15.6466 euro\nfinlandmarkka = 1|5.94573 euro\nfrancefranc = 1|6.55957 euro\ngermanymark = 1|1.95583 euro\ngreecedrachma = 1|340.75 euro\nirelandpunt = 1|0.787564 euro\nitalylira = 1|1936.27 euro\nluxembourgfranc = 1|40.3399 euro\nnetherlandsguilder = 1|2.20371 euro\nportugalescudo = 1|200.482 euro\nspainpeseta = 1|166.386 euro\ncypruspound = 1|0.585274 euro\nmaltalira = 1|0.429300 euro\nsloveniatolar = 1|239.640 euro\nslovakiakoruna = 1|30.1260 euro\nUKP = GBP\nVEB = 1|1000 VEF\nicelandkróna = icelandkrona\npolandzłoty = polandzloty\ntongapa’anga = tongapa'anga\nvenezuelabolívar = venezuelabolivar\nvietnamđồng = vietnamdong\nAED = uaedirham\nAFN = afghanafghani\nALL = albanialek\nAMD = armeniadram\nAOA = angolakwanza\nARS = argentinapeso\nAUD = australiadollar\nAWG = arubaflorin\nAZN = azerbaijanmanat\nBAM = bosniaconvertiblemark\nBBD = barbadosdollar\nBDT = bangladeshtaka\nBGN = bulgarialev\nBHD = bahraindinar\nBIF = burundifranc\nBMD = bermudadollar\nBND = bruneidollar\nBOB = boliviaboliviano\nBRL = brazilreal\nBSD = bahamasdollar\nBTN = bhutanngultrum\nBWP = botswanapula\nBYR = belarusruble\nBZD = belizedollar\nCAD = canadadollar\nCDF = drcfranccongolais\nCHF = swissfranc\nCLP = chilepeso\nCMG = sintmaartencaribbeanguilder\nCNY = chinayuan\nCOP = colombiapeso\nCRC = costaricacolon\nCUP = cubapeso\nCVE = capeverdeescudo\nCZK = czechkoruna\nDJF = djiboutifranc\nDKK = denmarkkrona\nDOP = dominicanrepublicpeso\nDZD = algeriadinar\nEGP = egyptpound\nERN = eritreanakfa\nETB = ethiopianbirr\nEUR = euro\nFJD = fijidollar\nFKP = falklandislandspound\nGBP = ukpound\nGEL = georgialari\nGGP = guernseypound\nGHS = ghanacedi\nGIP = gibraltarpound\nGMD = gambiadalasi\nGNF = guineafranc\nGTQ = guatemalaquetzal\nGYD = guyanadollar\nHKD = hongkongdollar\nHNL = honduraslempira\nHRK = croatiakuna\nHTG = haitigourde\nHUF = hungariaforint\nIDR = indonesiarupiah\nILS = israelnewshekel\nIMP = manxpound\nINR = indiarupee\nIQD = iraqdinar\nIRR = iranrial\nISK = icelandkrona\nJEP = jerseypound\nJMD = jamaicadollar\nJOD = jordandinar\nJPY = japanyen\nKES = kenyaschilling\nKGS = kyrgyzstansom\nKHR = cambodiariel\nKMF = comorosfranc\nKPW = northkoreawon\nKRW = southkoreawon\nKWD = kuwaitdinar\nKYD = caymanislandsdollar\nKZT = kazakhstantenge\nLAK = laokip\nLBP = lebanonpound\nLKR = srilankanrupee\nLRD = liberiadollar\nLTL = lithuanialita\nLVL = latvialat\nLYD = libyadinar\nMAD = moroccodirham\nMDL = moldovaleu\nMGA = madagascarariary\nMKD = macedoniadenar\nMMK = myanmarkyat\nMNT = mongoliatugrik\nMOP = macaupataca\nMRO = mauritaniaouguiya\nMUR = mauritiusrupee\nMVR = maldiverufiyaa\nMWK = malawikwacha\nMXN = mexicopeso\nMYR = malaysiaringgit\nMZN = mozambicanmetical\nNAD = namibiadollar\nNGN = nigerianaira\nNIO = nicaraguacordobaoro\nNOK = norwaykrone\nNPR = nepalrupee\nNZD = newzealanddollar\nOMR = omanrial\nPAB = panamabalboa\nPEN = perunuevosol\nPGK = papuanewguineakina\nPHP = philippinepeso\nPKR = pakistanrupee\nPLN = polandzloty\nPYG = paraguayguarani\nQAR = qatarrial\nRON = romanianewlei\nRSD = serbiadinar\nRUB = russiarouble\nRWF = rwandafranc\nSAR = saudiarabiariyal\nSBD = solomonislandsdollar\nSCR = seychellesrupee\nSDG = sudanpound\nSEK = swedenkrona\nSGD = singaporedollar\nSHP = sainthelenapound\nSLL = sierraleoneleone\nSOS = somaliaschilling\nSRD = surinamedollar\nSTD = saotome&principedobra\nSVC = elsalvadorcolon\nSYP = syriapound\nSZL = swazilandlilangeni\nTHB = thailandbaht\nTJS = tajikistansomoni\nTMT = turkmenistanmanat\nTND = tunisiadinar\nTOP = tongapa'anga\nTRY = turkeylira\nTTD = trinidadandtobagodollar\nTVD = tuvaludollar\nTWD = taiwandollar\nTZS = tanzaniashilling\nUAH = ukrainehryvnia\nUGX = ugandaschilling\nUSD = usdollar\nUYU = uruguaypeso\nUZS = uzbekistansum\nVEF = venezuelabolivar\nVND = vietnamdong\nVUV = vanuatuvatu\nWST = samoatala\nXAF = centralafricancfafranc\nXAG = silverounce\nXAU = goldounce\nXCD = eastcaribbeandollar\nXDR = specialdrawingrights\nXOF = westafricanfranc\nXPD = palladiumounce\nXPF = cfpfranc\nXPT = platinumounce\nYER = yemenrial\nZAR = southafricarand\nZMW = zambiakwacha\nZWL = zimbabwedollar\nuaedirham = 1|4.1151878572098 euro\nafghanafghani = 1|74.724 euro\nalbanialek = 1|138.17 euro\narmeniadram = 1|539.30992141454 euro\nangolakwanza = 1|176.53 euro\nargentinapeso = 1|16.514112223097 euro\naustraliadollar = 1|1.4766 euro\narubaflorin = 1|2.026996 euro\nazerbaijanmanat = 1|1.7540635308589 euro\nbosniaconvertiblemark = 1|1.95583 euro\nbarbadosdollar = 1|2.2648 euro\nbangladeshtaka = 1|85.405 euro\nbulgarialev = 1|1.9558 euro\nbahraindinar = 1|0.4257824 euro\nburundifranc = 1|1724.1 euro\nbermudadollar = 1|1.1324 euro\nbruneidollar = 1|1.5327 euro\nboliviaboliviano = 1|7.4762 euro\nbrazilreal = 1|4.1275 euro\nbahamasdollar = 1|1.1324 euro\nbhutanngultrum = 1|75.1760 euro\nbotswanapula = 1|12.415 euro\nbelarusruble = 1|22663.261093911 euro\nbelizedollar = 1|2.2648 euro\ncanadadollar = 1|1.4755 euro\ndrcfranccongolais = 1|998.43 euro\nswissfranc = 1|1.0913 euro\nchilepeso = 1|764.09989594173 euro\nsintmaartencaribbeanguilder = 1|2.026996 euro\nchinayuan = 1|7.3366 euro\ncolombiapeso = 1|3431.308411215 euro\ncostaricacolon = 1|583.52 euro\ncubapeso = 1|1.0888 euro\ncapeverdeescudo = 1|110.265 euro\nczechkoruna = 1|27.075 euro\ndjiboutifranc = 1|201.2512604 euro\ndenmarkkrona = 1|7.4531 euro\ndominicanrepublicpeso = 1|49.448 euro\nalgeriadinar = 1|118.21 euro\negyptpound = 1|10.058147713951 euro\neritreanakfa = 1|16.986 euro\nethiopianbirr = 1|23.239 euro\neuro = 1.1324 US$\nfijidollar = 1|0.42647981593809 euro\nfalklandislandspound = 1|0.78580 euro\nukpound = 1|0.78580 euro\ngeorgialari = 1|2.6498582202112 euro\nguernseypound = 1|0.78580 euro\nghanacedi = 1|4.3449704142012 euro\ngibraltarpound = 1|0.78580 euro\ngambiadalasi = 1|43.002 euro\nguineafranc = 1|8337 euro\nguatemalaquetzal = 1|8.9168184578021 euro\nguyanadollar = 1|225.6 euro\nhongkongdollar = 1|8.7810 euro\nhonduraslempira = 1|25.607672188317 euro\ncroatiakuna = 1|7.5168 euro\nhaitigourde = 1|66.19 euro\nhungariaforint = 1|314.29 euro\nindonesiarupiah = 1|15004.12 euro\nisraelnewshekel = 1|4.2899 euro\nmanxpound = 1|0.78580 euro\nindiarupee = 1|75.1760 euro\niraqdinar = 1|1300.2 euro\niranrial = 1|0.0234 euro\nicelandkrona = 1|140.59346991037 euro\njerseypound = 1|0.78580 euro\njamaicadollar = 1|137.76735459662 euro\njordandinar = 1|0.8028716 euro\njapanyen = 1|127.37 euro\nkenyaschilling = 1|110.67 euro\nkyrgyzstansom = 1|79.380806072655 euro\ncambodiariel = 1|4399 euro\ncomorosfranc = 1|491.96775 euro\nnorthkoreawon = 1|141.45 euro\nsouthkoreawon = 1|1293.67 euro\nkuwaitdinar = 1|0.33855486695649 euro\ncaymanislandsdollar = 1|0.94366666666667 euro\nkazakhstantenge = 1|385.68141903758 euro\nlaokip = 1|8853.6 euro\nlebanonpound = 1|1707.093 euro\nsrilankanrupee = 1|0.0059397518646082 euro\nliberiadollar = 1|100.71 euro\nlithuanialita = 1|3.45280 euro\nlatvialat = 1|0.702804 euro\nlibyadinar = 1|1.4994 euro\nmoroccodirham = 1|10.951528709918 euro\nmoldovaleu = 1|10.98035 euro\nmadagascarariary = 1|3534.2 euro\nmacedoniadenar = 1|61.682 euro\nmyanmarkyat = 1|1372.523364486 euro\nmongoliatugrik = 1|0.0346 euro\nmacaupataca = 1|9.04443 euro\nmauritaniaouguiya = 1|376.77 euro\nmauritiusrupee = 1|39.121 euro\nmaldiverufiyaa = 1|15.845 euro\nmalawikwacha = 1|823.89 euro\nmexicopeso = 1|19.5281 euro\nmalaysiaringgit = 1|4.4502 euro\nmozambicanmetical = 1|53.035 euro\nnamibiadollar = 1|16.9129 euro\nnigerianaira = 1|216.89 euro\nnicaraguacordobaoro = 1|30.609 euro\nnorwaykrone = 1|9.4300 euro\nnepalrupee = 1|120.2816 euro\nnewzealanddollar = 1|1.6356 euro\nomanrial = 1|0.43540449092587 euro\npanamabalboa = 1|1.1324 euro\nperunuevosol = 1|3.8086099585062 euro\npapuanewguineakina = 1|0.28833372613717 euro\nphilippinepeso = 1|52.056 euro\npakistanrupee = 1|0.0084298928382431 euro\npolandzloty = 1|4.2538 euro\nparaguayguarani = 1|6230.7 euro\nqatarrial = 1|4.121936 euro\nromanianewlei = 1|4.4623 euro\nserbiadinar = 1|122.74444705277 euro\nrussiarouble = 1|76.7842 euro\nrwandafranc = 1|832.56 euro\nsaudiarabiariyal = 1|4.2465 euro\nsolomonislandsdollar = 1|0.11175460391698 euro\nseychellesrupee = 1|15.763 euro\nsudanpound = 1|7.0184 euro\nswedenkrona = 1|9.2420 euro\nsingaporedollar = 1|1.5311 euro\nsainthelenapound = 1|0.78580 euro\nsierraleoneleone = 1|4386.6 euro\nsomaliaschilling = 1|669.07 euro\nsurinamedollar = 1|4.3541 euro\nsaotome&principedobra = 1|24496 euro\nelsalvadorcolon = 1|9.5222 euro\nsyriapound = 1|239.51 euro\nswazilandlilangeni = 1|16.9129 euro\nthailandbaht = 1|39.894 euro\ntajikistansomoni = 1|8.8128335808018 euro\nturkmenistanmanat = 1|3.9215535714286 euro\ntunisiadinar = 1|2.2854030501089 euro\ntongapa'anga = 1|0.40472409686383 euro\nturkeylira = 1|3.2140 euro\ntrinidadandtobagodollar = 1|7.0780662 euro\ntuvaludollar = 1|1.4766 euro\ntaiwandollar = 1|36.468835361311 euro\ntanzaniashilling = 1|2383.4 euro\nukrainehryvnia = 1|19.241014210086 euro\nugandaschilling = 1|3717.2 euro\nuruguaypeso = 1|35.016 euro\nuzbekistansum = 1|3200.8016324151 euro\nvenezuelabolivar = 1|11.331790123457 euro\nvietnamdong = 1|25320.689655172 euro\nvanuatuvatu = 1|0.0081395364309789 euro\nsamoatala = 1|0.34916376505508 euro\ncentralafricancfafranc = 1|655.957 euro\nsilverounce = 1|0.43459 euro\ngoldounce = 1|36.225 euro\neastcaribbeandollar = 1|3.05748 euro\nspecialdrawingrights = 1|1.9241014210086 euro\nwestafricanfranc = 1|655.957 euro\npalladiumounce = 1|14.595 euro\ncfpfranc = 1|119.33 euro\nplatinumounce = 1|27.144 euro\nyemenrial = 1|234.13 euro\nsouthafricarand = 1|16.9129 euro\nzambiakwacha = 1|12.396 euro\nzimbabwedollar = 1|353.62 euro\ngoldprice = 1225.90 US$/troyounce\nplatinumprice = 968.50 US$/troyounce\nsilverprice = 15.29 US$/troyounce\nolddollargold = 23.22 grains goldprice\nnewdollargold = 96|7 grains goldprice\ndollargold = newdollargold\npoundgold = 113 grains goldprice\nUSpennyweight = 2.5 grams\nUSnickelweight = 5 grams\nUSdimeweight = US$ 0.10 / (20 US$ / lb)\nUSquarterweight = US$ 0.25 / (20 US$ / lb)\nUShalfdollarweight = US$ 0.50 / (20 US$ / lb)\nUSdollarmass = 8.1 grams\nquid = britainpound\nfiver = 5 quid\ntenner = 10 quid\nmonkey = 500 quid\nbrgrand = 1000 quid\nbob = shilling\nshilling = 1|20 britainpound\noldpence = 1|12 shilling\nfarthing = 1|4 oldpence\nguinea = 21 shilling\ncrown = 5 shilling\nflorin = 2 shilling\ngroat = 4 oldpence\ntanner = 6 oldpence\nbrpenny = 0.01 britainpound\npence = brpenny\ntuppence = 2 pence\ntuppenny = tuppence\nha'penny = halfbrpenny\nhapenny = ha'penny\noldpenny = oldpence\noldtuppence = 2 oldpence\noldtuppenny = oldtuppence\nthreepence = 3 oldpence\nthreepenny = threepence\noldthreepence = threepence\noldthreepenny = threepence\noldhalfpenny = halfoldpenny\noldha'penny = oldhalfpenny\noldhapenny = oldha'penny\nbrpony = 25 britainpound\nloony = 1 canadadollar\ntoony = 2 canadadollar\ncord = 4*4*8 ft^3\nfacecord = 1|2 cord\ncordfoot = 1|8 cord\ncordfeet = cordfoot\nhousecord = 1|3 cord\nboardfoot = ft^2 inch\nboardfeet = boardfoot\nfbm = boardfoot\nstack = 4 yard^3\nrick = 4 ft 8 ft 16 inches\nstere = m^3\ntimberfoot = ft^3\nstandard = 120 12 ft 11 in 1.5 in\nhoppusfoot = (4/pi) ft^3\nhoppusboardfoot = 1|12 hoppusfoot\nhoppuston = 50 hoppusfoot\ndeal = 12 ft 11 in 2.5 in\nwholedeal = 12 ft 11 in 1.25 in\nsplitdeal = 12 ft 11 in 5|8 in\npoundcut = pound / gallon\nlbcut = poundcut\nFLUID_FLOW = VOLUME / TIME\ncumec = m^3/s\ncusec = ft^3/s\ngph = gal/hr\ngpm = gal/min\nmgd = megagal/day\ncfs = ft^3/s\ncfh = ft^3/hour\ncfm = ft^3/min\nlpm = liter/min\nlfm = ft/min\npru = mmHg / (ml/min)\nminersinchAZ = 1.5 ft^3/min\nminersinchCA = 1.5 ft^3/min\nminersinchMT = 1.5 ft^3/min\nminersinchNV = 1.5 ft^3/min\nminersinchOR = 1.5 ft^3/min\nminersinchID = 1.2 ft^3/min\nminersinchKS = 1.2 ft^3/min\nminersinchNE = 1.2 ft^3/min\nminersinchNM = 1.2 ft^3/min\nminersinchND = 1.2 ft^3/min\nminersinchSD = 1.2 ft^3/min\nminersinchUT = 1.2 ft^3/min\nminersinchCO = 1 ft^3/sec / 38.4\nminersinchBC = 1.68 ft^3/min\nsverdrup = 1e6 m^3 / sec\nGAS_FLOW = PRESSURE FLUID_FLOW\nsccm = atm cc/min\nsccs = atm cc/sec\nscfh = atm ft^3/hour\nscfm = atm ft^3/min\nslpm = atm liter/min\nslph = atm liter/hour\nlusec = liter micron Hg / s\ng00 = (-1)\ng000 = (-2)\ng0000 = (-3)\ng00000 = (-4)\ng000000 = (-5)\ng0000000 = (-6)\nwiregauge = g => 1|200 92^((36+(-g))/39) in\nwiregauge^-1 = wiregauge => 36+(-39)ln(200 wiregauge/in)/ln(92)\nawg = wiregauge\nbrwiregauge[in] = -6 0.5           -5 0.464         -3 0.4           -2 0.372          3 0.252          6 0.192         10 0.128         14 0.08          19 0.04          23 0.024         26 0.018         28 0.0148        30 0.0124        39 0.0052        49 0.0012        50 0.001\nplategauge[(oz/ft^2)/ = 480*lb/ft^3 => -5 300          1 180         14  50         16  40         17  36         20  24         26  12         31   7         36   4.5       38   4\nstdgauge[(oz/ft^2)/ = 501.84*lb/ft^3 => -5 300          1 180         14  50         16  40         17  36         20  24         26  12         31   7         36   4.5       38   4\nzincgauge[in] = 1 0.002         10 0.02          15 0.04          19 0.06          23 0.1           24 0.125         27 0.5           28 1\nscrewgauge = g => (.06 + .013 g) in \nscrewgauge^-1 = screwgauge => (screwgauge/in + (-.06)) / .013\ngrit_P[micron] = 12 1815         16 1324         20 1000         24 764         30 642         36 538         40 425         50 336         60 269         80 201         100 162         120 125         150 100         180 82         220 68         240 58.5         280 52.2         320 46.2         360 40.5         400 35         500 30.2         600 25.8         800 21.8         1000 18.3         1200 15.3         1500 12.6         2000 10.3         2500 8.4\ngrit_F[micron] = 4 4890         5 4125         6 3460         7 2900         8 2460         10 2085         12 1765         14 1470         16 1230         20 1040         22 885         24 745         30 625         36 525         40 438         46 370         54 310         60 260         70 218         80 185         90 154         100 129         120 109         150 82         180 69         220 58         230 53         240 44.5         280 36.5         320 29.2         360 22.8         400 17.3         500 12.8         600 9.3         800 6.5         1000 4.5         1200 3         1500 2.0         2000 1.2\nansibonded[micron] = 4 4890     5 4125     6 3460     7 2900     8 2460     10 2085     12 1765     14 1470     16 1230     20 1040     22 885     24 745     30 625     36 525     40 438     46 370     54 310     60 260     70 218     80 185     90 154     100 129     120 109     150 82     180 69     220 58     240 50     280 39.5     320 29.5     360 23     400 18.25     500 13.9     600 10.55     800 7.65     1000 5.8     1200 3.8\ngrit_ansibonded = ansibonded\nansicoated[micron] = noerror     4 4890     5 4125     6 3460     7 2900     8 2460     10 2085     12 1765     14 1470     16 1230     20 1040     22 885     24 745     30 625     36 525     40 438     46 370     54 310     60 260     70 218     80 185     90 154     100 129     120 109     150 82     180 69     220 58     240 50     280 39.5     320 29.5     360 23     400 18.25     500 13.9     600 10.55     800 11.5     1000 9.5     2000 7.2     2500 5.5     3000 4     4000 3     6000 2     8000 1.2\ngrit_ansicoated = ansicoated\njisgrit[micron] = 150 75      180 63      220 53      280 48      320 40      360 35      400 30      600 20      700 17      800 14      1000 11.5      1200 9.5      1500 8      2000 6.7      2500 5.5      3000 4      4000 3      6000 2      8000 1.2\ngrit_A[micron] = 16 15.3      25 21.8      30 23.6      35 25.75      45 35      60 46.2      65 53.5      75 58.5      90 65      110 78      130 93      160 127      200 156\ndmtxxcoarse = 120 micron\ndmtsilver = dmtxxcoarse\ndmtxx = dmtxxcoarse\ndmtxcoarse = 60 micron\ndmtx = dmtxcoarse\ndmtblack = dmtxcoarse\ndmtcoarse = 45 micron\ndmtc = dmtcoarse\ndmtblue = dmtcoarse\ndmtfine = 25 micron\ndmtred = dmtfine\ndmtf = dmtfine\ndmtefine = 9 micron\ndmte = dmtefine\ndmtgreen = dmtefine\ndmtceramic = 7 micron\ndmtcer = dmtceramic\ndmtwhite = dmtceramic\ndmteefine = 3 micron\ndmttan = dmteefine\ndmtee = dmteefine\nhardtranslucentarkansas = 6 micron\nsoftarkansas = 22 micron\nextrafineindia = 22 micron\nfineindia = 35 micron\nmediumindia = 53.5 micron\ncoarseindia = 97 micron\nfinecrystolon = 45 micron\nmediumcrystalon = 78 micron\ncoarsecrystalon = 127 micron\nhardblackarkansas = 6 micron\nhardwhitearkansas = 11 micron\nwashita = 35 micron\nringsize = n => (1.4216+.1018 n) in \nringsize^-1 = ringsize => (ringsize/in + (-1.4216))/.1018\nsizeAring = 37.50 mm\nsizeBring = 38.75 mm\nsizeCring = 40.00 mm\nsizeDring = 41.25 mm\nsizeEring = 42.50 mm\nsizeFring = 43.75 mm\nsizeGring = 45.00 mm\nsizeHring = 46.25 mm\nsizeIring = 47.50 mm\nsizeJring = 48.75 mm\nsizeKring = 50.00 mm\nsizeLring = 51.25 mm\nsizeMring = 52.50 mm\nsizeNring = 53.75 mm\nsizeOring = 55.00 mm\nsizePring = 56.25 mm\nsizeQring = 57.50 mm\nsizeRring = 58.75 mm\nsizeSring = 60.00 mm\nsizeTring = 61.25 mm\nsizeUring = 62.50 mm\nsizeVring = 63.75 mm\nsizeWring = 65.00 mm\nsizeXring = 66.25 mm\nsizeYring = 67.50 mm\nsizeZring = 68.75 mm\njpringsize = n => (38|3 + n/3) pi mm \njpringsize^-1 = jpringsize => 3 jpringsize/ pi mm + (-38)\neuringsize = n => (n+40) mm \neuringsize^-1 = euringsize => euringsize/mm + (-40)\nmph = mile/hr\nmpg = mile/gal\nkph = km/hr\nfL = footlambert\nfpm = ft/min\nfps = ft/s\nrpm = rev/min\nrps = rev/sec\nmi = mile\nsmi = mile\nnmi = nauticalmile\nmbh = 1e3 btu/hour\nmcm = 1e3 circularmil\nipy = inch/year\nccf = 100 ft^3\nMcf = 1000 ft^3\nkp = kilopond\nkpm = kp meter\nWh = W hour\nhph = hp hour\nplf = lb / foot\npa = Pa\nev = eV\nhg = Hg\noe = Oe\nmh = mH\nrd = rod\npf = pF\ngr = grain\nnt = N\nhz = Hz\nhd = hogshead\ndry = drygallon/gallon\nnmile = nauticalmile\nbeV = GeV\nbev = beV\ncoul = C\nbecquerel = /s\nBq = becquerel\ncurie = 3.7e10 Bq\nCi = curie\nrutherford = 1e6 Bq\nRADIATION_DOSE = gray\ngray = J/kg\nGy = gray\nrad = 1e-2 Gy\nrep = 8.38 mGy\nsievert = J/kg\nSv = sievert\nrem = 1e-2 Sv\nroentgen = 2.58e-4 C / kg\nrontgen = roentgen\nsievertunit = 8.38 rontgen\neman = 1e-7 Ci/m^3\nmache = 3.7e-7 Ci/m^3\nactinium = 227.0278\naluminum = 26.981539\namericium = 243.0614\nantimony = 121.760\nargon = 39.948\narsenic = 74.92159\nastatine = 209.9871\nbarium = 137.327\nberkelium = 247.0703\nberyllium = 9.012182\nbismuth = 208.98037\nboron = 10.811\nbromine = 79.904\ncadmium = 112.411\ncalcium = 40.078\ncalifornium = 251.0796\ncarbon = 12.011\ncerium = 140.115\ncesium = 132.90543\nchlorine = 35.4527\nchromium = 51.9961\ncobalt = 58.93320\ncopper = 63.546\ncurium = 247.0703\ndysprosium = 162.50\neinsteinium = 252.083\nerbium = 167.26\neuropium = 151.965\nfermium = 257.0951\nfluorine = 18.9984032\nfrancium = 223.0197\ngadolinium = 157.25\ngallium = 69.723\ngermanium = 72.61\ngold = 196.96654\nhafnium = 178.49\nhelium = 4.002602\nholmium = 164.93032\nhydrogen = 1.00794\nindium = 114.818\niodine = 126.90447\niridium = 192.217\niron = 55.845\nkrypton = 83.80\nlanthanum = 138.9055\nlawrencium = 262.11\nlead = 207.2\nlithium = 6.941\nlutetium = 174.967\nmagnesium = 24.3050\nmanganese = 54.93805\nmendelevium = 258.10\nmercury = 200.59\nmolybdenum = 95.94\nneodymium = 144.24\nneon = 20.1797\nneptunium = 237.0482\nnickel = 58.6934\nniobium = 92.90638\nnitrogen = 14.00674\nnobelium = 259.1009\nosmium = 190.23\noxygen = 15.9994\npalladium = 106.42\nphosphorus = 30.973762\nplatinum = 195.08\nplutonium = 244.0642\npolonium = 208.9824\npotassium = 39.0983\npraseodymium = 140.90765\npromethium = 144.9127\nprotactinium = 231.03588\nradium = 226.0254\nradon = 222.0176\nrhenium = 186.207\nrhodium = 102.90550\nrubidium = 85.4678\nruthenium = 101.07\nsamarium = 150.36\nscandium = 44.955910\nselenium = 78.96\nsilicon = 28.0855\nsilver = 107.8682\nsodium = 22.989768\nstrontium = 87.62\nsulfur = 32.066\ntantalum = 180.9479\ntechnetium = 97.9072\ntellurium = 127.60\nterbium = 158.92534\nthallium = 204.3833\nthorium = 232.0381\nthullium = 168.93421\ntin = 118.710\ntitanium = 47.867\ntungsten = 183.84\nuranium = 238.0289\nvanadium = 50.9415\nxenon = 131.29\nytterbium = 173.04\nyttrium = 88.90585\nzinc = 65.39\nzirconium = 91.224\nair = 28.967\npeople = 1\nperson = people\ndeath = people\ncapita = people\npercapita = / capita\nTim = 12^-4 hour\nGrafut = gravity Tim^2\nSurf = Grafut^2\nVolm = Grafut^3\nVlos = Grafut/Tim\nDenz = Maz/Volm\nMag = Maz gravity\nMaz = Volm kg / oldliter\nTm = Tim\nGf = Grafut\nSf = Surf\nVm = Volm\nVl = Vlos\nMz = Maz\nDz = Denz\nZena_ = 12\nDuna_ = 12^2\nTrina_ = 12^3\nQuedra_ = 12^4\nQuena_ = 12^5\nHesa_ = 12^6\nSeva_ = 12^7\nAka_ = 12^8\nNeena_ = 12^9\nDexa_ = 12^10\nLefa_ = 12^11\nZennila_ = 12^12\nZeni_ = 12^-1\nDuni_ = 12^-2\nTrini_ = 12^-3\nQuedri_ = 12^-4\nQueni_ = 12^-5\nHesi_ = 12^-6\nSevi_ = 12^-7\nAki_ = 12^-8\nNeeni_ = 12^-9\nDexi_ = 12^-10\nLefi_ = 12^-11\nZennili_ = 12^-12\nwari_proportion = 1|10\nwari = wari_proportion\nbu_proportion = 1|100\nrin_proportion = 1|1000\nmou_proportion = 1|10000\nshaku = 1|3.3 m\nmou = 1|10000 shaku\nrin = 1|1000 shaku\nbu_distance = 1|100 shaku\nsun = 1|10 shaku\njou_distance = 10 shaku\njou = jou_distance\nkanejakusun = sun\nkanejaku = shaku\nkanejakujou = jou\ntaichi = shaku\ntaicun = sun\n台尺 = taichi\n台寸 = taicun\nkujirajaku = 10|8 shaku\nkujirajakusun = 1|10 kujirajaku\nkujirajakubu = 1|100 kujirajaku\nkujirajakujou = 10 kujirajaku\ntan_distance = 3 kujirajakujou\nken = 6 shaku\nchou_distance = 60 ken\nchou = chou_distance\nri = 36 chou\ngou_area = 1|10 tsubo\ntsubo = 36 shaku^2\nse = 30 tsubo\ntan_area = 10 se\nchou_area = 10 tan_area\nping = tsubo\njia = 2934 ping\nfen = 1|10 jia\nfen_area = 1|10 jia\n坪 = ping\n甲 = jia\n分 = fen\n分地 = fen_area\nedoma = (5.8*2.9) shaku^2\nkyouma = (6.3*3.15) shaku^2\nchuukyouma = (6*3) shaku^2\njou_area = edoma\ntatami = jou_area\nshaku_volume = 1|10 gou_volume\ngou_volume = 1|10 shou\ngou = gou_volume\nshou = (4.9*4.9*2.7) sun^3\nkoku = 10 to\nrin_weight = 1|10 bu_weight\nbu_weight = 1|10 monme\nfun = 1|10 monme\nmonme = momme\nkin = 160 monme\nkan = 1000 monme\nkwan = kan\ntaijin = kin\ntailiang = 10 monme\ntaiqian = monme\n台斤 = taijin\n台兩 = tailiang\n台錢 = taiqian\naustraliasquare = (10 ft)^2\nzentner = 50 kg\ndoppelzentner = 2 zentner\npfund = 500 g\ndessiatine = 2400 sazhen^2\ndessjatine = dessiatine\nfunt = 409.51718 grams\nzolotnik = 1|96 funt\npood = 40 funt\narshin = (2 + 1|3) feet\nsazhen = 3 arshin\nverst = 500 sazhen\nversta = verst\nborderverst = 1000 sazhen\nrussianmile = 7 verst\nfrenchfoot = 144|443.296 m\npied = frenchfoot\nfrenchfeet = frenchfoot\nfrenchinch = 1|12 frenchfoot\nfrenchthumb = frenchinch\npouce = frenchthumb\nfrenchline = 1|12 frenchinch\nligne = frenchline\nfrenchpoint = 1|12 frenchline\ntoise = 6 frenchfeet\narpent = 180^2 pied^2\nfrenchgrain = 1|18827.15 kg\nfrenchpound = 9216 frenchgrain\nscotsinch = 1.00540054 UKinch\nscotslink = 1|100 scotschain\nscotsfoot = 12 scotsinch\nscotsfeet = scotsfoot\nscotsell = 37 scotsinch\nscotsfall = 6 scotsell\nscotschain = 4 scotsfall\nscotsfurlong = 10 scotschain\nscotsmile = 8 scotsfurlong\nscotsrood = 40 scotsfall^2\nscotsacre = 4 scotsrood\nirishinch = UKinch\nirishpalm = 3 irishinch\nirishspan = 3 irishpalm\nirishfoot = 12 irishinch\nirishfeet = irishfoot\nirishcubit = 18 irishinch\nirishyard = 3 irishfeet\nirishpace = 5 irishfeet\nirishfathom = 6 irishfeet\nirishpole = 7 irishyard\nirishperch = irishpole\nirishchain = 4 irishperch\nirishlink = 1|100 irishchain\nirishfurlong = 10 irishchain\nirishmile = 8 irishfurlong\nirishrood = 40 irishpole^2\nirishacre = 4 irishrood\nwinepint = 1|2 winequart\nwinequart = 1|4 winegallon\nwinegallon = 231 UKinch^3\nwinerundlet = 18 winegallon\nwinebarrel = 31.5 winegallon\nwinetierce = 42 winegallon\nwinehogshead = 2 winebarrel\nwinepuncheon = 2 winetierce\nwinebutt = 2 winehogshead\nwinepipe = winebutt\nwinetun = 2 winebutt\nbeerpint = 1|2 beerquart\nbeerquart = 1|4 beergallon\nbeergallon = 282 UKinch^3\nbeerbarrel = 36 beergallon\nbeerhogshead = 1.5 beerbarrel\nalepint = 1|2 alequart\nalequart = 1|4 alegallon\nalegallon = beergallon\nalebarrel = 34 alegallon\nalehogshead = 1.5 alebarrel\nscotsgill = 1|4 mutchkin\nmutchkin = 1|2 choppin\nchoppin = 1|2 scotspint\nscotspint = 1|2 scotsquart\nscotsquart = 1|4 scotsgallon\nscotsgallon = 827.232 UKinch^3\nscotsbarrel = 8 scotsgallon\njug = scotspint\nscotswheatlippy = 137.333 UKinch^3\nscotswheatlippies = scotswheatlippy\nscotswheatpeck = 4 scotswheatlippy\nscotswheatfirlot = 4 scotswheatpeck\nscotswheatboll = 4 scotswheatfirlot\nscotswheatchalder = 16 scotswheatboll\nscotsoatlippy = 200.345 UKinch^3\nscotsoatlippies = scotsoatlippy\nscotsoatpeck = 4 scotsoatlippy\nscotsoatfirlot = 4 scotsoatpeck\nscotsoatboll = 4 scotsoatfirlot\nscotsoatchalder = 16 scotsoatboll\ntrondrop = 1|16 tronounce\ntronounce = 1|20 tronpound\ntronpound = 9520 grain\ntronstone = 16 tronpound\nirishnoggin = 1|4 irishpint\nirishpint = 1|2 irishquart\nirishquart = 1|2 irishpottle\nirishpottle = 1|2 irishgallon\nirishgallon = 217.6 UKinch^3\nirishrundlet = 18 irishgallon\nirishbarrel = 31.5 irishgallon\nirishtierce = 42 irishgallon\nirishhogshead = 2 irishbarrel\nirishpuncheon = 2 irishtierce\nirishpipe = 2 irishhogshead\nirishtun = 2 irishpipe\nirishpeck = 2 irishgallon\nirishbushel = 4 irishpeck\nirishstrike = 2 irishbushel\nirishdrybarrel = 2 irishstrike\nirishquarter = 2 irishbarrel\ntowerpound = 5400 grain\ntowerounce = 1|12 towerpound\ntowerpennyweight = 1|20 towerounce\ntowergrain = 1|32 towerpennyweight\nmercpound = 6750 grain\nmercounce = 1|15 mercpound\nmercpennyweight = 1|20 mercounce\nleadstone = 12.5 lb\nfotmal = 70 lb\nleadwey = 14 leadstone\nfothers = 12 leadwey\nnewhaytruss = 60 lb\nnewhayload = 36 newhaytruss\noldhaytruss = 56 lb\noldhayload = 36 oldhaytruss\nwoolclove = 7 lb\nwoolstone = 2 woolclove\nwooltod = 2 woolstone\nwoolwey = 13 woolstone\nwoolsack = 2 woolwey\nwoolsarpler = 2 woolsack\nwoollast = 6 woolsarpler\nromanfoot = 296 mm\nromanfeet = romanfoot\npes = romanfoot\npedes = romanfoot\nromaninch = 1|12 romanfoot\nromandigit = 1|16 romanfoot\nromanpalm = 1|4 romanfoot\nromancubit = 18 romaninch\nromanpace = 5 romanfeet\npassus = romanpace\nromanperch = 10 romanfeet\nstade = 125 romanpaces\nstadia = stade\nstadium = stade\nromanmile = 8 stadia\nromanleague = 1.5 romanmile\nschoenus = 4 romanmile\nearlyromanfoot = 29.73 cm\npesdrusianus = 33.3 cm\nlateromanfoot = 29.42 cm\nactuslength = 120 romanfeet\nactus = 120*4 romanfeet^2\nsquareactus = 120^2 romanfeet^2\nacnua = squareactus\niugerum = 2 squareactus\niugera = iugerum\njugerum = iugerum\njugera = iugerum\nheredium = 2 iugera\nheredia = heredium\ncenturia = 100 heredia\ncenturium = centuria\nsextarius = 35.4 in^3\nsextarii = sextarius\ncochlearia = 1|48 sextarius\ncyathi = 1|12 sextarius\nacetabula = 1|8 sextarius\nquartaria = 1|4 sextarius\nquartarius = quartaria\nheminae = 1|2 sextarius\nhemina = heminae\ncheonix = 1.5 sextarii\nsemodius = 8 sextarius\nsemodii = semodius\nmodius = 16 sextarius\nmodii = modius\ncongius = 12 heminae\ncongii = congius\namphora = 8 congii\namphorae = amphora\nculleus = 20 amphorae\nquadrantal = amphora\nlibra = 5052 grain\nlibrae = libra\nromanpound = libra\nuncia = 1|12 libra\nunciae = uncia\nromanounce = uncia\ndeunx = 11 uncia\ndextans = 10 uncia\ndodrans = 9 uncia\nbes = 8 uncia\nseprunx = 7 uncia\nsemis = 6 uncia\nquincunx = 5 uncia\ntriens = 4 uncia\nquadrans = 3 uncia\nsextans = 2 uncia\nsescuncia = 1.5 uncia\nsemuncia = 1|2 uncia\nsiscilius = 1|4 uncia\nsextula = 1|6 uncia\nsemisextula = 1|12 uncia\nscriptulum = 1|24 uncia\nscrupula = scriptulum\nromanobol = 1|2 scrupula\nromanaspound = 4210 grain\negyptianroyalcubit = 20.63 in\negyptianpalm = 1|7 egyptianroyalcubit\negyptiandigit = 1|4 egyptianpalm\negyptianshortcubit = 6 egyptianpalm\ndoubleremen = 29.16 in\nremendigit = 1|40 doubleremen\ngreekfoot = 12.45 in\ngreekfeet = greekfoot\ngreekcubit = 1.5 greekfoot\npous = greekfoot\npodes = greekfoot\norguia = 6 greekfoot\ngreekfathom = orguia\nstadion = 100 orguia\nakaina = 10 greekfeet\nplethron = 10 akaina\ngreekfinger = 1|16 greekfoot\nhomericcubit = 20 greekfingers\nshortgreekcubit = 18 greekfingers\nionicfoot = 296 mm\ndoricfoot = 326 mm\nolympiccubit = 25 remendigit\nolympicfoot = 2|3 olympiccubit\nolympicfinger = 1|16 olympicfoot\nolympicfeet = olympicfoot\nolympicdakylos = olympicfinger\nolympicpalm = 1|4 olympicfoot\nolympicpalestra = olympicpalm\nolympicspithame = 3|4 foot\nolympicspan = olympicspithame\nolympicbema = 2.5 olympicfeet\nolympicpace = olympicbema\nolympicorguia = 6 olympicfeet\nolympicfathom = olympicorguia\nolympiccord = 60 olympicfeet\nolympicamma = olympiccord\nolympicplethron = 100 olympicfeet\nolympicstadion = 600 olympicfeet\ngreekkotyle = 270 ml\nxestes = 2 greekkotyle\nkhous = 12 greekkotyle\nmetretes = 12 khous\nchoinix = 4 greekkotyle\nhekteos = 8 choinix\nmedimnos = 6 hekteos\naeginastater = 192 grain\naeginadrachmae = 1|2 aeginastater\naeginaobol = 1|6 aeginadrachmae\naeginamina = 50 aeginastaters\naeginatalent = 60 aeginamina\natticstater = 135 grain\natticdrachmae = 1|2 atticstater\natticobol = 1|6 atticdrachmae\natticmina = 50 atticstaters\nattictalent = 60 atticmina\nnortherncubit = 26.6 in\nnorthernfoot = 1|2 northerncubit\nsumeriancubit = 495 mm\nkus = sumeriancubit\nsumerianfoot = 2|3 sumeriancubit\nassyriancubit = 21.6 in\nassyrianfoot = 1|2 assyriancubit\nassyrianpalm = 1|3 assyrianfoot\nassyriansusi = 1|20 assyrianpalm\nsusi = assyriansusi\npersianroyalcubit = 7 assyrianpalm\nhashimicubit = 25.56 in\nblackcubit = 21.28 in\narabicfeet = 1|2 blackcubit\narabicfoot = arabicfeet\narabicinch = 1|12 arabicfoot\narabicmile = 4000 blackcubit\nsilverdirhem = 45 grain\ntradedirhem = 48 grain\nsilverkirat = 1|16 silverdirhem\nsilverwukiyeh = 10 silverdirhem\nsilverrotl = 12 silverwukiyeh\narabicsilverpound = silverrotl\ntradekirat = 1|16 tradedirhem\ntradewukiyeh = 10 tradedirhem\ntraderotl = 12 tradewukiyeh\narabictradepound = traderotl\nparasang = 3.5 mile\nbiblicalcubit = 21.8 in\nhebrewcubit = 17.58 in\nli = 10|27.8 mile\nliang = 11|3 oz\ntimepoint = 1|5 hour\ntimeminute = 1|10 hour\ntimeostent = 1|60 hour\ntimeounce = 1|8 timeostent\ntimeatom = 1|47 timeounce\nmite = 1|20 grain\ndroit = 1|24 mite\nperiot = 1|20 droit\nblanc = 1|24 periot\nhundredweight = ushundredweight\nton = uston\nscruple = apscruple\nfluidounce = usfluidounce\ngallon = usgallon\nbushel = usbushel\nquarter = quarterweight\ncup = uscup\ntablespoon = ustablespoon\nteaspoon = usteaspoon\ndollar = US$\ncent = $ 0.01\npenny = cent\nminim = minimvolume\npony = ponyvolume\ngrand = usgrand\nfirkin = usfirkin\nhogshead = ushogshead\n⅛_ = 1|8\n¼_ = 1|4\n⅜_ = 3|8\n½_ = 1|2\n⅝_ = 5|8\n¾_ = 3|4\n⅞_ = 7|8\n⅙_ = 1|6\n⅓_ = 1|3\n⅔_ = 2|3\n⅚_ = 5|6\n⅕_ = 1|5\n⅖_ = 2|5\n⅗_ = 3|5\n⅘_ = 4|5\nℯ = exp(1)\nµ_ = micro\nμ_ = micro\nångström = angstrom\nÅ = angstrom\nÅ = angstrom\nröntgen = roentgen\n°C = degC\n°F = degF\n°K = K\n°R = degR\n° = degree\n℃ = degC\n℉ = degF\nK = K\nℓ = liter\n¢ = cent\n£ = britainpound\n¥ = japanyen\n€ = euro\n₩ = southkoreawon\n₪ = israelnewshekel\n₤ = lira\n₨ = rupee\nΩ = ohm\nΩ = ohm\n℧ = mho\nʒ = dram\n℈ = scruple\n℥ = ounce\n℔ = lb\nℎ = h\nℏ = hbar\n‰ = 1|1000\n‱ = 1|10000\n′ = '\n″ = \"\n㍱ = hPa\n㍲ = da\n㍳ = au\n㍴ = bar\n㍶ = pc\n㎀ = pA\n㎁ = nA\n㎂ = µA\n㎃ = mA\n㎄ = kA\n㎅ = kB\n㎆ = MB\n㎇ = GB\n㎈ = cal\n㎉ = kcal\n㎊ = pF\n㎋ = nF\n㎌ = µF\n㎍ = µg\n㎎ = mg\n㎏ = kg\n㎐ = Hz\n㎑ = kHz\n㎒ = MHz\n㎓ = GHz\n㎔ = THz\n㎕ = µL\n㎖ = mL\n㎗ = dL\n㎘ = kL\n㎙ = fm\n㎚ = nm\n㎛ = µm\n㎜ = mm\n㎝ = cm\n㎞ = km\n㎟ = mm^2\n㎠ = cm^2\n㎡ = m^2\n㎢ = km^2\n㎣ = mm^3\n㎤ = cm^3\n㎥ = m^3\n㎦ = km^3\n㎧ = m/s\n㎨ = m/s^2\n㎩ = Pa\n㎪ = kPa\n㎫ = MPa\n㎬ = GPa\n㎭ = rad\n㎮ = rad/s\n㎯ = rad/s^2\n㎰ = ps\n㎱ = ns\n㎲ = µs\n㎳ = ms\n㎴ = pV\n㎵ = nV\n㎶ = µV\n㎷ = mV\n㎸ = kV\n㎹ = MV\n㎺ = pW\n㎻ = nW\n㎼ = µW\n㎽ = mW\n㎾ = kW\n㎿ = MW\n㏀ = kΩ\n㏁ = MΩ\n㏃ = Bq\n㏄ = cc\n㏅ = cd\n㏆ = C/kg\n㏈ = dB\n㏉ = Gy\n㏊ = ha\n㏌ = in\n㏏ = kt\n㏐ = lm\n㏓ = lx\n㏔ = mb\n㏕ = mil\n㏖ = mol\n㏗ = pH\n㏙ = ppm\n㏛ = sr\n㏜ = Sv\n㏝ = Wb\n";
 });
 
 })();
 (function() {
 var define = $__System.amdDefine;
-define("a1", [], function() {
-  return "planck_constant = h\nh = hour \n\nAh = A h\n\nE = energy\n\n°C = tempC\n°F = tempF\n\nfibonacci = x => x >= 2 && fibonacci(x-1) + fibonacci(x-2) || x\n\ndelete(in) # to avoid confusion\n\n#\n# computing power\n#\n\nflo! # one floating point operation\n\nfloating_point_operation = flo\n\nflops = flo/s\n";
+define("a4", [], function() {
+  return "planck_constant = h\nh = hour \n\nAh = A h\n\nE = energy\n\n°C = tempC\n°F = tempF\n\nfibonacci = x => x >= 2 && fibonacci(x-1) + fibonacci(x-2) || x\n\nspheresurface = r => 4 pi r^2\n\ndelete(in) # to avoid confusion\n\n#\n# computing power\n#\n\nflo! # one floating point operation\n\nfloating_point_operation = flo\n\nflops = flo/s\n";
 });
 
 })();
@@ -11140,7 +11719,7 @@ $__System.registerDynamic("3", ["@system-env"], true, function($__require, expor
   return module.exports;
 });
 
-$__System.registerDynamic("a2", ["3"], true, function($__require, exports, module) {
+$__System.registerDynamic("a5", ["3"], true, function($__require, exports, module) {
   var process = $__require("3");
   var define,
       global = this,
@@ -13779,13 +14358,15 @@ $__System.registerDynamic("a2", ["3"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.register("1", ["28", "9f", "a2", "a0", "a1"], function($__export) {
+$__System.register("1", ["28", "29", "a0", "a5", "a3", "a4", "a2"], function($__export) {
   "use strict";
   var React,
+      lzString,
       ReactDOM,
       Decimal,
       gnuUnitsData,
       customData,
+      queryString,
       TaggedString,
       DimensionMap,
       UnitNumber,
@@ -14165,11 +14746,17 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
     });
   }
   function loadPresetLines() {
-    presetLines.split('\n').map((line) => line.trim()).filter((line) => line.length > 0).map((line) => line.split("|")[0]).map((input) => qalculate(input).then((output) => guiInst.addLine(new GuiLineElement(input, output))).catch((error) => guiInst.addLine(new GuiLineElement(input, new TaggedString("" + error)))));
+    let presets = presetLines;
+    let {state} = queryString.parse(location.hash);
+    if (state)
+      presets = JSON.parse(lzString.decompressFromEncodedURIComponent(state));
+    presets.map((input) => qalculate(input).then((output) => guiInst.addLine(new GuiLineElement(input, output))).catch((error) => guiInst.addLine(new GuiLineElement(input, new TaggedString("" + error)))));
   }
   return {
     setters: [function($__m) {
       React = $__m;
+    }, function($__m) {
+      lzString = $__m.default;
     }, function($__m) {
       ReactDOM = $__m;
     }, function($__m) {
@@ -14178,6 +14765,8 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       gnuUnitsData = $__m.default;
     }, function($__m) {
       customData = $__m.default;
+    }, function($__m) {
+      queryString = $__m.default;
     }],
     execute: function() {
       TaggedString = class TaggedString {
@@ -14770,7 +15359,7 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           });
         }
         render() {
-          return React.createElement("pre", null, this.taggedStringToHtml(this.props.text));
+          return React.createElement("pre", {style: {whiteSpace: "pre-wrap"}}, this.taggedStringToHtml(this.props.text));
         }
       };
       GuiLineElement = class GuiLineElement {
@@ -14787,10 +15376,14 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
           this.state = {displayDepth: 0};
         }
         render() {
-          return React.createElement("div", {className: "gui-line"}, React.createElement("p", {
+          const [inp, comment] = this.props.line.input.split("#");
+          return React.createElement("div", {className: "gui-line"}, comment ? React.createElement("h4", null, comment) : "", React.createElement("button", {
+            className: "btn pull-right close",
+            onClick: () => this.props.onClickRemove()
+          }, "×"), React.createElement("p", {
             style: {cursor: "pointer"},
             onClick: () => this.props.onClickInput(this.props.line)
-          }, "> ", this.props.line.input), React.createElement(UnitNumberDisplay, {
+          }, "> ", inp), React.createElement(UnitNumberDisplay, {
             text: this.props.line.output,
             onClickUnit: this.props.onClickUnit
           }), React.createElement("hr", null));
@@ -14798,13 +15391,15 @@ ${aliases && aliases.length > 0 ? TaggedString.t `Aliases: ${TaggedString.join(a
       };
       presetLines = `
 sqrt(2 * (6 million tons * uranium_natural) / (100000 pounds + 0.7% * 6 million tons)) to c  # speed a rocket could get with all the uranium on earth (E=1/2 mv^2)
+1 kg charcoal to liter gasoline
+solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of energy a square meter on earth can get from the sun
 5600 mAh * 11.7 V to Wh
 100W * 10 days * 0.25€/kWh to €
 7Mbit/s * 2h to Gbyte
 32bit/(0.2bit/s) to s
 88 mph to km/h|88 * mph = 0.03933952(km / s)
 100°F to °C
-`;
+`.split("\n").map((line) => line.trim()).filter((line) => line.length > 0).map((line) => line.split("|")[0]);
       GUI = class GUI extends React.Component {
         constructor(props) {
           super(props);
@@ -14820,6 +15415,11 @@ sqrt(2 * (6 million tons * uranium_natural) / (100000 pounds + 0.7% * 6 million 
           const lines = this.state.lines.slice();
           lines.unshift(line);
           this.setState({lines});
+        }
+        removeLine(index) {
+          const lines = this.state.lines.slice();
+          lines.splice(index, 1);
+          this.setState({lines: lines});
         }
         keyPress(evt) {
           const target = evt.target;
@@ -14860,14 +15460,22 @@ sqrt(2 * (6 million tons * uranium_natural) / (100000 pounds + 0.7% * 6 million 
           })), this.state.currentOutput.vals.length > 0 ? React.createElement(UnitNumberDisplay, {
             text: this.state.currentOutput,
             onClickUnit: (unit) => this.showUnit(unit)
-          }) : "", React.createElement("hr", null)), this.state.lines.map((line) => React.createElement(GUILine, {
+          }) : "", React.createElement("hr", null)), this.state.lines.map((line, i) => React.createElement(GUILine, {
             key: line.id,
             line: line,
-            onClickInput: (line) => this.setInput(line.input),
-            onClickUnit: (unit) => this.showUnit(unit)
+            onClickInput: () => this.setInput(line.input),
+            onClickUnit: (unit) => this.showUnit(unit),
+            onClickRemove: () => this.removeLine(i)
           })));
         }
-        componentDidUpdate() {}
+        componentDidUpdate(prevProps, prevState) {
+          if (prevState.lines !== this.state.lines) {
+            history.replaceState({}, "", "#" + queryString.stringify({state: this.serialize()}));
+          }
+        }
+        serialize() {
+          return lzString.compressToEncodedURIComponent(JSON.stringify(this.state.lines.map((line) => line.input)));
+        }
       };
       ReactDOM.render(React.createElement("div", {className: "container"}, React.createElement("div", {className: "page-header"}, React.createElement("h1", null, "Qalc")), React.createElement(GUI, null), React.createElement("footer", null, React.createElement("small", null, React.createElement("a", {href: "https://github.com/phiresky/qalc-react"}, "Source code on GitHub")))), document.getElementById("root"));
       $__export("GUILine", GUILine), $__export("GUI", GUI);
