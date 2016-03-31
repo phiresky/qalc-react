@@ -5,7 +5,9 @@
       "bootstrap": "github:twbs/bootstrap@^3.3.6",
       "css": "github:systemjs/plugin-css@^0.1.20",
       "decimal.js": "npm:decimal.js@^5.0.8",
+      "lz-string": "npm:lz-string@^1.4.4",
       "mathjs": "npm:mathjs@^3.1.0",
+      "query-string": "npm:query-string@^4.1.0",
       "react": "npm:react@^0.14.7",
       "react-dom": "npm:react-dom@^0.14.7",
       "text": "github:systemjs/plugin-text@^0.0.7",
@@ -104,18 +106,6 @@
           "./lib/ReactTestUtils.js": {
             "production": "@empty"
           }
-        }
-      },
-      "npm:typescript@1.8.9": {
-        "browser": {},
-        "map": {
-          "buffer": "@empty",
-          "child_process": "@empty",
-          "fs": "@empty",
-          "os": "@empty",
-          "path": "@empty",
-          "process": "@empty",
-          "readline": "@empty"
         }
       },
       "npm:typescript@1.9.0-dev.20160328": {

@@ -10,6 +10,8 @@ E = energy
 
 fibonacci = x => x >= 2 && fibonacci(x-1) + fibonacci(x-2) || x
 
+spheresurface = r => 4 pi r^2
+
 delete(in) # to avoid confusion
 
 #

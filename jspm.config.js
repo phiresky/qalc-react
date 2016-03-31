@@ -39,12 +39,14 @@ SystemJS.config({
     "fs": "github:jspm/nodelibs-fs@0.2.0-alpha",
     "http": "github:jspm/nodelibs-http@0.2.0-alpha",
     "https": "github:jspm/nodelibs-https@0.2.0-alpha",
+    "lz-string": "npm:lz-string@1.4.4",
     "mathjs": "npm:mathjs@3.1.3",
     "module": "github:jspm/nodelibs-module@0.2.0-alpha",
     "os": "github:jspm/nodelibs-os@0.2.0-alpha",
     "path": "github:jspm/nodelibs-path@0.2.0-alpha",
     "plugin-typescript": "github:frankwallis/plugin-typescript@4.0.5",
     "process": "github:jspm/nodelibs-process@0.2.0-alpha",
+    "query-string": "npm:query-string@4.1.0",
     "react": "npm:react@0.14.7",
     "react-dom": "npm:react-dom@0.14.7",
     "stream": "github:jspm/nodelibs-stream@0.2.0-alpha",
@@ -58,6 +60,11 @@ SystemJS.config({
     "xml2js": "npm:xml2js@0.4.16"
   },
   packages: {
+    "npm:query-string@4.1.0": {
+      "map": {
+        "strict-uri-encode": "npm:strict-uri-encode@1.1.0"
+      }
+    },
     "github:frankwallis/plugin-typescript@4.0.5": {
       "map": {
         "typescript": "npm:typescript@1.9.0-dev.20160328"

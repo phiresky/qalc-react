@@ -1,7 +1,9 @@
 {
   "ambientDependencies": {
     "decimal.js": "registry:dt/decimal.js#0.0.0+20160317120654",
+    "lz-string": "registry:dt/lz-string#0.0.0+20160317120654",
     "mathjs": "registry:dt/mathjs#0.0.0+20160317120654",
+    "query-string": "registry:dt/query-string#3.0.0+20160316155526",
     "react": "registry:dt/react#0.14.0+20160319053454",
     "react-dom": "registry:dt/react-dom#0.14.0+20160316155526",
     "xml2js": "registry:dt/xml2js#0.0.0+20160317120654"
