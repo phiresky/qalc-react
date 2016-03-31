@@ -15417,14 +15417,7 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
           const tokens = this.props.value.split(" ");
           const last = tokens.pop();
           const poss = [];
-          if (/[a-z]/.test(last)) {
-            for (const unitName of unitMap.keys()) {
-              if (unitName.indexOf(last) >= 0)
-                poss.push(unitName);
-              if (poss.length > 30)
-                break;
-            }
-          } else if (last === "" && tokens.pop() === "to") {
+          if (tokens.pop() === "to") {
             try {
               const val = parseEvaluate(tokens.join(" ")).value;
               for (const name of unitMap.keys()) {
@@ -15434,6 +15427,15 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
               }
             } catch (e) {
               console.log(e);
+            }
+          }
+          if (/[a-z]/i.test(last)) {
+            const units = poss.length > 0 ? poss.splice(0) : unitMap.keys();
+            for (const unitName of units) {
+              if (unitName.indexOf(last) >= 0)
+                poss.push(unitName);
+              if (poss.length > 30)
+                break;
             }
           }
           return React.createElement("div", {className: "dropdown"}, React.createElement("input", React.__spread({}, this.props, {
