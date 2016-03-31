@@ -1,7 +1,7 @@
 import * as React from 'react';
 import lzString from 'lz-string';
 import * as ReactDOM from 'react-dom';
-import * as QalcLib from './evaluator';
+import {qalculate, unitMap} from './evaluator';
 import {tokenize, TokenType} from './parser';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
@@ -68,7 +68,7 @@ function loadPresetLines() {
 	let presets = presetLines;
 	let {state} = queryString.parse(location.hash);
 	if(state) presets = JSON.parse(lzString.decompressFromEncodedURIComponent(state));
-	presets.map(input => QalcLib.qalculate(input)
+	presets.map(input => qalculate(input)
 			.then(output => guiInst.addLine(new GuiLineElement(input, output)))
 			.catch(error => guiInst.addLine(new GuiLineElement(input, new TaggedString("" + error))))
 		);
@@ -93,7 +93,7 @@ class UnitCompleteInput extends React.Component<{
 		const last = this.props.value.split(" ").pop(); // hacky (chrome bug when use tokenize)
 		const poss: string[] = [];
 		if(/[a-z]/.test(last)) {
-			for(const unitName of QalcLib.unitMap.keys()) {
+			for(const unitName of unitMap.keys()) {
 				if(unitName.indexOf(last) >= 0) poss.push(unitName);
 				if(poss.length > 10) break;
 			}
@@ -125,7 +125,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	onSubmit(evt: Event) {
 		evt.preventDefault();
 		const input = this.state.currentInput;
-		if (input.trim().length > 0) QalcLib.qalculate(input).then(output =>
+		if (input.trim().length > 0) qalculate(input).then(output =>
 			this.addLine(new GuiLineElement(input, output))
 		).catch(reason => this.addLine(new GuiLineElement(input, new TaggedString("" + reason))))
 		this.setState({currentInput: "", currentOutput: new TaggedString()} as any);
@@ -133,7 +133,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	setInput(input: string) {
 		this.setState({currentInput: input} as any);
 		if(/[=≈]/.test(input)) this.setState({currentOutput: new TaggedString("press enter to execute")} as any);
-		else QalcLib.qalculate(input)
+		else qalculate(input)
 		.then(output => this.setState({currentOutput: output} as any))
 		.catch(reason => this.setState({currentOutput: new TaggedString("" + reason)} as any));
 	}
