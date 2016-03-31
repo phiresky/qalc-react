@@ -15414,14 +15414,26 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
           this.props.onChange({target: this.refs["inp"]});
         }
         render() {
-          const last = this.props.value.split(" ").pop();
+          const tokens = this.props.value.split(" ");
+          const last = tokens.pop();
           const poss = [];
           if (/[a-z]/.test(last)) {
             for (const unitName of unitMap.keys()) {
               if (unitName.indexOf(last) >= 0)
                 poss.push(unitName);
-              if (poss.length > 10)
+              if (poss.length > 30)
                 break;
+            }
+          } else if (last === "" && tokens.pop() === "to") {
+            try {
+              const val = parseEvaluate(tokens.join(" ")).value;
+              for (const name of unitMap.keys()) {
+                const unit = getUnit(name).value;
+                if (!unit.isSpecial() && unit.dimensions.equals(val.dimensions))
+                  poss.push(name);
+              }
+            } catch (e) {
+              console.log(e);
             }
           }
           return React.createElement("div", {className: "dropdown"}, React.createElement("input", React.__spread({}, this.props, {
@@ -15433,7 +15445,11 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
             placeholder: "enter formula"
           })), poss.length > 0 ? React.createElement("ul", {
             className: "dropdown-menu",
-            style: {display: "block"}
+            style: {
+              display: "block",
+              maxHeight: "200px",
+              overflowX: "hidden"
+            }
           }, poss.map((unit) => React.createElement("li", {key: unit}, React.createElement("a", {
             href: "#",
             onClick: () => this.setUnit(unit)
