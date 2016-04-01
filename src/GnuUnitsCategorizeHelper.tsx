@@ -73,7 +73,7 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 		this.setState(s => {
 			const boxes = s.boxes.slice();
 			const [startI, endI] = this.findBounds(boxes, a, b);
-			for(let i = startI; i <= endI; i++) boxes[i] = Object.assign({}, boxes[i], {headingLevel});
+			for(let i = startI; i <= endI; i++) boxes[i] = boxes[i].type === Type.Heading ? Object.assign({}, boxes[i], {headingLevel}): boxes[i];
 			return {boxes}; 
 		});
 	}
@@ -137,10 +137,21 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 		let currentIndent = 0;
 		return (
 			<div className="container">
+				<div className="page-header">
+					<p>Select boxes with the mouse. <br />
+					Then press J to join boxes, S to split them, <br />
+					H to mark them as a heading <br/>
+					N to mark them as normal <br/>
+					D to mark them as deleted <br/>
+					T to print the category tree of the first box to the console. <br/>
+					Use 1-9 to set the level of the heading, 0 to set it to the level of the previous heading <br/>
+					</p>
+					<p>The data is saved to localStorage.executed as a list of the executed commands</p>
+				</div>
 				{boxes.map((box,i) => {
 					if(box.headingLevel) currentIndent = box.headingLevel;
 					const thisIndent = currentIndent + (box.type == Type.Heading ? 0 : 1);
-					return <pre style={Object.assign({}, typeStyles[box.type], {marginLeft:(thisIndent*100+1)+"px"})} className={box.start >= this.state.selectionStart && box.end <= this.state.selectionEnd ? "alert alert-info": ""}
+					return <pre style={Object.assign({}, typeStyles[box.type], {marginLeft:((thisIndent-1)*70)+"px"})} className={box.start >= this.state.selectionStart && box.end <= this.state.selectionEnd ? "alert alert-info": ""}
 							key={box.start+","+box.end} ref={e => this.pres.set(e, i)}>
 						{lines.slice(box.start, box.end + 1).join("\n")}
 					</pre>
@@ -168,7 +179,8 @@ const styles = {
 		borderBottom:"1px solid black",
 		borderRadius:"0px",
 		padding:"2px",
-		margin:0
+		margin:0,
+		maxHeight: "300px"
 	},
 };
 const typeStyles = {
