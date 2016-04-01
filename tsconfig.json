@@ -10,6 +10,7 @@
     "files": [
 		"typings/browser.d.ts",
 		"src/gui.tsx",
-		"src/unitNumber.ts"
+		"src/unitNumber.ts",
+		"src/UnitsBoxHelperGui.tsx"
     ]
 }

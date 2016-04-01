@@ -8,6 +8,7 @@ import customData from '../custom_data.txt!text';
 export function isEvaluated(node: Tree.Node): node is EvaluatedNode {
 	return !!(node as any).value;
 }
+
 declare var fetch: any;
 const loadUnits = (filename: string, data: string) => {
 	const lines = data.split("\n");

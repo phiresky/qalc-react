@@ -1,5 +1,5 @@
 "use strict";
-const dir = "/usr/share/units";
+const dir = "./gnu-units-2.12";
 const fs = require('fs');
 
 const vars = {};

@@ -4,11 +4,11 @@ bin/index.html: index.html
 	cp $< $@
 	patch bin/index.html < src/index-dist.patch
 
-bin/qalc_data.txt: qalc_data.txt
-	cp $< $@
-
-bin/bundle.js: $(wildcard src/*)
+bin/bundle.js: $(wildcard src/*) $(wildcard data/*)
 	jspm build src/gui.tsx bin/bundle.js --dev
+
+data/units_data.txt: src/parse-gnu-units.js
+	node --harmony --harmony_destructuring --harmony_default_parameters  src/parse-gnu-units.js > data/units_data.txt
 
 bin/.git:
 	[ -f bin/.git ] || git worktree add bin/ gh-pages
