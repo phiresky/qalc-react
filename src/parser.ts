@@ -56,7 +56,7 @@ export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<T
 
 		if (token.type === TokenType.Operator) {
 			if (token.str === '*') token.str = '·';
-			if(token.str === 'in') token.str = 'to';
+			if (token.str === 'in') token.str = 'to';
 			if (!lastToken || [TokenType.LParen, TokenType.Operator].indexOf(lastToken.type) >= 0) {
 				// is an unary operator
 				if (token.str === '-') token.str = token.str.replace('-', '#');

@@ -6,7 +6,7 @@
         "sourceMap": true,
         "jsx": "react",
 		"allowSyntheticDefaultImports": true
-    },
+	},
     "files": [
 		"typings/browser.d.ts",
 		"src/gui.tsx",

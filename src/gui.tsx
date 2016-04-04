@@ -1,12 +1,17 @@
 import * as React from 'react';
 import lzString from 'lz-string';
 import * as ReactDOM from 'react-dom';
-import {parseEvaluate, qalculate, unitMap, getUnit} from './evaluator';
-import {tokenize, TokenType} from './parser';
+import {parseEvaluate, unitMap, getUnit} from './evaluator';
+import {tokenize, TokenType, Lambda} from './parser';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
 import queryString from 'query-string';
 
+
+async function qalculate(s: string) {
+	const {tree, term, type} = Lambda.stringToType(s);
+	return new TaggedString(tree.toTaggedString(), "\n"+term+"\n"+type);
+}
 class UnitNumberDisplay extends React.Component<{ text: TaggedString, onClickUnit: (u: UnitNumber) => void }, {}> {
 	constructor(props: { text: TaggedString, onClickUnit: any }) {
 		super(props);
