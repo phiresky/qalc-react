@@ -221,3 +221,199 @@ export module Tree {
 		return stack[0];
 	}
 }
+
+
+export module Lambda {
+	export type Lambda = App | Abs | Var | Let | number;
+	export class App {
+		constructor(public termA: Lambda, public termB: Lambda) { }
+		toString = () => `(${this.termA} ${this.termB})`;
+	}
+	export class Abs {
+		constructor(public VSCSUCKSvariable: Var, public term: Lambda) { }
+		toString = () => `(λ${this.VSCSUCKSvariable}. ${this.term})`;
+	}
+	export class Var {
+		static map = new Map<string, Var>();
+		static get(name: string) {
+			if (!Var.map.has(name)) Var.map.set(name, new Var(name));
+			return Var.map.get(name);
+		}
+		private constructor(public name: string) { }
+		toString = () => this.name;
+	}
+	export class Let {
+		constructor(public VSCSUCKSletName: Var, public VSCSUCKSletDef: Lambda, public term: Lambda) { }
+		toString = () => `let ${this.VSCSUCKSletName} = ${this.VSCSUCKSletDef} in ${this.term}`;
+	}
+
+	export function solve(T: Map<Lambda, TypeTerm>, t: Lambda, α: TypeTerm): TypeEquation[] {
+		if (T.has(t)) {
+			const τ = T.get(t);
+			if (τ instanceof PolymorphType) return [[α, τ.instantiate()]];
+			return [[α, τ]];
+		}
+		if (t instanceof App) {
+			const [t1, t2] = [t.termA, t.termB];
+			const α2 = new UnknownType(), α3 = new UnknownType();
+			return [[α3, α2.to(α)], ...solve(T, t1, α3), ...solve(T, t2, α2)];
+		} else if (t instanceof Abs) {
+			const [x, term] = [t.VSCSUCKSvariable, t.term];
+			const α2 = new UnknownType(), α3 = new UnknownType();
+			const T2 = new Map(T); T2.set(x, α2);
+			return [[α, α2.to(α3)], ...solve(T2, term, α3)];
+		} else if (t instanceof Var) {
+			return [];
+		} else if (t instanceof Let) {
+			const α2 = new UnknownType(), α3 = new UnknownType();
+			const οLet = unify(solve(T, t.VSCSUCKSletDef, α2));
+			const substitutedT = οLet.substituteTypeMap(T);
+			const T2 = new Map<Lambda, TypeTerm>([...substitutedT, [t.VSCSUCKSletName, new PolymorphType(οLet.substitute(α2), substitutedT)]]);
+			const innerSolution = solve(T2, t.term, α3);
+			return [[α, α3], ...οLet, ...innerSolution];
+		} else {
+			return [[α, new KnownType(typeof t)]];
+		}
+	}
+	export type TypeTerm = KnownType | UnknownType | FuncType | PolymorphType;
+	export type TypeContext = Map<Lambda, TypeTerm>;
+	export class KnownType {
+		constructor(public name: string) { }
+		toString = () => this.name;
+	}
+	export class UnknownType {
+		static greek = "αβγδεζηθικλμνξοπρστυφχψω";
+		toString(mapping: Map<TypeTerm, number> = new Map()): string {
+			if (!mapping.has(this)) mapping.set(this, mapping.size);
+			return UnknownType.greek[mapping.get(this)];
+		}
+		to = (t2: TypeTerm) => new FuncType(this, t2);
+	}
+	export class FuncType {
+		constructor(public from: TypeTerm, public to: TypeTerm) { }
+		toString(mapping: Map<TypeTerm, number> = new Map()): string {
+			return `(${(this.from as any).toString(mapping)})→(${(this.to as any).toString(mapping)})`;
+		}
+	}
+	export class PolymorphType {
+		constructor(public t: TypeTerm, public T: Map<Lambda, TypeTerm>) { }
+		instantiate(): KnownType | UnknownType | FuncType {
+			const sets = [...this.T.values()].map(x => FV(x)).reduce((a, b) => [...a, ...b], [] as UnknownType[]);
+			return PolymorphType.recursiveInstantiate(this.t, new Set(sets), new Map());
+		}
+		static recursiveInstantiate(t: TypeTerm, T: Set<UnknownType>, existingReplacements: Map<UnknownType, UnknownType>): KnownType | UnknownType | FuncType {
+			if (t instanceof FuncType) return new FuncType(PolymorphType.recursiveInstantiate(t.from, T, existingReplacements), PolymorphType.recursiveInstantiate(t.to, T, existingReplacements));
+			else if (t instanceof UnknownType) if (!T.has(t)) {
+				if (!existingReplacements.has(t)) existingReplacements.set(t, new UnknownType());
+				return existingReplacements.get(t);
+			} else return t;
+			else if (t instanceof KnownType) return t;
+			else if (t instanceof PolymorphType) return PolymorphType.recursiveInstantiate(t.t, T, existingReplacements);
+		}
+	}
+
+	export function FV(t: TypeTerm): Set<UnknownType> {
+		if (t instanceof KnownType) return new Set();
+		else if (t instanceof UnknownType) return new Set([t]);
+		else if (t instanceof PolymorphType) return FV(t.instantiate());
+		else return new Set([...FV(t.from), ...FV(t.to)]);
+	}
+
+	export type TypeEquation = [TypeTerm, TypeTerm];
+
+	export class Substitution extends Map<UnknownType, TypeTerm>{
+		substituteEq([t1, t2]: TypeEquation): TypeEquation {
+			return [this.substitute(t1), this.substitute(t2)];
+		}
+		substitute(term: TypeTerm): TypeTerm {
+			if (term instanceof FuncType) return new FuncType(this.substitute(term.from), this.substitute(term.to));
+			else if (term instanceof KnownType) return term;
+			else if (term instanceof PolymorphType) return this.substitute(term.instantiate());
+			else return this.get(term) || term;
+		}
+		substituteTypeMap(T: Map<Lambda, TypeTerm>) {
+			return new Map([...T].map(([k, v]) => [k, this.substitute(v)] as [Lambda, TypeTerm]));
+		}
+		chain(s2: Substitution): Substitution {
+			return new Substitution([...this, ...[...s2].map(([from, to]) => ([from, this.substitute(to)] as [UnknownType, TypeTerm]))])
+		}
+		toString() {
+			return [...this].map(([x, y]) => `(${x.toString()}) ⇨ (${y.toString()})`).join(", ");
+		}
+	}
+
+	export function unify(C: TypeEquation[]): Substitution {
+		if (C.length == 0) return new Substitution();
+		else {
+			const [[t1, t2], ...C2] = C;
+			if (t1 == t2) return unify(C2);
+			else if (t1 instanceof UnknownType && !FV(t2).has(t1))
+				return unify(C2.map(eq => new Substitution([[t1 as UnknownType, t2]]).substituteEq(eq))).chain(new Substitution([[t1, t2]]));
+			else if (t2 instanceof UnknownType && !FV(t1).has(t2))
+				return unify(C2.map(eq => new Substitution([[t2 as UnknownType, t1]]).substituteEq(eq))).chain(new Substitution([[t2, t1]]));
+			else if (t1 instanceof FuncType && t2 instanceof FuncType)
+				return unify([...C2, [t1.from, t2.from], [t1.to, t2.to]]);
+			else {
+				console.error("unify failed, t1=", t1, "t2=", t2);
+				throw Error();
+			}
+		}
+	}
+
+	export function fromTree(t: Tree.Node): Lambda {
+		if (t instanceof Tree.NumberNode) return parseFloat(t.number);
+		else if (t instanceof Tree.IdentifierNode) return Var.get(t.identifier);
+		else if (t instanceof Tree.FunctionCallNode) {
+			if (t.fnname === '') return new App(fromTree(t.operands[0]), fromTree(t.operands[1]));
+			else if (t.fnname === '=>') return new Abs(fromTree(t.operands[0]) as Var, fromTree(t.operands[1]));
+			else if (t.fnname === '=') {
+				const x = t as any;
+				return new Let(fromTree(x.operands[0].operands[1]) as Var, fromTree(x.operands[1].operands[0].operands[0]), fromTree(x.operands[1].operands[1]));
+			}
+			else throw Error(t.fnname + ' not supported');
+		}
+	}
+	export function stringToType(s: string) {
+		const tree = parse(s);
+		const term = fromTree(tree);
+		const search = new UnknownType();
+		const subs = solve(new Map(), term, search);
+		const sub = unify(subs);
+		return {
+			tree, term, sub,
+			type: sub.substitute(search)
+		}
+	}
+
+	export function test() {
+		const v = new Proxy({}, {
+			get(_: any, name: string) {
+				return Var.get(name);
+			}
+		});
+		const exprs: Lambda[] = [
+			new Abs(v.x, v.x),
+			new Abs(v.f, new Abs(v.x, new App(new App(v.f, v.x), 2))),
+		]
+		const a1 = new UnknownType(), a2 = new UnknownType();
+
+		const id = new Abs(v.x, v.x), ChF = new Abs(v.a, new Abs(v.b, v.b));
+
+		const tests: [Lambda, Map<Lambda, TypeTerm>][] = [
+			[new App(new App(new App(id, ChF), 1), 2), new Map([[ChF, a1.to(a2.to(a2))]])],
+			[new Let(v.f, new Abs(v.x, new App(new App(v.g, v.y), v.y)), new App(v.f, 3)), new Map()],
+			[new Let(v.just, new Abs(v.x, new Abs(v.j, new Abs(v.n, new App(v.j, v.x)))), new App(v.just, 0)), new Map()]
+		]
+		//UnknownType.counter = 1;
+		for (const [term, T] of tests) {
+			const search = new UnknownType();
+			const subs = solve(T, term, search);
+			const sub = unify(subs);
+			console.log("solveTest", term.toString(), T, subs, sub, sub.toString(), sub.substitute(search));
+		}
+
+		for (const expr of exprs) {
+			console.log("printTest", expr, expr.toString());
+		}
+	}
+}
