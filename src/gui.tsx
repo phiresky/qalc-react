@@ -113,7 +113,7 @@ class UnitCompleteInput extends React.Component<{
 		} 
 		return <div className="dropdown">
 			<input {...this.props} ref="inp" autoCorrect={"off"} autoComplete={"off"} autoCapitalize={"none"} className="form-control" placeholder="enter formula" />
-			{poss.length > 0?<ul className="dropdown-menu" style={{display:"block", maxHeight:"200px",overflowX:"hidden"}}>{poss.map(unit => <li key={unit}><a href="#" onClick={() => this.setUnit(unit)}>{unit}</a></li>)}</ul>:""}
+			{poss.length > 0?<ul className="dropdown-menu" style={{display:"block", maxHeight:"200px",overflowX:"hidden",position:"inherit"}}>{poss.map(unit => <li key={unit}><a href="#" onClick={() => this.setUnit(unit)}>{unit}</a></li>)}</ul>:""}
 		</div>;
 	}
 	
