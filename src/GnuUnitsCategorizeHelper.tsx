@@ -53,6 +53,10 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 		if(key == 'T') {
 			console.log(this.categoryTreeOf(sel[0]).map(x => x.replace(/#/g, "").replace(/\s+/g, " ")));
 			return;
+		} else if(key =='C') {
+			console.log(this.props.lines.slice(sel[0], sel[1] + 1)
+				.map(x => x.replace(/^\s*#/g, "").replace()
+				.join("\n"));
 		}
 		const cmds:{[name:string]: any[]} = {
 			'J':["unifySelection", ...sel], 
