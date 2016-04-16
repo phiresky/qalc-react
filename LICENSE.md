@@ -1,3 +1,11 @@
+I like the concept of giving back, so I settled on the AGPL as the
+default license for all my personal projects.
+
+This isn't set in stone, so feel free to write me at
+`phireskyde+git@gmail.com` if you need something else.
+
+---
+
 ### GNU AFFERO GENERAL PUBLIC LICENSE
 
 Version 3, 19 November 2007
