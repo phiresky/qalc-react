@@ -6,7 +6,7 @@ const production = process.env.NODE_ENV == "production";
 const plugins = [
 	new webpack.DefinePlugin({
 	}),
-	new Copy([{from: '*.html', to:"."}])
+	new Copy([{ from: '*.html', to: "." }])
 ];
 if (production) {
 	plugins.push(new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } }));
@@ -37,7 +37,9 @@ module.exports = {
 				}
 			},
 			// all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
-			{ test: /\.tsx?$/, loader: 'ts-loader' },
+			{
+				test: /\.tsx?$/, loaders: ['babel-loader?plugins[]=transform-es2015-for-of', 'ts-loader']
+			},
 			{ test: /\.css$/, loader: "style-loader!css-loader" },
 		],
 	},
