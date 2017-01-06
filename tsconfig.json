@@ -1,16 +1,13 @@
 {
     "compilerOptions": {
-        "module": "system",
         "target": "es6",
+        "module": "commonjs",
         "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+        "strictNullChecks": true,
         "sourceMap": true,
         "jsx": "react",
-		"allowSyntheticDefaultImports": true
-    },
-    "files": [
-		"typings/browser.d.ts",
-		"src/gui.tsx",
-		"src/unitNumber.ts",
-		"src/GnuUnitsCategorizeHelper.tsx"
-    ]
+        "allowSyntheticDefaultImports": true
+    }
 }

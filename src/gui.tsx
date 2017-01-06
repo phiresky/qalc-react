@@ -5,7 +5,7 @@ import {parseEvaluate, qalculate, unitMap, getUnit} from './evaluator';
 import {tokenize, TokenType} from './parser';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
-import queryString from 'query-string';
+import * as queryString from 'query-string';
 
 class UnitNumberDisplay extends React.Component<{ text: TaggedString, onClickUnit: (u: UnitNumber) => void }, {}> {
 	constructor(props: { text: TaggedString, onClickUnit: any }) {
@@ -15,7 +15,8 @@ class UnitNumberDisplay extends React.Component<{ text: TaggedString, onClickUni
 		return str.vals.map((x,i) => {
 			if (typeof x === 'string') return <span key={i}>{x}</span>;
 			else if (x instanceof UnitNumber) return <a key={i} href="#" onClick={(e) => { this.props.onClickUnit(x as any); e.preventDefault() } } >{x.toString() }</a>;
-			else if(x instanceof TaggedString) return this.taggedStringToHtml(x);
+			else if (x instanceof TaggedString) return this.taggedStringToHtml(x);
+			else throw Error("unknown value");
 		}) 
 	}
 	render() {
@@ -67,7 +68,7 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 function loadPresetLines() {
 	let presets = presetLines;
 	let {state} = queryString.parse(location.hash);
-	if(state) presets = JSON.parse(lzString.decompressFromEncodedURIComponent(state));
+	if(state) presets = JSON.parse(lzString.decompressFromEncodedURIComponent(state as string));
 	presets.map(input => qalculate(input)
 			.then(output => guiInst.addLine(new GuiLineElement(input, output)))
 			.catch(error => guiInst.addLine(new GuiLineElement(input, new TaggedString("" + error))))
@@ -76,7 +77,7 @@ function loadPresetLines() {
 
 class UnitCompleteInput extends React.Component<{
 	value: string,
-	onChange: __React.FormEventHandler,
+	onChange: React.FormEventHandler<any>,
 }, {}> {
 	constructor(props: any) {
 		super(props);
@@ -91,13 +92,13 @@ class UnitCompleteInput extends React.Component<{
 	}
 	render() {
 		const tokens = this.props.value.split(" "); // hacky (chrome bug when use tokenize)
-		const last = tokens.pop();
+		const last = tokens.pop()!;
 		const poss: string[] = [];
 		if(tokens.pop() === "to") {
 			try {
 				const val = parseEvaluate(tokens.join(" ")).value;
 				for(const name of unitMap.keys()) {
-					const unit = getUnit(name).value;
+					const unit = getUnit(name)!.value;
 					if(!unit.isSpecial() && unit.dimensions.equals(val.dimensions))
 						poss.push(name);
 				}

@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import 'whatwg-fetch';
 
 const dir = "./gnu-units-2.12/";
 enum Type {
@@ -55,7 +56,7 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 			return;
 		} else if(key =='C') {
 			console.log(this.props.lines.slice(sel[0], sel[1] + 1)
-				.map(x => x.replace(/^\s*#/g, "").replace()
+				.map(x => x.replace(/^\s*#/g, ""))
 				.join("\n"));
 		}
 		const cmds:{[name:string]: any[]} = {
@@ -123,8 +124,8 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 	}
 	getSelection(s: Selection) {
 		const [boxes, lines] = [this.state.boxes, this.props.lines];
-		let boxStartI = this.pres.get(s.anchorNode) || this.pres.get(s.anchorNode.parentElement);
-		let boxEndI = this.pres.get(s.focusNode) || this.pres.get(s.focusNode.parentNode);
+		let boxStartI = this.pres.get(s.anchorNode) || this.pres.get(s.anchorNode.parentElement!);
+		let boxEndI = this.pres.get(s.focusNode) || this.pres.get(s.focusNode.parentNode!);
 		if(boxStartI === undefined || boxEndI === undefined) {
 			boxStartI = -1;
 			boxEndI = -1;

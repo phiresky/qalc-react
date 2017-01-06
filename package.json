@@ -1,128 +1,26 @@
 {
-  "jspm": {
-    "name": "qalc-react",
-    "dependencies": {
-      "bootstrap": "github:twbs/bootstrap@^3.3.6",
-      "css": "github:systemjs/plugin-css@^0.1.20",
-      "decimal.js": "npm:decimal.js@^5.0.8",
-      "lz-string": "npm:lz-string@^1.4.4",
-      "mathjs": "npm:mathjs@^3.1.0",
-      "query-string": "npm:query-string@^4.1.0",
-      "react": "npm:react@^0.14.7",
-      "react-dom": "npm:react-dom@^0.14.7",
-      "text": "github:systemjs/plugin-text@^0.0.7",
-      "typescript": "npm:typescript@1.9.0-dev.20160328",
-      "xml2js": "npm:xml2js@^0.4.16"
-    },
-    "devDependencies": {
-      "clean-css": "npm:clean-css@^3.4.10",
-      "plugin-typescript": "github:frankwallis/plugin-typescript@^4.0.2"
-    },
-    "peerDependencies": {
-      "assert": "github:jspm/nodelibs-assert@^0.2.0-alpha",
-      "buffer": "github:jspm/nodelibs-buffer@^0.2.0-alpha",
-      "child_process": "github:jspm/nodelibs-child_process@^0.2.0-alpha",
-      "constants": "github:jspm/nodelibs-constants@^0.2.0-alpha",
-      "crypto": "github:jspm/nodelibs-crypto@^0.2.0-alpha",
-      "events": "github:jspm/nodelibs-events@^0.2.0-alpha",
-      "fs": "github:jspm/nodelibs-fs@^0.2.0-alpha",
-      "http": "github:jspm/nodelibs-http@^0.2.0-alpha",
-      "https": "github:jspm/nodelibs-https@^0.2.0-alpha",
-      "module": "github:jspm/nodelibs-module@^0.2.0-alpha",
-      "os": "github:jspm/nodelibs-os@^0.2.0-alpha",
-      "path": "github:jspm/nodelibs-path@^0.2.0-alpha",
-      "process": "github:jspm/nodelibs-process@^0.2.0-alpha",
-      "stream": "github:jspm/nodelibs-stream@^0.2.0-alpha",
-      "string_decoder": "github:jspm/nodelibs-string_decoder@^0.2.0-alpha",
-      "timers": "github:jspm/nodelibs-timers@^0.2.0-alpha",
-      "url": "github:jspm/nodelibs-url@^0.2.0-alpha",
-      "util": "github:jspm/nodelibs-util@^0.2.0-alpha",
-      "vm": "github:jspm/nodelibs-vm@^0.2.0-alpha"
-    },
-    "overrides": {
-      "github:components/jquery@2.2.1": {
-        "main": "jquery"
-      },
-      "github:twbs/bootstrap@3.3.6": {
-        "shim": {
-          "js/bootstrap": {
-            "deps": [
-              "jquery"
-            ],
-            "exports": "$"
-          }
-        },
-        "dependencies": {
-          "jquery": "github:components/jquery"
-        },
-        "files": [
-          "dist",
-          "fonts",
-          "js",
-          "css",
-          "less",
-          "grunt",
-          "LICENSE"
-        ],
-        "systemjs": {
-          "main": "dist/js/bootstrap.js",
-          "modules": {
-            "dist/js/bootstrap.js": {
-              "deps": [
-                "jquery"
-              ],
-              "exports": "$"
-            }
-          }
-        }
-      },
-      "npm:fbjs@0.6.1": {
-        "dependencies": {}
-      },
-      "npm:inherits@2.0.1": {
-        "ignore": [
-          "test.js"
-        ]
-      },
-      "npm:react@0.14.7": {
-        "dependencies": {
-          "fbjs": "^0.6.1"
-        },
-        "format": "cjs",
-        "meta": {
-          "*": {
-            "globals": {
-              "process": "process"
-            }
-          }
-        },
-        "map": {
-          "fbjs/lib/ExecutionEnvironment.js": {
-            "production": "@empty"
-          },
-          "./lib/ReactDefaultPerf.js": {
-            "production": "@empty"
-          },
-          "./lib/ReactTestUtils.js": {
-            "production": "@empty"
-          }
-        }
-      },
-      "npm:typescript@1.9.0-dev.20160328": {
-        "browser": {},
-        "map": {
-          "buffer": "@empty",
-          "child_process": "@empty",
-          "fs": "@empty",
-          "os": "@empty",
-          "path": "@empty",
-          "process": "@empty",
-          "readline": "@empty"
-        }
-      }
-    }
-  },
   "devDependencies": {
-    "jspm": "^0.17.0-beta.11"
+    "copy-webpack-plugin": "^4.0.1",
+    "css-loader": "^0.26.1",
+    "raw-loader": "^0.5.1",
+    "style-loader": "^0.13.1",
+    "ts-loader": "^1.3.3",
+    "typescript": "^2.1.4",
+    "webpack": "^1.14.0"
+  },
+  "dependencies": {
+    "@types/decimal.js": "^0.0.29",
+    "@types/lz-string": "^1.3.31",
+    "@types/query-string": "^3.0.31",
+    "@types/react": "^0.14.56",
+    "@types/react-dom": "^0.14.20",
+    "@types/whatwg-fetch": "^0.0.33",
+    "bootstrap": "^3.3.7",
+    "decimal.js": "^7.1.0",
+    "lz-string": "^1.4.4",
+    "query-string": "^4.2.3",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1",
+    "whatwg-fetch": "^2.0.1"
   }
 }

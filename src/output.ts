@@ -23,7 +23,7 @@ export class TaggedString {
 		}
 	}
 	// template function creating an array containing strings and UnitNumbers for linking to definitions in the gui
-	static t(literals: string[], ...placeholders: TaggedStringEle[]): TaggedString {
+	static t(literals: TemplateStringsArray, ...placeholders: TaggedStringEle[]): TaggedString {
 		let result: TaggedStringEle[] = [];
 		for (let i = 0; i < placeholders.length; i++) {
 			if (literals[i].length > 0) result.push(literals[i]);

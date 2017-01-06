@@ -47,7 +47,7 @@ export function* tokenize(str: string): IterableIterator<Token> {
  * - implicit multiplication between {), num, identifier} and {(, num, identifier)}
  */
 export function* preprocess(tokens: IterableIterator<Token>): IterableIterator<Token> {
-	let lastToken: Token = null;
+	let lastToken: Token | null = null;
 	for (const token of tokens) {
 		if (token.type === TokenType.Whitespace) continue;
 		if (lastToken) yield lastToken;
@@ -110,7 +110,7 @@ function operator(token: Token) {
 	if (!c) throw Error("unknown operator: '" + op + "'");
 	return c;
 }
-export function* toRPN(tokens: Iterable<Token>) {
+export function* toRPN(tokens: Iterable<Token>): IterableIterator<Token> {
 	const stack: Token[] = [];
 	function top<T>(stack: T[]) { return stack[stack.length - 1] };
 	for (const token of tokens) {
@@ -132,7 +132,7 @@ export function* toRPN(tokens: Iterable<Token>) {
 							&& o1.precedence > o2.precedence)
 					)
 				) {
-					yield stack.pop();
+					yield stack.pop()!;
 				}
 				stack.push(token);
 				break;
@@ -141,7 +141,7 @@ export function* toRPN(tokens: Iterable<Token>) {
 				break;
 			case TokenType.RParen:
 				while (top(stack) && top(stack).type !== TokenType.LParen)
-					yield stack.pop();
+					yield stack.pop()!;
 				if (stack.length === 0) throw Error(token.start + ": missing opening paren");
 				stack.pop();
 				break;
@@ -149,7 +149,7 @@ export function* toRPN(tokens: Iterable<Token>) {
 		}
 	}
 	while (stack.length > 0) {
-		if (top(stack).type === TokenType.Operator) yield stack.pop();
+		if (top(stack).type === TokenType.Operator) yield stack.pop()!;
 		else throw Error(top(stack).start + ":missing closing parens");
 	}
 }
