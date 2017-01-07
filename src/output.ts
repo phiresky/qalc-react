@@ -1,7 +1,7 @@
 import {UnitNumber} from './unitNumber';
 
 export class TaggedString {
-	readonly vals: TaggedStringEle[];
+	vals: TaggedStringEle[];
 	constructor(...vals: TaggedStringEle[]) {
 		this.vals = vals;
 	}

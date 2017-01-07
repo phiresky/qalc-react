@@ -30,7 +30,12 @@ function loadUnit(data: {line: string, info: {comment: string, headings: string[
 		}
 		docMap.set(name, data.info);
 		postEvaluate.push({reevaluateUnit: name});
-	} else postEvaluate.push({evaluateNode:tree});
+	} else if (tree instanceof Tree.FunctionCallNode && tree.fnname === "!") {
+		docMap.set((tree.operands[0] as Tree.IdentifierNode).identifier, data.info);
+		postEvaluate.push({evaluateNode:tree});
+	} else {
+		postEvaluate.push({evaluateNode:tree});
+	}
 }
 function loadUnitsJson(filename: string, data: {line: string, info: {comment: string, headings: string[]}}[]) {
 	const postEvaluate = [] as {reevaluateUnit?: string, evaluateNode?: Tree.Node}[];
@@ -236,27 +241,33 @@ export function define(unit: EvaluatedNode): TaggedString {
 	if(unit instanceof Tree.IdentifierNode) unit = getUnit(unit.value.id!)!;
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit.value);
+	const canonicalText = canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical.toTaggedString()}` : ""
 	const aliases = getAliases(unit.value);
+	const aliasesText = aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases.map(a => a.value), ", ")}` : "";
 	const info = docMap.get(unit.value.id!);
-	let infoText: TaggedString | undefined;
+	let infoText: TaggedString = t``;
 	if(info) {
 		infoText = t`
 Documentation:
 ${info.comment ? "Comment: " + info.comment :""}
-${info.headings.length ? "Headings: \n" + info.headings.map((h,i) => `${i+1}. ${h}`).join("\n"): ""}
+${info.headings.length ? "Category: \n" + info.headings.join("\n -> "): ""}
 `;
 	}
 	unit = [...aliases, unit].find(alternative => alternative.value.id === unit.value.id)!;
 	const inverse = unit.value instanceof SpecialUnitNumber && unit.value.inverse.fnTree;
-	return (t
+	let inverseText = inverse ? t`Inverse:    ${inverse.toTaggedString()}`:"";
+	const res = t
 		`Definition: ${unit.toTaggedString()}.
-${inverse ? t`Inverse:    ${inverse.toTaggedString()}`:""}
-${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical.toTaggedString()}` : ""}
+		${inverseText}
+		${canonicalText}
 
-${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases.map(a => a.value), ", ")}` : ""}
+		${aliasesText}
 
-${infoText || ""}`
-	);
+		${infoText}`;
+	res.flatten();
+	res.vals = res.vals.map(x => typeof x === "string" ? x.replace(/\n\s*/g, "\n"): x)
+	console.log(res.vals);
+	return res;
 }
 function unitConvertedTaggedString(node: Tree.Node) {
 	if(node instanceof Tree.FunctionCallNode && node.fnname === 'to') {
