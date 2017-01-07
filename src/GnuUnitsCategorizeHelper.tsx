@@ -97,7 +97,8 @@ export class CategorizeStore {
 			if(box.type == Type.Heading && level <= catTree.length) {
 				catTree.splice(level);
 				catTree.push(this.lines.slice(box.start, box.end + 1)
-					.join("\n").replace(/#/g, "").replace(/\s+/g, " ").trim());
+						.map(line => line.replace(/\s+/g, " ").replace(/#/g, "").trim())
+					.join("\n").trim());
 			}
 		}
 		catTree.shift();

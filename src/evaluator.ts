@@ -250,7 +250,7 @@ export function define(unit: EvaluatedNode): TaggedString {
 		infoText = t`
 Documentation:
 ${info.comment ? "Comment: " + info.comment :""}
-${info.headings.length ? "Category: \n" + info.headings.join("\n -> "): ""}
+${info.headings.length ? "Category: \n" + info.headings.map(x => `"${x}"`).join("\n -> "): ""}
 `;
 	}
 	unit = [...aliases, unit].find(alternative => alternative.value.id === unit.value.id)!;
