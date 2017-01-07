@@ -11,6 +11,8 @@ git worktree add bin/ gh-pages
 ## to compile
 
 ```bash
+webpack --config webpack-node.config.js
+node bin/parseGnu.js data/gnu-units.json
 webpack
 ```
 
@@ -18,6 +20,7 @@ webpack
 
 ```bash
 webpack-dev-server --content-base bin
+webpack --watch --config webpack-node.config.js
 ```
 
 ## to push
