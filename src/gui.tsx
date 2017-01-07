@@ -2,6 +2,7 @@ import * as React from 'react';
 import lzString from 'lz-string';
 import * as ReactDOM from 'react-dom';
 import {parseEvaluate, qalculate, unitMap, getUnit} from './evaluator';
+import * as evaluator from "./evaluator";
 import {tokenize, TokenType} from './parser';
 import {UnitNumber} from './unitNumber';
 import {TaggedString} from './output';
@@ -197,4 +198,5 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 }
 
-ReactDOM.render(<GUI />, document.getElementById("root"));
+const gui = ReactDOM.render(<GUI />, document.getElementById("root"));
+Object.assign(window, {gui, evaluator});

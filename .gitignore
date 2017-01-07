@@ -4,3 +4,4 @@ qalc_data.txt
 units_data.txt
 gnu-units*/
 yarn.lock
+/data/gnu-units.json

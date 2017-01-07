@@ -6,7 +6,9 @@ const production = process.env.NODE_ENV == "production";
 const plugins = [
 	new webpack.DefinePlugin({
 	}),
-	new Copy([{ from: '*.html', to: "." }])
+	new Copy([
+		{ from: '*.html', to: "." }
+	])
 ];
 if (production) {
 	plugins.push(new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } }));
@@ -19,7 +21,7 @@ if (production) {
 module.exports = {
 	entry: {
 		gui: "./src/gui",
-		categorizeHelper: "./src/GnuUnitsCategorizeHelper"
+		categorizeHelper: ["./src/GnuUnitsCategorizeHelper"]
 	},
 	devtool: 'source-map',
 	output: {
@@ -41,6 +43,7 @@ module.exports = {
 				test: /\.tsx?$/, loaders: ['babel-loader?plugins[]=transform-es2015-for-of', 'ts-loader']
 			},
 			{ test: /\.css$/, loader: "style-loader!css-loader" },
+			{ test: /\.json$/, loader: "json-loader" }
 		],
 	},
 	resolve: {

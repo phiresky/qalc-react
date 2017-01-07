@@ -1,6 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import 'whatwg-fetch';
+import * as mobx from 'mobx';
+import * as mobxReact from 'mobx-react';
+import DevTools from 'mobx-react-devtools';
+
+import * as gnuDefs from 'raw-loader!../gnu-units-2.12/definitions.units';
 
 const dir = "./gnu-units-2.12/";
 enum Type {
@@ -20,42 +25,114 @@ function binarySearchIndex<T>(array: T[], accessor: (ele:T) => number, search: n
 	else
 		return binarySearchIndex(array, accessor, search, exact, min, mid);
 }
-class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], selectionStart: number, selectionEnd: number }> {
-	pres: Map<Node, number> = new Map();
-	executed: any[][] = [
-	];
-	constructor(props: { lines: string[] }) {
-		super(props);
-		this.state = { boxes: autoparseText(props.lines), selectionStart: -1, selectionEnd: -1 };
-		document.addEventListener("selectionchange", e => this.getSelection(document.getSelection()), false);
-		document.addEventListener("keyup", e => this.commandKey(e, String.fromCharCode(e.keyCode)));
+export class CategorizeStore {
+	@mobx.observable
+	executed: any[][] = [];
+	@mobx.observable
+	boxes: Box[] = [];
+	@mobx.observable
+	selectionStart = -1;
+	@mobx.observable
+	selectionEnd = -1;
+	readonly lines: string[];
+	constructor(data: string, changes: any[][] = []) {
+		this.lines = data.split("\n");
+		this.lines.unshift(""); // pretend it's one indexed
+		this.boxes = autoparseText(this.lines);
+		this.executeAll(changes);
+	}
+	@mobx.action
+	executeAll(changes: any[][]) {
+		for(const change of changes) this.execute(change);
+	}
+	@mobx.action
+	execute(cmd: any[]) {
+		console.log("run: ", ...cmd);
+		this.executed.push(cmd);
+		const [command, ...args] = cmd;
+		(this as any)[command](...args);
+	}
+	@mobx.action
+	markSelection(a: number, b: number, type: Type) {
+		const [startI, endI] = this.findBounds(this.boxes, a, b);
+		for(let i = startI; i <= endI; i++) this.boxes[i].type = type;
+	}
+	@mobx.action
+	unifySelection(a: number, b: number) {
+		const [startI, endI] = this.findBounds(this.boxes, a, b);
+		const type = this.boxes[startI].type;
+		this.boxes.splice(startI, endI - startI + 1, {start: a, end: b, type});
+		this.selectionStart = -1;
+		this.selectionEnd = -1;	
+	}
+	@mobx.action
+	splitSelection(a: number, b: number) {
+		const [startI, endI] = this.findBounds(this.boxes, a,b);
+		const newBs = [] as Box[];
+		const type = this.boxes[startI].type;
+		for(let i = a; i <= b; i++) {
+			newBs.push({start:i, end: i, type});
+		}
+		this.boxes.splice(startI, endI - startI + 1, ...newBs);
+		this.selectionStart = -1;
+		this.selectionEnd = -1;
+	}
+	@mobx.action
+	setHeadingDepth(a: number, b: number, headingLevel: number) {
+		const [startI, endI] = this.findBounds(this.boxes, a, b);
+		for(let i = startI; i <= endI; i++)
+			if(this.boxes[i].type === Type.Heading)
+			this.boxes[i].headingLevel = headingLevel;
+	}
+	findBounds(boxes: Box[], l: number, r: number): [number, number] {
+		return [binarySearchIndex(boxes, x => x.start, l), binarySearchIndex(boxes, x => x.end, r)];
 	}
 	categoryTreeOf(line: number) {
-		const boxI = binarySearchIndex(this.state.boxes, x => x.start, line, false);
+		const boxI = Math.min(binarySearchIndex(this.boxes, x => x.start, line, false),
+			binarySearchIndex(this.boxes, x => x.end, line, false));
 		const catTree = [''] as string[];
 		for(let i = 0; i <= boxI; i++) {
-			const box = this.state.boxes[i];
+			const box = this.boxes[i];
 			const level = box.headingLevel || catTree.length - 1;
 			if(box.type == Type.Heading && level <= catTree.length) {
 				catTree.splice(level);
-				catTree.push(this.props.lines.slice(box.start, box.end + 1).join("\n"));
+				catTree.push(this.lines.slice(box.start, box.end + 1)
+					.join("\n").replace(/#/g, "").replace(/\s+/g, " ").trim());
 			}
 		}
 		catTree.shift();
-		return catTree;
+		const box = this.boxes[boxI];
+		const comment = this.lines.slice(box.start, box.end + 1).map(line => (line.split("#")[1] || "").trim()).join("\n").trim();
+		return {headings: catTree, comment};
+	}
+}
+@mobxReact.observer
+class HelperGui extends React.Component<{store: CategorizeStore}, {}> {
+	pres: Map<Node, number> = new Map();
+	store: CategorizeStore;
+	constructor(props: {store: CategorizeStore}) {
+		super(props);
+		this.store = this.props.store;
+		document.addEventListener("selectionchange", e => this.getSelection(document.getSelection()), false);
+		document.addEventListener("keyup", e => this.commandKey(e, String.fromCharCode(e.keyCode)));
+		mobx.autorun("consistency check", () => this.checkConsistency());
+		mobx.reaction("save to localStorage", () => JSON.stringify(this.store.executed), (data) => {
+			console.log("set localStorage");
+			localStorage.setItem("executed", data);
+		}, false, 500);
 	}
 	commandKey(e: KeyboardEvent, key: string) {
 		if(e.shiftKey || e.altKey || e.metaKey || e.ctrlKey) return;
-		const sel = [this.state.selectionStart, this.state.selectionEnd];
+		const sel = [this.store.selectionStart, this.store.selectionEnd];
 		if(sel[0] == -1 || sel[1] == -1) {
 			console.log("no selection");
 			return;
 		}
 		if(key == 'T') {
-			console.log(this.categoryTreeOf(sel[0]).map(x => x.replace(/#/g, "").replace(/\s+/g, " ")));
+			console.log(this.store.categoryTreeOf(sel[0]));
 			return;
 		} else if(key =='C') {
-			console.log(this.props.lines.slice(sel[0], sel[1] + 1)
+			console.log(this.store.lines.slice(sel[0], sel[1] + 1)
 				.map(x => x.replace(/^\s*#/g, ""))
 				.join("\n"));
 		}
@@ -72,58 +149,12 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 			console.log("unknown command: "+key);
 			return;
 		}
-		this.execute(cmd);
+		this.store.execute(cmd);
 	}
-	setHeadingDepth(a: number, b: number, headingLevel: number) {
-		this.setState(s => {
-			const boxes = s.boxes.slice();
-			const [startI, endI] = this.findBounds(boxes, a, b);
-			for(let i = startI; i <= endI; i++) boxes[i] = boxes[i].type === Type.Heading ? Object.assign({}, boxes[i], {headingLevel}): boxes[i];
-			return {boxes}; 
-		});
-	}
-	execute(cmd: any[]) {
-		console.log("run: ", ...cmd);
-		this.executed.push(cmd);
-		(this as any)[cmd[0]].apply(this, cmd.slice(1));
-		localStorage.setItem("executed", JSON.stringify(this.executed));
-	}
-	findBounds(boxes: Box[], l: number, r: number): [number, number] {
-		return [binarySearchIndex(boxes, x => x.start, l), binarySearchIndex(boxes, x => x.end, r)];
-	}
-	markSelection(a: number, b: number, type: Type) {
-		this.setState(s => {
-			const boxes = s.boxes.slice();
-			const [startI, endI] = this.findBounds(boxes, a, b);
-			for(let i = startI; i <= endI; i++) boxes[i] = Object.assign({}, boxes[i], {type});
-			return {boxes}; 
-		});
-	}
-	unifySelection(a: number, b: number) {
-		this.setState(s => {
-			const boxes = s.boxes.slice();
-			const [startI, endI] = this.findBounds(boxes, a,b);
-			const type = boxes[startI].type;
-			boxes.splice(startI, endI - startI + 1, {start: a, end: b, type});
-			return {boxes, selectionStart: -1, selectionEnd: -1};
-		})
-		
-	}
-	splitSelection(a: number, b: number) {
-		this.setState(s => {
-			const boxes = s.boxes.slice();
-			const [startI, endI] = this.findBounds(boxes, a,b);
-			const newBs = [] as Box[];
-			const type = boxes[startI].type;
-			for(let i = a; i <= b; i++) {
-				newBs.push({start:i, end: i, type});
-			}
-			boxes.splice(startI, endI - startI + 1, ...newBs);
-			return {boxes, selectionStart: -1, selectionEnd: -1};
-		});
-	}
+
+	@mobx.action
 	getSelection(s: Selection) {
-		const [boxes, lines] = [this.state.boxes, this.props.lines];
+		const [boxes, lines] = [this.store.boxes, this.store.lines];
 		let boxStartI = this.pres.get(s.anchorNode) || this.pres.get(s.anchorNode.parentElement!);
 		let boxEndI = this.pres.get(s.focusNode) || this.pres.get(s.focusNode.parentNode!);
 		if(boxStartI === undefined || boxEndI === undefined) {
@@ -131,14 +162,12 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 			boxEndI = -1;
 		}
 		if(boxEndI < boxStartI) [boxStartI, boxEndI] = [boxEndI, boxStartI];
-		const [a, b] = [this.state.boxes[boxStartI].start, this.state.boxes[boxEndI].end];
-		if(a == this.state.selectionStart && b == this.state.selectionEnd) {
-			return;
-		}
-		else this.setState({selectionStart: a, selectionEnd: b} as any);
+		const [a, b] = [this.store.boxes[boxStartI].start, this.store.boxes[boxEndI].end];
+		this.store.selectionStart = a;
+		this.store.selectionEnd = b;
 	}
 	render() {
-		const [boxes, lines] = [this.state.boxes, this.props.lines];
+		const {boxes, lines} = this.store;
 		let currentIndent = 0;
 		return (
 			<div className="container">
@@ -156,7 +185,7 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 				{boxes.map((box,i) => {
 					if(box.headingLevel) currentIndent = box.headingLevel;
 					const thisIndent = currentIndent + (box.type == Type.Heading ? 0 : 1);
-					return <pre style={Object.assign({}, typeStyles[box.type], {marginLeft:((thisIndent-1)*70)+"px"})} className={box.start >= this.state.selectionStart && box.end <= this.state.selectionEnd ? "alert alert-info": ""}
+					return <pre style={Object.assign({}, typeStyles[box.type], {marginLeft:((thisIndent-1)*70)+"px"})} className={box.start >= this.store.selectionStart && box.end <= this.store.selectionEnd ? "alert alert-info": ""}
 							key={box.start+","+box.end} ref={e => this.pres.set(e, i)}>
 						{lines.slice(box.start, box.end + 1).join("\n")}
 					</pre>
@@ -165,13 +194,10 @@ class HelperGui extends React.Component<{ lines: string[] }, { boxes: Box[], sel
 			</div>
 		)
 	}
-	componentDidMount() {
-		JSON.parse(localStorage.getItem("executed") || "[]").forEach((cmd:any[]) => this.execute(cmd));
-		this.componentDidUpdate();
-	}
-	componentDidUpdate() {
+
+	checkConsistency() {
 		let i = 0;
-		for(const box of this.state.boxes) {
+		for(const box of this.store.boxes) {
 			if(box.start !== i) console.error("inconsistency: end=", i, "!=", box.start,"=start");
 			if(box.end < box.start) console.error("inconsistency box < 0", box);
 			i = box.end + 1;
@@ -239,8 +265,13 @@ function autoparseText(lines: string[]) {
 	if(boxStart < lines.length) boxes.push({start: boxStart, end: lines.length - 1, type: Type.Deleted});
 	return boxes;
 }
-fetch(dir + "/definitions.units").then(x => x.text()).then(str => {
-	const lines = str.split("\n");
-	lines.unshift(""); // pretend it's one indexed
-	(window as any).guiInst = ReactDOM.render(<HelperGui lines={lines} />, document.getElementById("root")) as any;
-})
+function init(str: string) {
+	const actions = JSON.parse(localStorage.getItem("executed") || "[]");
+	ReactDOM.render(
+		<div>
+			<HelperGui store={new CategorizeStore(str, actions)} ref={guiInst => Object.assign(window, {guiInst})} />
+			<DevTools />
+		</div>, document.getElementById("root"));
+}
+if(typeof window !== "undefined")
+	init(gnuDefs);

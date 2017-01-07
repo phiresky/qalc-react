@@ -145,7 +145,10 @@ export function* toRPN(tokens: Iterable<Token>): IterableIterator<Token> {
 				if (stack.length === 0) throw Error(token.start + ": missing opening paren");
 				stack.pop();
 				break;
-			default: throw Error('what is ' + token);
+			default: {
+				console.error("unknown token ", token);
+				throw Error('what is ' + token);
+			}
 		}
 	}
 	while (stack.length > 0) {

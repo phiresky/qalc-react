@@ -2,7 +2,7 @@ import {UnitNumber, SpecialUnitNumber, EvaluatedNode} from './unitNumber';
 import {TaggedString} from './output';
 import {parse, Token, TokenType, Tree} from './parser';
 import Decimal from 'decimal.js';
-import * as gnuUnitsData from 'raw-loader!../data/units_data.txt';
+import * as gnuUnitsData from '../data/gnu-units.json';
 import * as customData from 'raw-loader!../data/custom_data.txt';
 
 export function isEvaluated(node: Tree.Node): node is EvaluatedNode {
@@ -10,32 +10,35 @@ export function isEvaluated(node: Tree.Node): node is EvaluatedNode {
 }
 
 declare var fetch: any;
-const loadUnits = (filename: string, data: string) => {
-	const lines = data.split("\n");
+function loadUnit(data: {line: string, info: {comment: string, headings: string[]}}, postEvaluate: any) {
+	const line = stripCommentsTrim(data.line);
+	if (line.length === 0) return;
+	if (line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0) return;
+	const tree = parse(line);
+	if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=') {
+		const nameNode = tree.operands[0];
+		const name = nameNode instanceof Tree.IdentifierNode && nameNode.identifier;
+		if(!name) {
+			postEvaluate.push({evaluateNode:tree});
+			return;
+		}
+		if (name.endsWith("_")) {
+			const prefixName = name.substr(0, name.length - 1);
+			prefixMap.set(prefixName, tree);
+		} else {
+			unitMap.set(name, tree);
+		}
+		docMap.set(name, data.info);
+		postEvaluate.push({reevaluateUnit: name});
+	} else postEvaluate.push({evaluateNode:tree});
+}
+function loadUnitsJson(filename: string, data: {line: string, info: {comment: string, headings: string[]}}[]) {
 	const postEvaluate = [] as {reevaluateUnit?: string, evaluateNode?: Tree.Node}[];
-	for (let i = 0; i < lines.length; i++) {
+	for(let i = 0; i < data.length; i++) {
 		try {
-			const line = stripCommentsTrim(lines[i]);
-			if (line.length === 0) continue;
-			if (line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0) continue;
-			const tree = parse(line);
-			if (tree instanceof Tree.FunctionCallNode && tree.fnname === '=') {
-				const nameNode = tree.operands[0];
-				const name = nameNode instanceof Tree.IdentifierNode && nameNode.identifier;
-				if(!name) {
-					postEvaluate.push({evaluateNode:tree});
-					continue;
-				}
-				if (name.endsWith("_")) {
-					const prefixName = name.substr(0, name.length - 1);
-					prefixMap.set(prefixName, tree);
-				} else {
-					unitMap.set(name, tree);
-				}
-				postEvaluate.push({reevaluateUnit: name});
-			} else postEvaluate.push({evaluateNode:tree});
+			loadUnit(data[i], postEvaluate);
 		} catch (e) {
-			console.error(filename+":"+(i+1), lines[i], e);
+			console.error(filename+":"+(i+1), data[i], e);
 		}
 	}
 	// force evaluate all units
@@ -45,8 +48,12 @@ const loadUnits = (filename: string, data: string) => {
 			if(evaluateNode) evaluate(evaluateNode, [unitMap]);
 		} catch (e) { console.error("force-evaluate unit", reevaluateUnit || evaluateNode, e); }
 	}
+}
+const loadUnitsTxt = (filename: string, data: string) => {
+	loadUnitsJson(filename, data.split("\n").map(line => ({line, info: {comment: "", headings: []}})));
 };
 export const unitMap = new Map<string, Tree.Node>();
+export const docMap = new Map<string, {comment: string, headings: string[]}>();
 type Scope = Map<string, Tree.Node>[];
 export const prefixMap = new Map<string, Tree.Node>();
 export const canonicalMap = new Map<UnitNumber, UnitNumber>();
@@ -230,6 +237,15 @@ export function define(unit: EvaluatedNode): TaggedString {
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit.value);
 	const aliases = getAliases(unit.value);
+	const info = docMap.get(unit.value.id!);
+	let infoText: TaggedString | undefined;
+	if(info) {
+		infoText = t`
+Documentation:
+${info.comment ? "Comment: " + info.comment :""}
+${info.headings.length ? "Headings: \n" + info.headings.map((h,i) => `${i+1}. ${h}`).join("\n"): ""}
+`;
+	}
 	unit = [...aliases, unit].find(alternative => alternative.value.id === unit.value.id)!;
 	const inverse = unit.value instanceof SpecialUnitNumber && unit.value.inverse.fnTree;
 	return (t
@@ -237,7 +253,9 @@ export function define(unit: EvaluatedNode): TaggedString {
 ${inverse ? t`Inverse:    ${inverse.toTaggedString()}`:""}
 ${canonical ? canonical == unit.value ? "(Canonical form)" : t`Canonical Form: ${canonical.toTaggedString()}` : ""}
 
-${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases.map(a => a.value), ", ")}` : ""}`
+${aliases && aliases.length > 0 ? TaggedString.t`Aliases: ${TaggedString.join(aliases.map(a => a.value), ", ")}` : ""}
+
+${infoText || ""}`
 	);
 }
 function unitConvertedTaggedString(node: Tree.Node) {
@@ -255,5 +273,5 @@ export async function qalculate(input: string): Promise<TaggedString> {
 	return TaggedString.t`${ret.toTaggedString()} = ${unitConvertedTaggedString(ret)}`;
 }
 
-loadUnits("units_data.txt", gnuUnitsData);
-loadUnits("custom_data.txt", customData);
+loadUnitsJson("units.json", gnuUnitsData);
+loadUnitsTxt("custom_data.txt", customData);
