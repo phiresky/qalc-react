@@ -1,4 +1,4 @@
-import {UnitNumber} from './unitNumber';
+import { UnitNumber } from "./unitNumber";
 
 export class TaggedString {
 	vals: TaggedStringEle[];
@@ -23,7 +23,10 @@ export class TaggedString {
 		}
 	}
 	// template function creating an array containing strings and UnitNumbers for linking to definitions in the gui
-	static t(literals: TemplateStringsArray, ...placeholders: TaggedStringEle[]): TaggedString {
+	static t(
+		literals: TemplateStringsArray,
+		...placeholders: TaggedStringEle[]
+	): TaggedString {
 		let result: TaggedStringEle[] = [];
 		for (let i = 0; i < placeholders.length; i++) {
 			if (literals[i].length > 0) result.push(literals[i]);
@@ -43,4 +46,4 @@ export class TaggedString {
 	}
 }
 
-type TaggedStringEle = (UnitNumber | string | TaggedString);
+type TaggedStringEle = UnitNumber | string | TaggedString;

@@ -1,7 +1,7 @@
 "use strict";
 const dir = "/usr/share/qalculate";
-const xml2js = require('xml2js');
-const fs = require('fs');
+const xml2js = require("xml2js");
+const fs = require("fs");
 
 const _output = [];
 function output(priority, str) {
@@ -16,9 +16,8 @@ const builtinValue = {
 	infinity: +Infinity,
 	plus_infinity: +Infinity,
 	minus_infinity: -Infinity,
-	undefined: NaN
-
-}
+	undefined: NaN,
+};
 function comment(str) {
 	return `  # ${str}`;
 }
@@ -38,7 +37,8 @@ function addStuff(stuff) {
 	if (stuff.builtin_variable) {
 		maybeMultiple(v => {
 			v.value = [builtinValue[parseName(v.names[0], false)[0]]];
-			if (v.value[0] === undefined) throw Error("don't know " + v.names[0]);
+			if (v.value[0] === undefined)
+				throw Error("don't know " + v.names[0]);
 			addVariable(v, 1);
 		}, stuff.builtin_variable);
 		delete stuff.builtin_variable;
@@ -68,12 +68,11 @@ function error(...stuff) {
 }
 
 function parseTitle(title) {
-	if (typeof title === 'string') return title;
+	if (typeof title === "string") return title;
 	error(title);
 }
 function parseBase(base) {
-	if (!base.unit || !base.relation || !base.exponent)
-		error(base);
+	if (!base.unit || !base.relation || !base.exponent) error(base);
 	if (Object.keys(base).length !== 3) error(base);
 
 	let approximate = false;
@@ -84,7 +83,7 @@ function parseBase(base) {
 			error("unknown attr " + JSON.stringify(attr));
 		approximate = !!attr.approximate;
 	}
-	let str = `${base.relation[0]} ${base.unit}`;;
+	let str = `${base.relation[0]} ${base.unit}`;
 	if (base.exponent != 1) str += `^(${base.exponent})`;
 	return { approximate, str };
 }
@@ -96,8 +95,7 @@ function parseName(name, join = true) {
 			attributes = attributes.replace(/[^Ä]/g, ""); // (/[^c]/g, "");
 			if (attributes.length > 0) return attributes + ":" + name;
 			else return name;
-		}
-		else return n;
+		} else return n;
 	});
 	if (join) return list.join(" = ");
 	else return list;
@@ -105,19 +103,23 @@ function parseName(name, join = true) {
 
 function parsePrefix(prefix) {
 	let base = 10;
-	if (typeof prefix === 'object') {
-		if (JSON.stringify(prefix.$) !== ('{"type":"binary"}'))
-			error(prefix);
+	if (typeof prefix === "object") {
+		if (JSON.stringify(prefix.$) !== '{"type":"binary"}') error(prefix);
 		base = 2;
 		prefix = prefix._;
 	}
-	return +prefix !== 0 ? `${base}^${prefix} ` : '';
+	return +prefix !== 0 ? `${base}^${prefix} ` : "";
 }
 
 function parsePart(part) {
-	if ("unit" in part && "prefix" in part && "exponent" in part && Object.keys(part).length === 3) {
+	if (
+		"unit" in part &&
+		"prefix" in part &&
+		"exponent" in part &&
+		Object.keys(part).length === 3
+	) {
 		const prefix = parsePrefix(part.prefix[0]);
-		const suffix = +part.exponent[0] !== 1 ? `^${part.exponent[0]}` : '';
+		const suffix = +part.exponent[0] !== 1 ? `^${part.exponent[0]}` : "";
 		return `${prefix}${part.unit[0]}${suffix}`;
 	} else error(part);
 	return "?";
@@ -129,35 +131,54 @@ function maybeMultiple(fn, arg) {
 }
 function addUnit(unit) {
 	switch (unit.$.type) {
-		case 'alias': {
+		case "alias": {
 			if (unit.base[0].inverse_relation) {
-				console.error('todo: ' + parseName(unit.names[0])); return;
+				console.error("todo: " + parseName(unit.names[0]));
+				return;
 			}
-			const {approximate, str} = parseBase(unit.base[0]);
-			output(0, `${parseName(unit.names[0])} ${approximate ? "≈" : "="} ${str}${comment(parseTitle(unit.title[0]))}`);
+			const { approximate, str } = parseBase(unit.base[0]);
+			output(
+				0,
+				`${parseName(unit.names[0])} ${
+					approximate ? "≈" : "="
+				} ${str}${comment(parseTitle(unit.title[0]))}`,
+			);
 			break;
-		} case 'base': {
+		}
+		case "base": {
 			const list = parseName(unit.names[0], false);
 			const firstName = list.shift();
 			output(1, `${firstName}!${comment(parseTitle(unit.title[0]))}`);
 			output(0, `${list.join(" = ")} = ${firstName}`);
 			break;
-		} case 'composite': {
-			output(0, `${parseName(unit.names[0])} = ${unit.part.map(part => `${parsePart(part)}`).join(" ")}${comment(parseTitle(unit.title[0]))}`)
+		}
+		case "composite": {
+			output(
+				0,
+				`${parseName(unit.names[0])} = ${unit.part
+					.map(part => `${parsePart(part)}`)
+					.join(" ")}${comment(parseTitle(unit.title[0]))}`,
+			);
 			break;
-		} default: {
+		}
+		default: {
 			error("what is " + unit.$.type);
 		}
 	}
 }
 
 function addVariable(vaiable, priority = 0) {
-	let eq = '=';
-	if (typeof vaiable.value[0] === 'object') {
-		if (vaiable.value[0].$.approximate) eq = '≈';
+	let eq = "=";
+	if (typeof vaiable.value[0] === "object") {
+		if (vaiable.value[0].$.approximate) eq = "≈";
 		vaiable.value[0] = vaiable.value[0]._;
 	}
-	output(priority, `${parseName(vaiable.names[0])} ${eq} ${vaiable.value[0]}${comment(parseTitle(vaiable.title[0]))}`);
+	output(
+		priority,
+		`${parseName(vaiable.names[0])} ${eq} ${vaiable.value[0]}${comment(
+			parseTitle(vaiable.title[0]),
+		)}`,
+	);
 }
 function addPrefix(prefix) {
 	const base = { decimal: 10, binary: 2 }[prefix.$.type];
@@ -168,13 +189,21 @@ function addPrefix(prefix) {
 xml2js.parseString(fs.readFileSync(dir + "/units.xml"), function(err, result) {
 	if (err) error(err);
 	addStuff(result.QALCULATE);
-	xml2js.parseString(fs.readFileSync(dir + "/variables.xml"), function(err, result) {
+	xml2js.parseString(fs.readFileSync(dir + "/variables.xml"), function(
+		err,
+		result,
+	) {
 		if (err) error(err);
 		addStuff(result.QALCULATE);
-		xml2js.parseString(fs.readFileSync(dir + "/prefixes.xml"), function(err, result) {
+		xml2js.parseString(fs.readFileSync(dir + "/prefixes.xml"), function(
+			err,
+			result,
+		) {
 			if (err) error(err);
 			addStuff(result.QALCULATE);
-			_output.sort((a, b) => b.priority - a.priority || a.pos - b.pos).forEach(({str}) => console.log(str));
+			_output
+				.sort((a, b) => b.priority - a.priority || a.pos - b.pos)
+				.forEach(({ str }) => console.log(str));
 		});
 	});
 });
