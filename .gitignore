@@ -2,6 +2,6 @@ node_modules/
 bin/
 qalc_data.txt
 units_data.txt
-gnu-units*/
+units-2.*/
 yarn.lock
 /data/gnu-units.json

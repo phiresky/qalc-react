@@ -198,5 +198,5 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 }
 
-const gui = ReactDOM.render(<GUI />, document.getElementById("root"));
+const gui = ReactDOM.render(<GUI />, document.getElementById("app"));
 Object.assign(window, {gui, evaluator});

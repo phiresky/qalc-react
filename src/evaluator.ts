@@ -3,7 +3,7 @@ import {TaggedString} from './output';
 import {parse, Token, TokenType, Tree} from './parser';
 import Decimal from 'decimal.js';
 import * as gnuUnitsData from '../data/gnu-units.json';
-import * as customData from 'raw-loader!../data/custom_data.txt';
+import * as customData from '../data/custom_data.txt';
 
 export function isEvaluated(node: Tree.Node): node is EvaluatedNode {
 	return !!(node as any).value;
@@ -129,8 +129,8 @@ function unifyAliases(unit1: EvaluatedNode, unit2: EvaluatedNode) {
 		aliasMap.set(canonical, new Set([unit1, unit2]));
 		return;
 	}
-	if (!can2) { canonicalMap.set(unit2.value, can1); aliasMap.get(can1!)!.add(unit2); return }
-	if (!can1) { canonicalMap.set(unit1.value, can2); aliasMap.get(can2)!.add(unit1); return }
+	if (!can2 && can1) { canonicalMap.set(unit2.value, can1); aliasMap.get(can1!)!.add(unit2); return }
+	if (!can1 && can2) { canonicalMap.set(unit1.value, can2); aliasMap.get(can2)!.add(unit1); return }
 	throw Error("unity error, can. form ex. for both " + unit1 + " and " + unit2 + ":" + can1 + " and " + can2);
 }
 export function getCanonical(u: UnitNumber) {

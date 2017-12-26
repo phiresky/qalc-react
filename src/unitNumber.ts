@@ -1,4 +1,4 @@
-import * as Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import {Tree} from './parser';
 import {TaggedString} from './output';
 export type EvaluatedNode = Tree.Node & { value: UnitNumber };
@@ -61,11 +61,11 @@ class DimensionMap extends Map<DimensionId, number> {
 }
 
 export class UnitNumber {
-	readonly value: decimal.Decimal;
+	readonly value: Decimal;
 	readonly dimensions: DimensionMap;
 	readonly id: string | null;
-	constructor(value: decimal.Decimal | number | string | null, dimensions: DimensionMap | null = new DimensionMap(), id?: string | null) {
-		if (value !== null) this.value = Decimal(value);
+	constructor(value: Decimal | number | string | null, dimensions: DimensionMap | null = new DimensionMap(), id?: string | null) {
+		if (value !== null) this.value = new Decimal(value);
 		if (dimensions !== null) this.dimensions = dimensions;
 		this.id = id === undefined ? null : id;
 	}
@@ -115,7 +115,7 @@ export class UnitNumber {
 			return TaggedString.t`${v}${v && this.dimensions.size > 0 ? " " : ""}${this.dimensions.toTaggedString()}`;
 		}
 	}
-	pow(factor: number | decimal.Decimal | UnitNumber): UnitNumber {
+	pow(factor: number | Decimal | UnitNumber): UnitNumber {
 		if (typeof factor === 'number' || factor instanceof Decimal)
 			return new UnitNumber(this.value.pow(factor), DimensionMap.join({ dimensions: this.dimensions, factor: typeof factor === 'number' ? factor : factor.toNumber() }));
 		else if (factor.isSpecial()) return factor.pow(this, true);
@@ -133,7 +133,7 @@ export class UnitNumber {
 }
 
 export class SpecialUnitNumber extends UnitNumber {
-	get value(): decimal.Decimal { throw Error("can't get function.value") }
+	get value(): Decimal { throw Error("can't get function.value") }
 	get dimensions(): DimensionMap { throw Error("can't get function.dimensions") }
 	fn: ((arg: UnitNumber) => UnitNumber) | null;
 	fnTree: Tree.Node | null;

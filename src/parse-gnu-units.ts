@@ -1,5 +1,5 @@
 "use strict";
-const dir = "./gnu-units-2.12";
+const dir = "./units-2.12";
 const output = process.argv[2];
 if(!output) throw Error("specify output file");
 

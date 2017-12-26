@@ -5,8 +5,6 @@ import * as mobx from 'mobx';
 import * as mobxReact from 'mobx-react';
 import DevTools from 'mobx-react-devtools';
 
-import * as gnuDefs from 'raw-loader!../gnu-units-2.12/definitions.units';
-
 const dir = "./gnu-units-2.12/";
 enum Type {
 	Deleted, Normal, Heading
@@ -117,10 +115,10 @@ class HelperGui extends React.Component<{store: CategorizeStore}, {}> {
 		document.addEventListener("selectionchange", e => this.getSelection(document.getSelection()), false);
 		document.addEventListener("keyup", e => this.commandKey(e, String.fromCharCode(e.keyCode)));
 		mobx.autorun("consistency check", () => this.checkConsistency());
-		mobx.reaction("save to localStorage", () => JSON.stringify(this.store.executed), (data) => {
+		mobx.reaction( () => JSON.stringify(this.store.executed), (data) => {
 			console.log("set localStorage");
 			localStorage.setItem("executed", data);
-		}, false, 500);
+		}, {name: "save to localStorage", fireImmediately: false, delay: 500});
 	}
 	commandKey(e: KeyboardEvent, key: string) {
 		if(e.shiftKey || e.altKey || e.metaKey || e.ctrlKey) return;
@@ -187,7 +185,7 @@ class HelperGui extends React.Component<{store: CategorizeStore}, {}> {
 					if(box.headingLevel) currentIndent = box.headingLevel;
 					const thisIndent = currentIndent + (box.type == Type.Heading ? 0 : 1);
 					return <pre style={Object.assign({}, typeStyles[box.type], {marginLeft:((thisIndent-1)*70)+"px"})} className={box.start >= this.store.selectionStart && box.end <= this.store.selectionEnd ? "alert alert-info": ""}
-							key={box.start+","+box.end} ref={e => this.pres.set(e, i)}>
+							key={box.start+","+box.end} ref={e => this.pres.set(e!, i)}>
 						{lines.slice(box.start, box.end + 1).join("\n")}
 					</pre>
 				}
@@ -266,7 +264,7 @@ function autoparseText(lines: string[]) {
 	if(boxStart < lines.length) boxes.push({start: boxStart, end: lines.length - 1, type: Type.Deleted});
 	return boxes;
 }
-function init(str: string) {
+export function init(str: string) {
 	const actions = JSON.parse(localStorage.getItem("executed") || "[]");
 	ReactDOM.render(
 		<div>
@@ -274,5 +272,3 @@ function init(str: string) {
 			<DevTools />
 		</div>, document.getElementById("root"));
 }
-if(typeof window !== "undefined")
-	init(gnuDefs);
