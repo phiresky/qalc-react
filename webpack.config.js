@@ -20,6 +20,7 @@ const plugins = [
 		// set width=device-width header for mobile devices
 		mobile: true,
 		scripts: [],
+		links: ["https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"],
 		// remove additional newlines from the template
 		// (https://github.com/jaketrent/html-webpack-template/issues/40)
 		minify: {
