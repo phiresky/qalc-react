@@ -552,7 +552,7 @@ export async function qalculate(input: string): Promise<TaggedString> {
 		error += e + "\n";
 	}
 
-	//if (evaled.value.id) return define(ret);
+	if (evaled && evaled.value.id) return define(evaled);
 	return TaggedString.t`
 res = ${
 		evaled
