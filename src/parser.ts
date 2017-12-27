@@ -1,14 +1,56 @@
 import { isEvaluated } from "./evaluator";
 import { TaggedString } from "./output";
-export enum TokenType {
-	Identifier,
-	Number,
-	LParen,
-	RParen,
-	Operator,
-	Whitespace,
-	Unknown,
+export namespace TokenType {
+	export const Identifier = "Identifier";
+	export type Identifier = typeof Identifier;
+	export const Number = "Number";
+	export type Number = typeof Number;
+	export const LParen = "LParen";
+	export type LParen = typeof LParen;
+	export const RParen = "RParen";
+	export type RParen = typeof RParen;
+	export const Operator = "Operator";
+	export type Operator = typeof Operator;
+	export const Whitespace = "Whitespace";
+	export type Whitespace = typeof Whitespace;
+	export const Unknown = "Unknown";
+	export type Unknown = typeof Unknown;
 }
+type TokenType =
+	| TokenType.Identifier
+	| TokenType.Number
+	| TokenType.LParen
+	| TokenType.RParen
+	| TokenType.Operator
+	| TokenType.Whitespace
+	| TokenType.Unknown;
+export namespace RPNTokenType {
+	export const Identifier = "Identifier";
+	export type Identifier = typeof Identifier;
+	export const Number = "Number";
+	export type Number = typeof Number;
+	export const LParen = "LParen";
+	export type LParen = typeof LParen;
+	export const RParen = "RParen";
+	export type RParen = typeof RParen;
+	export const UnaryOperator = "UnaryOperator";
+	export type UnaryOperator = typeof UnaryOperator;
+	export const InfixOperator = "InfixOperator";
+	export type InfixOperator = typeof InfixOperator;
+	export const Whitespace = "Whitespace";
+	export type Whitespace = typeof Whitespace;
+	export const Unknown = "Unknown";
+	export type Unknown = typeof Unknown;
+}
+export type RPNTokenType =
+	| RPNTokenType.Identifier
+	| RPNTokenType.Number
+	| RPNTokenType.LParen
+	| RPNTokenType.RParen
+	| RPNTokenType.UnaryOperator
+	| RPNTokenType.InfixOperator
+	| RPNTokenType.Whitespace
+	| RPNTokenType.Unknown;
 
 const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^\s+/, TokenType.Whitespace],
@@ -22,13 +64,20 @@ const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^[^() =<>≈+*/^&|·!>-]+/i, TokenType.Identifier],
 	[/^./, TokenType.Unknown],
 ];
-export interface Token {
-	type: TokenType;
+interface Token<Type extends RPNTokenType | TokenType> {
+	type: Type;
 	str: string;
 	start: number;
 }
+export type RPNToken = Token<RPNTokenType>;
 
-export function* tokenize(str: string): IterableIterator<Token> {
+export type AToken = Token<TokenType>;
+
+export function tokenToDebugString(t: AToken | RPNToken): string {
+	return `(${t.type} '${t.str}')`;
+}
+
+export function* tokenize(str: string): IterableIterator<AToken> {
 	let i = 0;
 	let it = 0;
 	while (i < str.length) {
@@ -55,9 +104,9 @@ export function* tokenize(str: string): IterableIterator<Token> {
  * - implicit multiplication between {), num, identifier} and {(, num, identifier)}
  */
 export function* preprocess(
-	tokens: IterableIterator<Token>,
-): IterableIterator<Token> {
-	let lastToken: Token | null = null;
+	tokens: Iterable<AToken>,
+): IterableIterator<AToken> {
+	let lastToken: AToken | null = null;
 	for (const token of tokens) {
 		if (token.type === TokenType.Whitespace) continue;
 		if (lastToken) yield lastToken;
@@ -81,7 +130,7 @@ export function* preprocess(
 					lastToken.type,
 				) >= 0
 			) {
-				// is an unary operator
+				/*// is an unary operator
 				if (token.str === "-") token.str = token.str.replace("-", "#");
 				else if (token.str === "/")
 					yield {
@@ -89,7 +138,7 @@ export function* preprocess(
 						str: "1",
 						start: token.start,
 					};
-				else throw Error("Unary " + token.str + " not allowed");
+				else throw Error("Unary " + token.str + " not allowed");*/
 			}
 		}
 		lastToken = token;
@@ -105,20 +154,16 @@ enum Associativity {
 	/** a + b + c = (a + b) + c = a + (b + c) */
 	both,
 }
-interface OperatorInfo {
+interface OperatorInfo<arity extends number = 2> {
 	precedence: number;
 	associativity: Associativity;
-	arity: number;
+	arity: arity;
 	displayString?: string;
 }
-const operators: { [n: string]: OperatorInfo } = {
-	"!": { precedence: 0.5, associativity: Associativity.left, arity: 1 },
-	"#": {
-		precedence: 0.5,
-		associativity: Associativity.right,
-		arity: 1,
-		displayString: "-",
-	}, // unary minus
+const infixOperators: { [n: string]: OperatorInfo } = {
+	// hack: this only allowed at end of line
+	"!": { precedence: 0.5, associativity: Associativity.left, arity: 1 as 2 },
+
 	"^": { precedence: 1, associativity: Associativity.right, arity: 2 },
 	"|": { precedence: 1.5, associativity: Associativity.left, arity: 2 },
 	"": { precedence: 1.8, associativity: Associativity.left, arity: 2 },
@@ -142,42 +187,81 @@ const operators: { [n: string]: OperatorInfo } = {
 	"≈": { precedence: 10, associativity: Associativity.right, arity: 2 },
 	to: { precedence: 12, associativity: Associativity.left, arity: 2 },
 };
-function operator(token: Token) {
+const unaryOperators: { [n: string]: OperatorInfo<1> } = {
+	"-": {
+		precedence: 0.5,
+		associativity: Associativity.right,
+		arity: 1,
+	}, // unary minus
+	"/": {
+		precedence: 0.8,
+		associativity: Associativity.right,
+		arity: 1,
+	}, // unary minus
+};
+function operator(token: RPNToken) {
 	const op = token.str.trim();
-	const c = operators[op];
-	if (!c) throw Error("unknown operator: '" + op + "'");
+	if (token.type === RPNTokenType.InfixOperator)
+		var c: OperatorInfo<1 | 2> = infixOperators[op];
+	else if (token.type === RPNTokenType.UnaryOperator) c = unaryOperators[op];
+	else return null;
+	if (!c) throw Error(`unknown ${token.type}: '${op}'`);
 	return c;
 }
-export function* toRPN(tokens: Iterable<Token>): IterableIterator<Token> {
-	const stack: Token[] = [];
+export function* toRPN(tokens: Iterable<AToken>): IterableIterator<RPNToken> {
+	const stack: Token<
+		| TokenType.LParen
+		| RPNTokenType.InfixOperator
+		| RPNTokenType.UnaryOperator
+	>[] = [];
 	function top<T>(stack: T[]) {
 		return stack[stack.length - 1];
+	}
+	let infix_mode: "infix" | "unary" = "unary";
+	function yieldOperator(
+		token: AToken,
+	): Token<RPNTokenType.InfixOperator | RPNTokenType.UnaryOperator> {
+		if (token.type !== TokenType.Operator)
+			throw Error("not an operator " + token.type);
+		if (infix_mode === "infix")
+			return {
+				...token,
+				type: RPNTokenType.InfixOperator,
+			};
+		else
+			return {
+				...token!,
+				type: RPNTokenType.UnaryOperator,
+			};
 	}
 	for (const token of tokens) {
 		switch (token.type) {
 			case TokenType.Number:
 			case TokenType.Identifier:
-				yield token;
+				yield { ...token, type: token.type };
+				infix_mode = "infix";
 				break;
 			case TokenType.Operator:
-				const o1 = operator(token);
-				let token2: Token, o2: OperatorInfo;
+				const convToken = yieldOperator(token);
+				const o1 = operator(convToken)!;
+				let token2: RPNToken, o2: OperatorInfo<1 | 2> | null;
 				while (
 					(token2 = top(stack)) &&
-					token2.type === TokenType.Operator &&
 					(o2 = operator(token2)) &&
-					(((o1.associativity == Associativity.left ||
-						o1.associativity == Associativity.both) &&
+					(((o1.associativity === Associativity.left ||
+						o1.associativity === Associativity.both) &&
 						o1.precedence >= o2.precedence) ||
-						(o1.associativity == Associativity.right &&
+						(o1.associativity === Associativity.right &&
 							o1.precedence > o2.precedence))
 				) {
 					yield stack.pop()!;
 				}
-				stack.push(token);
+				stack.push(convToken);
+				infix_mode = "unary";
 				break;
 			case TokenType.LParen:
-				stack.push(token);
+				stack.push({ ...token, type: token.type });
+				infix_mode = "unary";
 				break;
 			case TokenType.RParen:
 				while (top(stack) && top(stack).type !== TokenType.LParen)
@@ -185,6 +269,7 @@ export function* toRPN(tokens: Iterable<Token>): IterableIterator<Token> {
 				if (stack.length === 0)
 					throw Error(token.start + ": missing opening paren");
 				stack.pop();
+				infix_mode = "infix";
 				break;
 			default: {
 				console.error("unknown token ", token);
@@ -193,8 +278,11 @@ export function* toRPN(tokens: Iterable<Token>): IterableIterator<Token> {
 		}
 	}
 	while (stack.length > 0) {
-		if (top(stack).type === TokenType.Operator) yield stack.pop()!;
-		else throw Error(top(stack).start + ":missing closing parens");
+		if (top(stack).type === RPNTokenType.UnaryOperator) yield stack.pop()!;
+		else if (top(stack).type === RPNTokenType.InfixOperator) {
+			yield stack.pop()!;
+			//throw Error("Missing second operand for " + top(stack).str);
+		} else throw Error(top(stack).start + ":missing closing parens");
 	}
 }
 
@@ -210,6 +298,12 @@ export namespace Tree {
 		toTaggedString(parentPrecedence = Infinity) {
 			return new TaggedString(this.number);
 		}
+		toJSON() {
+			return { type: "NumberNode", number: this.number };
+		}
+		toDebugString() {
+			return this.number;
+		}
 		clone() {
 			return new NumberNode(this.number);
 		}
@@ -220,11 +314,17 @@ export namespace Tree {
 			if (isEvaluated(this)) return (this as any).value.toTaggedString(); // todo: remove cast
 			return new TaggedString(this.identifier);
 		}
+		toJSON() {
+			return { type: "IdenifierNode", identifier: this.identifier };
+		}
+		toDebugString() {
+			return this.identifier;
+		}
 		clone() {
 			return new IdentifierNode(this.identifier);
 		}
 	}
-	export class FunctionCallNode {
+	export abstract class FunctionCallNode {
 		constructor(public fnname: string, public operands: Node[]) {}
 		toTaggedString(parentPrecedence = Infinity): TaggedString {
 			return TaggedString.t`${this.fnname}(${TaggedString.join(
@@ -232,16 +332,29 @@ export namespace Tree {
 				", ",
 			)})`;
 		}
+		toJSON(): any {
+			return {
+				type: this.constructor.name,
+				fnname: this.fnname,
+				operands: this.operands.map(x => x.toJSON()),
+			};
+		}
+		abstract toDebugString(): string;
 		clone(): FunctionCallNode {
-			return new FunctionCallNode(
+			return new (this.constructor as any)(
 				this.fnname,
-				this.operands.map(x => x.clone()),
+				this.operands.map(o => o.clone()),
 			);
+		}
+	}
+	export class UnaryFunctionCallNode extends FunctionCallNode {
+		toDebugString(): string {
+			return `(${this.fnname} ${this.operands[0].toDebugString()})`;
 		}
 	}
 	export class InfixFunctionCallNode extends FunctionCallNode {
 		toTaggedString(parentPrecedence = Infinity): TaggedString {
-			const op = operators[this.fnname];
+			const op = infixOperators[this.fnname];
 			const disp = op.displayString || this.fnname;
 			const leftAdd =
 				op.associativity === Associativity.right ? -0.01 : 0;
@@ -270,12 +383,17 @@ export namespace Tree {
 				return TaggedString.t`(${result})`;
 			else return result;
 		}
+		toDebugString(): string {
+			return `(${this.operands[0].toDebugString()} ${
+				this.fnname
+			} ${this.operands[1].toDebugString()})`;
+		}
 	}
-	export function rpnToTree(tokens: Iterable<Token>): Node {
+	export function rpnToTree(tokens: Iterable<RPNToken>): Node {
 		const stack: Node[] = [];
 		for (const token of tokens) {
-			if (token.type === TokenType.Operator) {
-				const op = operators[token.str.trim()];
+			if (token.type === RPNTokenType.InfixOperator) {
+				const op = infixOperators[token.str.trim()];
 				if (stack.length < op.arity)
 					throw Error(
 						`Operator '${token.str.trim()}' needs ${
@@ -284,13 +402,25 @@ export namespace Tree {
 					);
 				const args = stack.splice(stack.length - op.arity);
 				stack.push(new InfixFunctionCallNode(token.str.trim(), args));
+			} else if (token.type === RPNTokenType.UnaryOperator) {
+				const op = unaryOperators[token.str.trim()];
+				stack.push(
+					new UnaryFunctionCallNode(
+						token.str.trim(),
+						stack.splice(stack.length - op.arity),
+					),
+				);
 			} else if (token.type === TokenType.Identifier) {
 				stack.push(new IdentifierNode(token.str));
 			} else if (token.type === TokenType.Number) {
 				stack.push(new NumberNode(token.str));
 			} else throw Error("to tree: don't know token type " + token.type);
 		}
-		if (stack.length !== 1) throw Error("stack error " + stack);
+		if (stack.length !== 1)
+			throw Error(
+				"stack has more than one element left: " +
+					stack.map(x => x.toDebugString()),
+			);
 		return stack[0];
 	}
 }

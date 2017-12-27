@@ -154,7 +154,8 @@ class UnitCompleteInput extends React.Component<
 		const poss: string[] = [];
 		if (tokens.pop() === "to") {
 			try {
-				const val = parseEvaluate(tokens.join(" ")).value;
+				const evaled = parseEvaluate(tokens.join(" "));
+				const val = evaled.value;
 				for (const name of unitMap.keys()) {
 					const unit = getUnit(name)!.value;
 					if (

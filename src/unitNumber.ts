@@ -12,7 +12,7 @@ class DimensionMap extends Map<DimensionId, number> {
 		return x
 			.toString()
 			.split("")
-			.map(x => DimensionMap.unicodePow[+x])
+			.map(x => (x === "." ? "⋅" : DimensionMap.unicodePow[+x]))
 			.join("");
 	}
 	static listToUnicodePow(entries: [DimensionId, number][]): TaggedString {
@@ -80,7 +80,21 @@ class DimensionMap extends Map<DimensionId, number> {
 	}
 }
 
+function dimensionMismatch(
+	a: DimensionMap,
+	b: DimensionMap,
+	diff: DimensionMap,
+) {
+	throw Error(
+		`Dimensions don't match (${a.toString()} vs ${b.toString()}: ` +
+			diff.toMismatchString(),
+	);
+}
+
 export class UnitNumber {
+	static zero = new UnitNumber(0);
+	static one = new UnitNumber(1);
+	static minusOne = new UnitNumber(-1);
 	readonly value: Decimal;
 	readonly dimensions: DimensionMap;
 	readonly id: string | null;
@@ -122,9 +136,10 @@ export class UnitNumber {
 		if (other.isSpecial()) return other.plus(this, factor, true);
 		const dimensionDifference = this.div(other).dimensions;
 		if (dimensionDifference.size > 0)
-			throw Error(
-				"Dimensions don't match: " +
-					dimensionDifference.toMismatchString(),
+			throw dimensionMismatch(
+				this.dimensions,
+				other.dimensions,
+				dimensionDifference,
 			);
 		return new UnitNumber(
 			this.value.plus(other.value.times(factor)),

@@ -1,6 +1,8 @@
 import { UnitNumber, SpecialUnitNumber, EvaluatedNode } from "./unitNumber";
 import { TaggedString } from "./output";
-import { parse, Token, TokenType, Tree } from "./parser";
+import { parse, TokenType, Tree, RPNToken, AToken } from "./parser";
+import * as parser from "./parser";
+
 import Decimal from "decimal.js";
 import * as gnuUnitsData from "../data/gnu-units.json";
 import * as customData from "../data/custom_data.txt";
@@ -111,6 +113,141 @@ function addFunctions(
 		);
 	}
 }
+export type QalcFunction =
+	| (((...args: UnitNumber[]) => UnitNumber) & ({ rawInput: false }))
+	| (((node: Tree.FunctionCallNode, scope: Scope) => UnitNumber) &
+			({ rawInput: true }));
+
+function makeFn(fn: (...args: UnitNumber[]) => UnitNumber): QalcFunction {
+	const fn2 = fn as QalcFunction;
+	fn2.rawInput = false;
+	return fn2;
+}
+function memberAlias(
+	fnname: "mul" | "div" | "plus" | "pow" | "minus" | "convertTo",
+): QalcFunction {
+	return makeFn((a, b) => {
+		const x: (other: UnitNumber) => UnitNumber = a[fnname];
+		return x.call(a, b);
+	});
+}
+
+function makeRawFn(
+	fn: (args: Tree.FunctionCallNode, scope: Scope) => UnitNumber,
+): QalcFunction {
+	const fn2 = fn as QalcFunction;
+	fn2.rawInput = true;
+	return fn2;
+}
+const yes = UnitNumber.one;
+const no = UnitNumber.zero;
+const unaryOperators: { [name: string]: QalcFunction } = {
+	"-": makeFn(l => l.mul(UnitNumber.minusOne)),
+	"/": makeFn(l => UnitNumber.one.div(l)),
+};
+const assignment = makeRawFn((node, scope) => {
+	const [name, val] = node.operands;
+	const evNode = node as EvaluatedNode;
+	if (name instanceof Tree.IdentifierNode) {
+		setUnitOrPrefix(name.identifier, evNode, evaluate(val, scope));
+		return evNode.value;
+	} else {
+		const leftVal = evaluate(name, scope);
+		if (leftVal.value.id) leftVal.value.assign(evaluate(val, scope).value);
+		else throw Error("invalid left hand side of assignment");
+		return leftVal.value;
+	}
+});
+const infixOperators: { [name: string]: QalcFunction | undefined } = {
+	"=": assignment,
+	"≈": assignment,
+	"!": makeRawFn(node => {
+		const [name, oth] = node.operands;
+		if (oth) throw Error("! must be at end of line");
+		const evNode = node as EvaluatedNode;
+		if (name instanceof Tree.IdentifierNode) {
+			evNode.value = UnitNumber.createBaseUnit(name.identifier);
+			setUnit(name.identifier, evNode);
+			return evNode.value;
+		} else throw Error("invalid definition");
+	}),
+	"=>": makeRawFn((node, scope) => {
+		const evNode = node as EvaluatedNode;
+		const [argNameNode, val] = node.operands;
+		if (argNameNode instanceof Tree.IdentifierNode) {
+			const argName = argNameNode.identifier;
+			return new SpecialUnitNumber(
+				val,
+				arg => {
+					const argval = new Tree.IdentifierNode(
+						argName,
+					) as EvaluatedNode;
+					argval.value = arg;
+					const newScope = new Map<string, Tree.Node>();
+					newScope.set(argName, argval);
+					return evaluate(val.clone(), [newScope, ...scope]).value;
+				},
+				null,
+				null,
+			);
+		} else throw Error("invalid lambda definition");
+	}),
+	">": makeFn(
+		(a, b) => (
+			a.dimensions.assertEqual(b.dimensions),
+			a.value.greaterThan(b.value) ? yes : no
+		),
+	),
+	"<": makeFn(
+		(a, b) => (
+			a.dimensions.assertEqual(b.dimensions),
+			a.value.lessThan(b.value) ? yes : no
+		),
+	),
+	">=": makeFn(
+		(a, b) => (
+			a.dimensions.assertEqual(b.dimensions),
+			a.value.greaterThanOrEqualTo(b.value) ? yes : no
+		),
+	),
+	"<=": makeFn(
+		(a, b) => (
+			a.dimensions.assertEqual(b.dimensions),
+			a.value.lessThanOrEqualTo(b.value) ? yes : no
+		),
+	),
+	"==": makeFn(
+		(a, b) =>
+			a.value.equals(b.value) && a.dimensions.equals(b.dimensions)
+				? yes
+				: no,
+	),
+	"!=": makeFn(
+		(a, b) => (
+			a.dimensions.assertEqual(b.dimensions),
+			a.value.equals(b.value) ? no : yes
+		),
+	),
+
+	"&&": makeRawFn(({ operands: [a, b] }, scope) => {
+		const aEv = evaluate(a, scope).value;
+		return aEv.value.isZero() ? evaluate(b, scope).value : aEv;
+	}),
+	"||": makeRawFn(({ operands: [a, b] }, scope) => {
+		const aEv = evaluate(a, scope).value;
+		return !aEv.value.isZero() ? evaluate(b, scope).value : aEv;
+	}),
+
+	"·": memberAlias("mul"),
+	"": memberAlias("mul"),
+	"/": memberAlias("div"),
+	"|": memberAlias("div"),
+	"^": memberAlias("pow"),
+	"+": memberAlias("plus"),
+	"-": memberAlias("minus"),
+	to: memberAlias("convertTo"),
+};
+
 addFunctions(
 	["sqrt", num => num.pow(0.5)],
 	[
@@ -124,9 +261,7 @@ addFunctions(
 		"delete",
 		num => {
 			if (!num.id) throw Error("has no ID");
-			return unitMap.delete(num.id)
-				? new UnitNumber(1)
-				: new UnitNumber(0);
+			return unitMap.delete(num.id) ? yes : no;
 		},
 	],
 	[
@@ -154,60 +289,7 @@ addFunctions(
 		),
 	],
 );
-export function getFunction({
-	name,
-	throwOnError = true,
-}: {
-	name: string;
-	throwOnError?: boolean;
-}): ((...args: UnitNumber[]) => UnitNumber) | null {
-	const memberAliases: { [name: string]: string } = {
-		"·": "mul",
-		"": "mul",
-		"/": "div",
-		"|": "div",
-		"^": "pow",
-		"+": "plus",
-		"-": "minus",
-		to: "convertTo",
-	};
-	const yes = new UnitNumber(1);
-	const no = new UnitNumber(0);
-	const staticAliases: {
-		[name: string]: (a: UnitNumber, b: UnitNumber) => UnitNumber;
-	} = {
-		">": (a, b) => (
-			a.dimensions.assertEqual(b.dimensions),
-			a.value.greaterThan(b.value) ? yes : no
-		),
-		"<": (a, b) => (
-			a.dimensions.assertEqual(b.dimensions),
-			a.value.lessThan(b.value) ? yes : no
-		),
-		">=": (a, b) => (
-			a.dimensions.assertEqual(b.dimensions),
-			a.value.greaterThanOrEqualTo(b.value) ? yes : no
-		),
-		"<=": (a, b) => (
-			a.dimensions.assertEqual(b.dimensions),
-			a.value.lessThanOrEqualTo(b.value) ? yes : no
-		),
-		"==": (a, b) =>
-			a.value.equals(b.value) && a.dimensions.equals(b.dimensions)
-				? yes
-				: no,
-		"!=": (a, b) => (
-			a.dimensions.assertEqual(b.dimensions),
-			a.value.equals(b.value) ? no : yes
-		),
-	};
-	if (name === "#") return l => l.mul(new UnitNumber(-1));
-	else if (name in memberAliases) {
-		return (l, r) => (l as any)[memberAliases[name]](r);
-	} else if (name in staticAliases) return staticAliases[name];
-	else if (throwOnError) throw Error("unknown function: " + name);
-	else return null;
-}
+
 function setUnit(name: string, val: Tree.Node) {
 	if (unitMap.has(name))
 		throw Error(
@@ -346,68 +428,33 @@ function stripCommentsTrim(str: string) {
 export function parseEvaluate(str: string) {
 	return evaluate(parse(stripCommentsTrim(str)), [unitMap]);
 }
+
+function applyFunction(
+	fn: QalcFunction,
+	node: Tree.FunctionCallNode,
+	scope: Scope,
+) {
+	if (fn.rawInput) return fn(node, scope);
+	else return fn(...node.operands.map(arg => evaluate(arg, scope).value));
+}
 function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 	if (isEvaluated(node)) return node;
-	const evNode = node as EvaluatedNode;
+	let evNode = node as EvaluatedNode;
 	if (node instanceof Tree.NumberNode) {
 		evNode.value = new UnitNumber(node.number);
 	} else if (node instanceof Tree.IdentifierNode) {
 		evNode.value = getUnit(node.identifier, scope)!.value;
 		if (!evNode.value) throw Error("can't resolve " + node.identifier);
-	} else if (node instanceof Tree.FunctionCallNode) {
+	} else if (node instanceof Tree.InfixFunctionCallNode) {
 		const op = node.fnname;
-		if (op === "!") {
-			const name = node.operands[0];
-			if (name instanceof Tree.IdentifierNode) {
-				evNode.value = UnitNumber.createBaseUnit(name.identifier);
-				setUnit(name.identifier, evNode);
-			} else throw Error("invalid definition");
-		} else if (op === "=" || op === "≈") {
-			const [name, val] = node.operands;
-			if (name instanceof Tree.IdentifierNode)
-				setUnitOrPrefix(name.identifier, evNode, evaluate(val, scope));
-			else {
-				const leftVal = evaluate(name, scope);
-				if (leftVal.value.id)
-					leftVal.value.assign(evaluate(val, scope).value);
-				else throw Error("invalid left hand side of assignment");
-				evNode.value = leftVal.value;
-			}
-		} else if (op === "=>") {
-			const [argNameNode, val] = node.operands;
-			if (argNameNode instanceof Tree.IdentifierNode) {
-				const argName = argNameNode.identifier;
-				evNode.value = new SpecialUnitNumber(
-					val,
-					arg => {
-						const argval = new Tree.IdentifierNode(
-							argName,
-						) as EvaluatedNode;
-						argval.value = arg;
-						const newScope = new Map<string, Tree.Node>();
-						newScope.set(argName, argval);
-						return evaluate(val.clone(), [newScope, ...scope])
-							.value;
-					},
-					null,
-					null,
-				);
-			} else throw Error("invalid lambda definition");
-		} else if (op === "||" || op === "&&") {
-			const [a, b] = node.operands;
-			const aEv = evaluate(a, scope).value;
-			if (op === "||")
-				evNode.value = aEv.value.isZero()
-					? evaluate(b, scope).value
-					: aEv;
-			else if (op === "&&")
-				evNode.value = !aEv.value.isZero()
-					? evaluate(b, scope).value
-					: aEv;
-		} else
-			evNode.value = getFunction({ name: op })!(
-				...node.operands.map(x => evaluate(x, scope)).map(x => x.value),
-			);
+		const fn = infixOperators[op];
+		if (!fn) throw Error("function not found: " + op);
+		evNode.value = applyFunction(fn, node, scope);
+	} else if (node instanceof Tree.UnaryFunctionCallNode) {
+		const op = node.fnname;
+		const fn = unaryOperators[op];
+		if (!fn) throw Error("function not found: " + op);
+		evNode.value = applyFunction(fn, node, scope);
 	} else throw Error("what is " + node);
 	return evNode;
 }
@@ -474,11 +521,55 @@ function unitConvertedTaggedString(node: Tree.Node) {
 }
 export async function qalculate(input: string): Promise<TaggedString> {
 	if (input.trim().length === 0) return new TaggedString();
-	const ret = parseEvaluate(input);
-	if (ret.value.id) return define(ret);
-	return TaggedString.t`${ret.toTaggedString()} = ${unitConvertedTaggedString(
-		ret,
-	)}`;
+	input = stripCommentsTrim(input);
+	let error = "";
+	const tokens = [...parser.tokenize(input)];
+	let preproc: AToken[] | null = null;
+	if (tokens)
+		try {
+			preproc = [...parser.preprocess(tokens)];
+		} catch (e) {
+			error += e + "\n";
+		}
+	let rpn: RPNToken[] | null = null;
+	if (preproc)
+		try {
+			rpn = [...parser.toRPN(preproc)];
+		} catch (e) {
+			error += e + "\n";
+		}
+	let parsed: Tree.Node | null = null;
+	if (rpn)
+		try {
+			parsed = Tree.rpnToTree(rpn);
+		} catch (e) {
+			error += e + "\n";
+		}
+	let evaled: EvaluatedNode | null = null;
+	try {
+		evaled = evaluate(parsed!, [unitMap]);
+	} catch (e) {
+		error += e + "\n";
+	}
+
+	//if (evaled.value.id) return define(ret);
+	return TaggedString.t`
+res = ${
+		evaled
+			? TaggedString.t`${evaled.toTaggedString()} = ${unitConvertedTaggedString(
+					evaled,
+				)}`
+			: "err"
+	}
+tokens = ${tokens.map(t => parser.tokenToDebugString(t)).join(" ")}
+preproc = ${
+		preproc
+			? preproc.map(t => parser.tokenToDebugString(t)).join(" ")
+			: "err"
+	}
+rpn = ${rpn ? rpn.map(t => parser.tokenToDebugString(t)).join(" ") : "err"}
+parsed = ${parsed ? parsed.toDebugString() : "err"}
+${error ? "error = " + error : ""}`;
 }
 
 loadUnitsJson("units.json", gnuUnitsData);
