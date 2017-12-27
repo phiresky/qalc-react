@@ -10,7 +10,7 @@ function dimensionMismatch(
 	diff: DimensionMap,
 ) {
 	throw Error(
-		`Dimensions don't match (${a.toString()} vs ${b.toString()}: ` +
+		`Dimensions don't match (${a.toString()} vs ${b.toString() || 1}): ` +
 			diff.toMismatchString(),
 	);
 }

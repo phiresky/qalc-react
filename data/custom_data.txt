@@ -1,18 +1,26 @@
+
+# I use hours far more often than the planck_constant
 planck_constant = h
+delete h
 h = hour 
 
 Ah = A h
 
 E = energy
 
+delete °C
 °C = tempC
+delete °F
 °F = tempF
 
 fibonacci = x => x >= 2 && fibonacci(x-1) + fibonacci(x-2) || x
 
 spheresurface = r => 4 pi r^2
 
-delete(in) # to avoid confusion
+
+# people might try to write either `10 in to cm` (inches to cm) or `10 kg in pounds`, which would be syntactically different.
+# to avoid confusion, disallow both of these
+delete(in)
 
 #
 # computing power
@@ -23,3 +31,10 @@ flo! # one floating point operation
 floating_point_operation = flo
 
 flops = flo/s
+
+
+# cryptocurrency
+
+bitcoin!
+BTC = bitcoin
+satoshi = (1/100million) bitcoin

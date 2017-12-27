@@ -1,17 +1,41 @@
 import * as React from "react";
 import lzString from "lz-string";
-import { parseEvaluate, qalculate } from "./libqalc/evaluator";
-import * as evaluator from "./libqalc/evaluator";
+import { qalculate, qalculationHasSideeffect, parseEvaluate } from "./libqalc";
 import { UnitNumber } from "./unitNumber";
 import { TaggedString } from "./output";
 import * as queryString from "query-string";
 import scope from "./libqalc/globalScope";
 import { render } from "react-dom";
+import Tooltip from "rc-tooltip";
+import { observable } from "mobx";
+import "../style.scss";
+import "rc-tooltip/assets/bootstrap_white.css";
+import { observer } from "mobx-react";
 
-class UnitNumberDisplay extends React.Component<
-	{ text: TaggedString; onClickUnit: (u: UnitNumber) => void },
-	{}
-> {
+@observer
+class DefinitionOvelay extends React.Component<{ unit: UnitNumber }> {
+	@observable definition: TaggedString | null = null;
+	componentDidUpdate() {
+		this.load();
+	}
+	async load() {
+		this.definition = await qalculate(this.props.unit.id!);
+	}
+	render() {
+		if (this.definition)
+			return (
+				<UnitNumberDisplay
+					text={this.definition}
+					onClickUnit={() => {}}
+				/>
+			);
+		return <div />;
+	}
+}
+class UnitNumberDisplay extends React.Component<{
+	text: TaggedString;
+	onClickUnit: (u: UnitNumber) => void;
+}> {
 	constructor(props: { text: TaggedString; onClickUnit: any }) {
 		super(props);
 	}
@@ -20,16 +44,20 @@ class UnitNumberDisplay extends React.Component<
 			if (typeof x === "string") return <span key={i}>{x}</span>;
 			else if (x instanceof UnitNumber)
 				return (
-					<a
+					<Tooltip
 						key={i}
-						href="#"
-						onClick={e => {
-							this.props.onClickUnit(x as any);
-							e.preventDefault();
-						}}
+						overlay={() => <DefinitionOvelay unit={x} />}
 					>
-						{x.toString()}
-					</a>
+						<a
+							href="#"
+							onClick={e => {
+								this.props.onClickUnit(x as any);
+								e.preventDefault();
+							}}
+						>
+							{x.toString()}
+						</a>
+					</Tooltip>
 				);
 			else if (x instanceof TaggedString)
 				return this.taggedStringToHtml(x);
@@ -111,22 +139,24 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 	.map(line => line.trim())
 	.filter(line => line.length > 0)
 	.map(line => line.split("|")[0]);
-function loadPresetLines() {
+async function loadPresetLines() {
 	let presets = presetLines;
 	let { state } = queryString.parse(location.hash);
 	if (state)
 		presets = JSON.parse(
 			lzString.decompressFromEncodedURIComponent(state as string),
 		);
-	presets.map(input =>
-		qalculate(input)
-			.then(output => guiInst.addLine(new GuiLineElement(input, output)))
-			.catch(error =>
-				guiInst.addLine(
-					new GuiLineElement(input, new TaggedString("" + error)),
+	const lines = await Promise.all(
+		presets.map(input =>
+			qalculate(input)
+				.then(output => new GuiLineElement(input, output))
+				.catch(
+					error =>
+						new GuiLineElement(input, new TaggedString("" + error)),
 				),
-			),
+		),
 	);
+	for (const line of lines) guiInst.addLine(line);
 }
 
 class UnitCompleteInput extends React.Component<
@@ -254,9 +284,9 @@ export class GUI extends React.Component<{}, GuiState> {
 			currentOutput: new TaggedString(),
 		} as any);
 	}
-	setInput(input: string) {
+	async setInput(input: string) {
 		this.setState({ currentInput: input } as any);
-		if (/[=≈]/.test(input))
+		if (await qalculationHasSideeffect(input))
 			this.setState({
 				currentOutput: new TaggedString("press enter to execute"),
 			} as any);
@@ -353,4 +383,4 @@ export class GUI extends React.Component<{}, GuiState> {
 }
 
 const gui = render(<GUI />, document.getElementById("app"));
-Object.assign(window, { gui, evaluator });
+Object.assign(window, { gui });

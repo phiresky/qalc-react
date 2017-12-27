@@ -105,9 +105,11 @@ export class InfixFunctionCallNode extends FunctionCallNode {
 		else return result;
 	}
 	toDebugString(): string {
-		return `(${this.operands[0].toDebugString()} ${
-			this.fnname
-		} ${this.operands[1].toDebugString()})`;
+		//if (this.operands.length !== 2)
+		//	throw Error(`${this} has ${this.operands.length} ≠ 2 operands`);
+		return `(${this.operands[0].toDebugString()} ${this.fnname} ${
+			this.operands[1] ? this.operands[1].toDebugString() : ""
+		})`;
 	}
 }
 export function rpnToTree(tokens: Iterable<RPNToken>): Node {
@@ -122,8 +124,12 @@ export function rpnToTree(tokens: Iterable<RPNToken>): Node {
 						op.arity
 					} arguments, only got ${stack.length}`,
 				);
-			const args = stack.splice(stack.length - op.arity);
-			stack.push(new InfixFunctionCallNode(token.str.trim(), args));
+			stack.push(
+				new InfixFunctionCallNode(
+					token.str.trim(),
+					stack.splice(stack.length - op.arity),
+				),
+			);
 		} else if (token.type === RPNTokenType.UnaryOperator) {
 			const op = unaryOperators[token.str.trim()];
 			if (stack.length < op.arity)

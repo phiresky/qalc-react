@@ -11,36 +11,45 @@ export default class SpecialUnitNumber extends UnitNumber {
 	get dimensions(): DimensionMap {
 		throw Error("can't get function.dimensions");
 	}
-	fn: ((arg: UnitNumber) => UnitNumber) | null;
+	fn: ((arg: UnitNumber, mode: "left" | "right") => UnitNumber) | null;
 	fnTree: Tree.Node | null;
+	hasSideEffects: boolean;
 	readonly inverse: SpecialUnitNumber;
-	constructor(
-		fnTree: Tree.Node | null,
-		fn: ((arg: UnitNumber) => UnitNumber) | null,
-		inverse: SpecialUnitNumber | null,
-		id: string | null,
-		inverseFnTree: Tree.Node | null = null,
-		inverseFn: ((arg: UnitNumber) => UnitNumber) | null = null,
-	) {
-		super(null!, null!, id);
-		this.fnTree = fnTree;
-		this.fn = fn;
+	constructor(meta: {
+		fnTree?: Tree.Node;
+		fn?: ((arg: UnitNumber, mode: "left" | "right") => UnitNumber);
+		inverse?: SpecialUnitNumber;
+		id?: string;
+		inverseFnTree?: Tree.Node;
+		inverseFn?: ((arg: UnitNumber, mode: "left" | "right") => UnitNumber);
+		hasSideEffects: boolean;
+	}) {
+		super(null!, null!, meta.id);
+		this.fnTree = meta.fnTree || null;
+		this.fn = meta.fn || null;
+		this.hasSideEffects = meta.hasSideEffects;
 		this.inverse =
-			inverse ||
-			new SpecialUnitNumber(inverseFnTree, inverseFn, this, id + "^-1");
+			meta.inverse ||
+			new SpecialUnitNumber({
+				fnTree: meta.inverseFnTree,
+				fn: meta.inverseFn,
+				inverse: this,
+				id: meta.id + "^-1",
+				hasSideEffects: meta.hasSideEffects,
+			});
 	}
 	withIdentifier(id: string): SpecialUnitNumber {
-		return new SpecialUnitNumber(
-			this.fnTree,
-			this.fn,
-			null,
+		return new SpecialUnitNumber({
+			fnTree: this.fnTree || undefined,
+			fn: this.fn || undefined,
 			id,
-			this.inverse.fnTree,
-			this.inverse.fn,
-		);
+			inverseFnTree: this.inverse.fnTree || undefined,
+			inverseFn: this.inverse.fn || undefined,
+			hasSideEffects: this.hasSideEffects,
+		});
 	}
-	mul(other: UnitNumber, _reversed = false): UnitNumber {
-		if (this.fn) return this.fn(other);
+	mul(other: UnitNumber, reversed = false): UnitNumber {
+		if (this.fn) return this.fn(other, reversed ? "right" : "left");
 		throw Error(`function not defined: ${this}`);
 	}
 	div(other: UnitNumber, reversed = false): UnitNumber {
@@ -55,10 +64,12 @@ export default class SpecialUnitNumber extends UnitNumber {
 		if (other.value.equals(-1)) return this.inverse;
 		throw Error(`can't pow ${this} with ${other}`);
 	}
+	/** TODO: replace this with normal assignment / replacement? */
 	assign(other: UnitNumber) {
 		if (other.isSpecial()) {
 			this.fn = other.fn;
 			this.fnTree = other.fnTree;
+			this.hasSideEffects = other.hasSideEffects;
 		} else throw Error("can't assign non-function to function");
 	}
 	isSpecial(): this is SpecialUnitNumber {

@@ -5,9 +5,11 @@ import { evaluate } from "./evaluator";
 import Scope from "./scope";
 
 function makeFn(fn: (...args: UnitNumber[]) => UnitNumber): QalcFunction {
-	const fn2 = fn as QalcFunction;
-	fn2.rawInput = false;
-	return fn2;
+	return {
+		apply: (node, scope) =>
+			fn(...node.operands.map(arg => evaluate(arg, scope).value)),
+		hasSideEffects: () => false,
+	};
 }
 function memberAlias(
 	fnname: "mul" | "div" | "plus" | "pow" | "minus" | "convertTo",
@@ -19,11 +21,17 @@ function memberAlias(
 }
 
 function makeRawFn(
-	fn: (args: Tree.FunctionCallNode, scope: Scope) => UnitNumber,
+	hasSideEffects: boolean | (() => boolean),
+	apply: (args: Tree.FunctionCallNode, scope: Scope) => UnitNumber,
 ): QalcFunction {
-	const fn2 = fn as QalcFunction;
-	fn2.rawInput = true;
-	return fn2;
+	if (typeof hasSideEffects !== "function") {
+		const val = hasSideEffects;
+		hasSideEffects = () => val;
+	}
+	return {
+		apply,
+		hasSideEffects,
+	};
 }
 const yes = UnitNumber.one;
 const no = UnitNumber.zero;
@@ -31,7 +39,7 @@ export const unaryOperators: { [name: string]: QalcFunction } = {
 	"-": makeFn(l => l.mul(UnitNumber.minusOne)),
 	"/": makeFn(l => UnitNumber.one.div(l)),
 };
-const assignment = makeRawFn((node, scope) => {
+const assignment = makeRawFn(true, (node, scope) => {
 	const [name, val] = node.operands;
 	const evNode = node as Tree.EvaluatedNode;
 	if (name instanceof Tree.IdentifierNode) {
@@ -47,7 +55,7 @@ const assignment = makeRawFn((node, scope) => {
 export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 	"=": assignment,
 	"≈": assignment,
-	"!": makeRawFn((node, scope) => {
+	"!": makeRawFn(true, (node, scope) => {
 		const [name, oth] = node.operands;
 		if (oth) throw Error("! must be at end of line");
 		const evNode = node as Tree.EvaluatedNode;
@@ -57,13 +65,13 @@ export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 			return evNode.value;
 		} else throw Error("invalid definition");
 	}),
-	"=>": makeRawFn((node, scope) => {
+	"=>": makeRawFn(false, (node, scope) => {
 		const [argNameNode, val] = node.operands;
 		if (argNameNode instanceof Tree.IdentifierNode) {
 			const argName = argNameNode.identifier;
-			return new SpecialUnitNumber(
-				val,
-				arg => {
+			return new SpecialUnitNumber({
+				fnTree: val,
+				fn: arg => {
 					const argval = new Tree.IdentifierNode(
 						argName,
 					) as Tree.EvaluatedNode;
@@ -73,9 +81,8 @@ export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 						scope.withNew([argName, argval]),
 					).value;
 				},
-				null,
-				null,
-			);
+				hasSideEffects: false,
+			});
 		} else throw Error("invalid lambda definition");
 	}),
 	">": makeFn(
@@ -115,11 +122,11 @@ export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 		),
 	),
 
-	"&&": makeRawFn(({ operands: [a, b] }, scope) => {
+	"&&": makeRawFn(false, ({ operands: [a, b] }, scope) => {
 		const aEv = evaluate(a, scope).value;
 		return aEv.value.isZero() ? evaluate(b, scope).value : aEv;
 	}),
-	"||": makeRawFn(({ operands: [a, b] }, scope) => {
+	"||": makeRawFn(false, ({ operands: [a, b] }, scope) => {
 		const aEv = evaluate(a, scope).value;
 		return !aEv.value.isZero() ? evaluate(b, scope).value : aEv;
 	}),

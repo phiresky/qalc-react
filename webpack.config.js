@@ -20,9 +20,7 @@ const plugins = [
 		mobile: true,
 		scripts: [],
 		chunks: ["gui"],
-		links: [
-			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
-		],
+		links: [],
 		// remove additional newlines from the template
 		// (https://github.com/jaketrent/html-webpack-template/issues/40)
 		minify: {
@@ -89,6 +87,7 @@ module.exports = {
 				},
 			},
 			{ test: /\.css$/, loader: "style-loader!css-loader" },
+			{ test: /\.scss$/, loader: "style-loader!css-loader!sass-loader" },
 			{ test: /\.json$/, loader: "json-loader" },
 			{ test: /\.(txt|units)$/, loader: "raw-loader" },
 		],

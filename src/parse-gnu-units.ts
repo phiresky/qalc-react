@@ -76,6 +76,8 @@ function parseLine(line: string): any[] {
 		else if (value === "!dimensionless") return [variable + " = 1"];
 		else throw Error("invalid value: " + value);
 	}
+	// ignore mapped functions
+	if (variable.search(/[\[]/) >= 0) return [];
 	if (variable.endsWith("-")) variable = variable.replace(/-$/, "_");
 	if (variable === "to" || value.match(/\bto\b/)) {
 		console.warn("skipping", line);

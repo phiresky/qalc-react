@@ -2,6 +2,7 @@ import * as Tree from "./Tree";
 import { UnitNumber, SpecialUnitNumber } from "../unitNumber";
 import { evaluate } from "./evaluator";
 import * as util from "./util";
+import { FunctionDefinition } from "./functions";
 
 export type ScopeMaps = Map<string, Tree.Node>[];
 
@@ -20,17 +21,32 @@ export default class Scope {
 		if (scopes) this.scopes = scopes;
 	}
 
-	addFunctions(...fns: [string, ((...arg: UnitNumber[]) => UnitNumber)][]) {
-		for (const [name, fn] of fns) {
+	addFunctions(...fns: FunctionDefinition[]) {
+		for (const {
+			name,
+			fn,
+			hasSideEffects = false,
+			mode = "leftOnly",
+		} of fns) {
 			const builtin = new Tree.IdentifierNode(
 				"[builtin]",
 			) as Tree.EvaluatedNode;
-			builtin.value = new SpecialUnitNumber(
-				new Tree.NumberNode("[built in]"),
-				fn,
-				null,
-				null,
-			);
+			function apply(a: UnitNumber, modeB: "left" | "right"): UnitNumber {
+				if (modeB === "left" && mode === "rightOnly")
+					throw Error(
+						`${name} must be invoked as "x ${name}" not "${name} x"`,
+					);
+				if (modeB === "right" && mode === "leftOnly")
+					throw Error(
+						`${name} must be invoked as "${name} x" not "x ${name}"`,
+					);
+				return fn(a);
+			}
+			builtin.value = new SpecialUnitNumber({
+				fnTree: new Tree.NumberNode("[built in]"),
+				fn: apply,
+				hasSideEffects,
+			});
 			evaluate(
 				new Tree.InfixFunctionCallNode("=", [
 					new Tree.IdentifierNode(name),
@@ -44,7 +60,9 @@ export default class Scope {
 	setUnit(name: string, val: Tree.Node) {
 		if (this.globalScope.has(name))
 			throw Error(
-				`Unit ${name} already exists.\nUse delete(${name}) to remove it.`,
+				`Unit ${name} already exists.\nUse delete(${name}) to remove it. (${this.globalScope.get(
+					name,
+				)!.toDebugString()})`,
 			);
 		this.globalScope.set(name, val);
 	}

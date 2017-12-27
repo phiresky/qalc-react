@@ -2,63 +2,65 @@ import { UnitNumber } from "../unitNumber";
 import * as Tree from "./Tree";
 import Scope from "./scope";
 import scope from "./globalScope";
-import { evaluate } from "./evaluator";
 
-export type QalcFunction =
-	| (((...args: UnitNumber[]) => UnitNumber) & ({ rawInput: false }))
-	| (((node: Tree.FunctionCallNode, scope: Scope) => UnitNumber) &
-			({ rawInput: true }));
-
-export function applyFunction(
-	fn: QalcFunction,
-	node: Tree.FunctionCallNode,
-	scope: Scope,
-) {
-	if (fn.rawInput) return fn(node, scope);
-	else return fn(...node.operands.map(arg => evaluate(arg, scope).value));
+export interface QalcFunction {
+	apply(node: Tree.FunctionCallNode, scope: Scope): UnitNumber;
+	hasSideEffects(node: Tree.FunctionCallNode, scope: Scope): boolean;
 }
-
-export const internalFunctions: [
-	string,
-	((...arg: UnitNumber[]) => UnitNumber)
-][] = [
-	["sqrt", num => num.pow(0.5)],
-	[
-		"ln",
-		num => {
+export interface FunctionDefinition {
+	name: string;
+	fn: (arg: UnitNumber) => UnitNumber;
+	hasSideEffects?: true;
+	/**
+	 * * leftOnly: `log 10`
+	 * * rightOnly: `10 °C`
+	 * * both: `fn x` and `x fn`
+	 *
+	 * default: leftOnly
+	 */
+	mode?: "leftOnly" | "rightOnly" | "leftAndRight";
+}
+export const internalFunctions: FunctionDefinition[] = [
+	{ name: "sqrt", fn: num => num.pow(0.5) },
+	{
+		name: "ln",
+		fn: num => {
 			num.dimensions.assertEmpty("argument of ln()");
 			return new UnitNumber(num.value.ln());
 		},
-	],
-	[
-		"delete",
-		num => {
+	},
+	{
+		name: "delete",
+		fn: num => {
 			if (!num.id) throw Error("has no ID");
 			return scope.deleteUnit(num.id) ? UnitNumber.one : UnitNumber.zero;
 		},
-	],
-	[
-		"log2",
-		num => (
+		hasSideEffects: true,
+	},
+	{
+		name: "log2",
+		fn: num => (
 			num.dimensions.assertEmpty(), new UnitNumber(num.value.logarithm(2))
 		),
-	],
-	[
-		"exp",
-		num => (num.dimensions.assertEmpty(), new UnitNumber(num.value.exp())),
-	],
-	[
-		"tan",
-		num => (
+	},
+	{
+		name: "exp",
+		fn: num => (
+			num.dimensions.assertEmpty(), new UnitNumber(num.value.exp())
+		),
+	},
+	{
+		name: "tan",
+		fn: num => (
 			num.dimensions.assertEmpty(),
 			new UnitNumber(Math.tan(num.value.toNumber()))
 		),
-	],
-	[
-		"log",
-		num => (
+	},
+	{
+		name: "log",
+		fn: num => (
 			num.dimensions.assertEmpty(),
 			new UnitNumber(num.value.logarithm(10))
 		),
-	],
+	},
 ];
