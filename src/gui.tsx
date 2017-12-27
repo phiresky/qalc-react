@@ -239,14 +239,15 @@ export class GUI extends React.Component<{}, GuiState> {
 		if (input.trim().length > 0)
 			qalculate(input)
 				.then(output => this.addLine(new GuiLineElement(input, output)))
-				.catch(reason =>
+				.catch(reason => {
+					console.error("could not qalc", input, reason);
 					this.addLine(
 						new GuiLineElement(
 							input,
 							new TaggedString("" + reason),
 						),
-					),
-				);
+					);
+				});
 		this.setState({
 			currentInput: "",
 			currentOutput: new TaggedString(),

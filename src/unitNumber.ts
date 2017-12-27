@@ -121,8 +121,8 @@ export class UnitNumber {
 	div(other: UnitNumber): UnitNumber {
 		if (other.isSpecial()) return other.div(this, true);
 		let name: string | null = null;
-		if (this.dimensions.size == 0 && other.dimensions.size == 0)
-			name = this.value.toString() + "|" + other.value.toString();
+		//if (this.dimensions.size == 0 && other.dimensions.size == 0)
+		//	name = this.value.toString() + "|" + other.value.toString();
 		return new UnitNumber(
 			this.value.div(other.value),
 			DimensionMap.join(

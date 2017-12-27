@@ -460,6 +460,7 @@ function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 }
 
 export function define(unit: EvaluatedNode): TaggedString {
+	console.log(unit.value);
 	if (unit instanceof Tree.IdentifierNode) unit = getUnit(unit.value.id!)!;
 	const t = TaggedString.t;
 	const canonical = getCanonical(unit.value);
@@ -507,7 +508,6 @@ ${
 	res.vals = res.vals.map(
 		x => (typeof x === "string" ? x.replace(/\n\s*/g, "\n") : x),
 	);
-	console.log(res.vals);
 	return res;
 }
 function unitConvertedTaggedString(node: Tree.Node) {
@@ -523,7 +523,12 @@ export async function qalculate(input: string): Promise<TaggedString> {
 	if (input.trim().length === 0) return new TaggedString();
 	input = stripCommentsTrim(input);
 	let error = "";
-	const tokens = [...parser.tokenize(input)];
+	let tokens: AToken[] | null = null;
+	try {
+		tokens = [...parser.tokenize(input)];
+	} catch (e) {
+		error += e + "\n";
+	}
 	let preproc: AToken[] | null = null;
 	if (tokens)
 		try {
@@ -561,7 +566,9 @@ res = ${
 				)}`
 			: "err"
 	}
-tokens = ${tokens.map(t => parser.tokenToDebugString(t)).join(" ")}
+tokens = ${
+		tokens ? tokens.map(t => parser.tokenToDebugString(t)).join(" ") : "err"
+	}
 preproc = ${
 		preproc
 			? preproc.map(t => parser.tokenToDebugString(t)).join(" ")

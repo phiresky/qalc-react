@@ -404,6 +404,12 @@ export namespace Tree {
 				stack.push(new InfixFunctionCallNode(token.str.trim(), args));
 			} else if (token.type === RPNTokenType.UnaryOperator) {
 				const op = unaryOperators[token.str.trim()];
+				if (stack.length < op.arity)
+					throw Error(
+						`Operator '${token.str.trim()}' needs ${
+							op.arity
+						} arguments, only got ${stack.length}`,
+					);
 				stack.push(
 					new UnaryFunctionCallNode(
 						token.str.trim(),
