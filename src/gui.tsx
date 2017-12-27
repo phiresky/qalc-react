@@ -1,12 +1,12 @@
 import * as React from "react";
 import lzString from "lz-string";
-import * as ReactDOM from "react-dom";
-import { parseEvaluate, qalculate, unitMap, getUnit } from "./evaluator";
-import * as evaluator from "./evaluator";
-import { tokenize, TokenType } from "./parser";
+import { parseEvaluate, qalculate } from "./libqalc/evaluator";
+import * as evaluator from "./libqalc/evaluator";
 import { UnitNumber } from "./unitNumber";
 import { TaggedString } from "./output";
 import * as queryString from "query-string";
+import scope from "./libqalc/globalScope";
+import { render } from "react-dom";
 
 class UnitNumberDisplay extends React.Component<
 	{ text: TaggedString; onClickUnit: (u: UnitNumber) => void },
@@ -156,8 +156,8 @@ class UnitCompleteInput extends React.Component<
 			try {
 				const evaled = parseEvaluate(tokens.join(" "));
 				const val = evaled.value;
-				for (const name of unitMap.keys()) {
-					const unit = getUnit(name)!.value;
+				for (const name of scope.getAllUnits()) {
+					const unit = scope.getUnit(name)!.value;
 					if (
 						!unit.isSpecial() &&
 						unit.dimensions.equals(val.dimensions)
@@ -169,7 +169,8 @@ class UnitCompleteInput extends React.Component<
 			}
 		}
 		if (/[a-z]/i.test(last)) {
-			const units = poss.length > 0 ? poss.splice(0) : unitMap.keys();
+			const units =
+				poss.length > 0 ? poss.splice(0) : scope.getAllUnits();
 
 			for (const unitName of units) {
 				if (unitName.indexOf(last) >= 0) poss.push(unitName);
@@ -328,7 +329,7 @@ export class GUI extends React.Component<{}, GuiState> {
 			</div>
 		);
 	}
-	componentDidUpdate(prevProps: any, prevState: GuiState) {
+	componentDidUpdate(_prevProps: any, prevState: GuiState) {
 		if (prevState.lines !== this.state.lines) {
 			history.replaceState(
 				{},
@@ -351,5 +352,5 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 }
 
-const gui = ReactDOM.render(<GUI />, document.getElementById("app"));
+const gui = render(<GUI />, document.getElementById("app"));
 Object.assign(window, { gui, evaluator });

@@ -23,6 +23,12 @@ function parseLine(line: string): any[] {
 	if (commentStart >= 0) line = line.substr(0, commentStart);
 	line = line.trim();
 	if (line.length === 0) return [];
+
+	// special case hacks
+	if (line.startsWith("grit_ansicoated")) return [];
+	if (line.startsWith("grit_ansibonded")) return [];
+	line = line.replace("saotome&", "saotomeand");
+
 	if (line.startsWith("!")) {
 		const [command, ...args] = line
 			.substr(1)
@@ -71,14 +77,17 @@ function parseLine(line: string): any[] {
 		else throw Error("invalid value: " + value);
 	}
 	if (variable.endsWith("-")) variable = variable.replace(/-$/, "_");
-	if (variable === "to") return [];
+	if (variable === "to" || value.match(/\bto\b/)) {
+		console.warn("skipping", line);
+		return [];
+	}
 	value = value
 		.replace(/\bper\b/g, "/")
 		.replace(/([^0-9])([a-z]+)([2-9])\b([^(]|$)/g, "$1$2^$3$4");
 	const fnCall = variable.match(/(.*)\((.*)\)/);
 	if (fnCall) {
 		//console.warn("\t"+variable+ " = " +value);
-		const [_, fnName, argName] = fnCall;
+		const [, fnName, argName] = fnCall;
 		if (argName === "") return [fnName + " = " + value];
 		else {
 			const [fn, inverseFn] = value
@@ -113,4 +122,4 @@ function parseFile(fname: string): any[] {
 }
 console.log("# source: GNU Units");
 const res = parseFile(dir + "/definitions.units");
-fs.writeFileSync(output, JSON.stringify(res));
+fs.writeFileSync(output, JSON.stringify(res, null, "\t"));

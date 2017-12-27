@@ -5,7 +5,6 @@ import * as mobx from "mobx";
 import * as mobxReact from "mobx-react";
 import DevTools from "mobx-react-devtools";
 
-const dir = "./gnu-units-2.12/";
 enum Type {
 	Deleted,
 	Normal,
@@ -145,7 +144,7 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 		this.store = this.props.store;
 		document.addEventListener(
 			"selectionchange",
-			e => this.getSelection(document.getSelection()),
+			_ => this.getSelection(document.getSelection()),
 			false,
 		);
 		document.addEventListener("keyup", e =>
@@ -201,7 +200,7 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 
 	@mobx.action
 	getSelection(s: Selection) {
-		const [boxes, lines] = [this.store.boxes, this.store.lines];
+		// const [boxes, lines] = [this.store.boxes, this.store.lines];
 		let boxStartI =
 			this.pres.get(s.anchorNode) ||
 			this.pres.get(s.anchorNode.parentElement!);

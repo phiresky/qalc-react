@@ -1,13 +1,12 @@
-const path = require('path');
-const webpack = require('webpack');
-const Copy = require('copy-webpack-plugin');
+const path = require("path");
+const webpack = require("webpack");
+const Copy = require("copy-webpack-plugin");
 const Html = require("html-webpack-plugin");
 const Template = require("html-webpack-template");
 
 const production = process.env.NODE_ENV == "production";
 const plugins = [
-	new webpack.DefinePlugin({
-	}),
+	new webpack.DefinePlugin({}),
 	new Html({
 		inject: false,
 		// use more flexible html-webpack-template
@@ -16,43 +15,50 @@ const plugins = [
 		// add a div with this id in which we will mount our root react component
 		appMountId: "app",
 		// webpage title
-		title: "Stats",
+		title: "Qalc",
 		// set width=device-width header for mobile devices
 		mobile: true,
 		scripts: [],
-		links: ["https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"],
+		chunks: ["gui"],
+		links: [
+			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
+		],
 		// remove additional newlines from the template
 		// (https://github.com/jaketrent/html-webpack-template/issues/40)
 		minify: {
 			collapseWhitespace: true,
-			preserveLineBreaks: true
-		}
+			preserveLineBreaks: true,
+		},
 	}),
 ];
 if (production) {
-	plugins.push(new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } }));
-	plugins.push(new webpack.DefinePlugin({
-		'process.env': {
-			'NODE_ENV': `"production"`
-		}
-	}));
+	plugins.push(
+		new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } }),
+	);
+	plugins.push(
+		new webpack.DefinePlugin({
+			"process.env": {
+				NODE_ENV: `"production"`,
+			},
+		}),
+	);
 }
 module.exports = {
 	entry: {
 		gui: "./src/gui",
-		categorizeHelper: ["./src/GnuUnitsCategorizeHelperMain"]
+		categorizeHelper: ["./src/GnuUnitsCategorizeHelperMain"],
 	},
-	devtool: 'cheap-module-eval-source-map',
+	devtool: "cheap-module-eval-source-map",
 	output: {
 		path: path.join(__dirname, "bin"),
-		filename: "[name].[hash].js"
+		filename: "[name].[hash].js",
 	},
 	node: {
-		fs: "empty"
+		fs: "empty",
 	},
 	module: {
 		loaders: [
-			{
+			/*{
 				test: /\.js$/,
 				exclude: /(node_modules|bower_components)/,
 				loader: 'babel-loader',
@@ -71,20 +77,26 @@ module.exports = {
 					],
 
 				}
-			},
+			},*/
 			// all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
 			{
-				test: /\.tsx?$/, loaders: ['ts-loader']
+				test: /\.tsx?$/,
+				loader: "ts-loader",
+				options: {
+					compilerOptions: {
+						module: "esnext",
+					},
+				},
 			},
 			{ test: /\.css$/, loader: "style-loader!css-loader" },
 			{ test: /\.json$/, loader: "json-loader" },
-			{ test: /\.(txt|units)$/, loader: 'raw-loader'}
+			{ test: /\.(txt|units)$/, loader: "raw-loader" },
 		],
 	},
 	resolve: {
 		modules: ["node_modules"],
 
-		extensions: [".webpack.js", ".web.js", ".tsx", ".ts", ".jsx", ".js"]
+		extensions: [".webpack.js", ".web.js", ".tsx", ".ts", ".jsx", ".js"],
 	},
-	plugins
+	plugins,
 };
