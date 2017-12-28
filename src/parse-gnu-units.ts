@@ -11,7 +11,8 @@ const ignoring: boolean[] = [];
 let lineCache = "";
 import * as steps from "../data/gnu-units-categorize-steps.json";
 
-function parseLine(line: string): any[] {
+type Line = string;
+function parseLine(line: string): Line[] {
 	if (line.endsWith("\\")) {
 		lineCache += line.substr(0, line.length - 1);
 		return [];
@@ -103,14 +104,15 @@ function parseLine(line: string): any[] {
 	}
 	return [variable + " = " + value];
 }
+type Info = { headings: string[]; comment: string };
 
-function parseFile(fname: string): any[] {
+function parseFile(fname: string): { line: Line; info: Info }[] {
 	const file = fs.readFileSync(fname, "utf-8");
 	const categoryStore = new CategorizeStore(
 		file,
 		fname.endsWith("definitions.units") ? steps : [],
 	);
-	const all = [];
+	const all: { line: Line; info: Info }[] = [];
 	for (let i = 0; i < categoryStore.lines.length; i++) {
 		const line = categoryStore.lines[i];
 		const parsed = parseLine(line);

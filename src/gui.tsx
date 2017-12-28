@@ -13,45 +13,65 @@ import "rc-tooltip/assets/bootstrap_white.css";
 import { observer } from "mobx-react";
 
 @observer
-class DefinitionOvelay extends React.Component<{ unit: UnitNumber }> {
+class DefinitionOvelay extends React.Component<{
+	unit: UnitNumber;
+	onClickUnit: (u: UnitNumber) => void;
+}> {
 	@observable definition: TaggedString | null = null;
-	componentDidUpdate() {
+	constructor(p: any) {
+		super(p);
 		this.load();
 	}
 	async load() {
-		this.definition = await qalculate(this.props.unit.id!);
+		try {
+			this.definition = await qalculate(this.props.unit.id!);
+		} catch (e) {
+			this.definition = new TaggedString(e.message);
+		}
 	}
 	render() {
 		if (this.definition)
 			return (
-				<UnitNumberDisplay
+				<TaggedStringDisplay
 					text={this.definition}
-					onClickUnit={() => {}}
+					ignore={[this.props.unit]}
+					onClickUnit={this.props.onClickUnit}
 				/>
 			);
-		return <div />;
+		return <div>Loading</div>;
 	}
 }
-class UnitNumberDisplay extends React.Component<{
+class TaggedStringDisplay extends React.Component<{
 	text: TaggedString;
+	ignore?: UnitNumber[];
 	onClickUnit: (u: UnitNumber) => void;
 }> {
-	constructor(props: { text: TaggedString; onClickUnit: any }) {
+	constructor(props: any) {
 		super(props);
 	}
 	taggedStringToHtml(str: TaggedString): any[] {
 		return str.vals.map((x, i) => {
 			if (typeof x === "string") return <span key={i}>{x}</span>;
-			else if (x instanceof UnitNumber)
+			else if (x instanceof UnitNumber) {
+				if (
+					this.props.ignore &&
+					this.props.ignore.some(i => i.id === x.id)
+				)
+					return <span key={i}>{x.toString()}</span>;
 				return (
 					<Tooltip
 						key={i}
-						overlay={() => <DefinitionOvelay unit={x} />}
+						overlay={() => (
+							<DefinitionOvelay
+								unit={x}
+								onClickUnit={this.props.onClickUnit}
+							/>
+						)}
 					>
 						<a
 							href="#"
 							onClick={e => {
-								this.props.onClickUnit(x as any);
+								this.props.onClickUnit(x);
 								e.preventDefault();
 							}}
 						>
@@ -59,7 +79,7 @@ class UnitNumberDisplay extends React.Component<{
 						</a>
 					</Tooltip>
 				);
-			else if (x instanceof TaggedString)
+			} else if (x instanceof TaggedString)
 				return this.taggedStringToHtml(x);
 			else throw Error("unknown value");
 		});
@@ -114,7 +134,7 @@ export class GUILine extends React.Component<
 				>
 					> {inp}
 				</p>
-				<UnitNumberDisplay
+				<TaggedStringDisplay
 					text={this.props.line.output}
 					onClickUnit={this.props.onClickUnit}
 				/>
@@ -321,7 +341,7 @@ export class GUI extends React.Component<{}, GuiState> {
 						/>
 					</form>
 					{this.state.currentOutput.vals.length > 0 ? (
-						<UnitNumberDisplay
+						<TaggedStringDisplay
 							text={this.state.currentOutput}
 							onClickUnit={unit => this.showUnit(unit)}
 						/>

@@ -105,14 +105,15 @@ export class CategorizeStore {
 			binarySearchIndex(this.boxes, x => x.start, line, false),
 			binarySearchIndex(this.boxes, x => x.end, line, false),
 		);
-		const catTree = [""] as string[];
+		const catTree = [{ str: "", num: 0 }] as { str: string; num: number }[];
 		for (let i = 0; i <= boxI; i++) {
 			const box = this.boxes[i];
 			const level = box.headingLevel || catTree.length - 1;
 			if (box.type == Type.Heading && level <= catTree.length) {
-				catTree.splice(level);
-				catTree.push(
-					this.lines
+				const [old = { str: "", num: 0 }] = catTree.splice(level);
+				catTree.push({
+					num: old.num + 1,
+					str: this.lines
 						.slice(box.start, box.end + 1)
 						.map(line =>
 							line
@@ -122,7 +123,7 @@ export class CategorizeStore {
 						)
 						.join("\n")
 						.trim(),
-				);
+				});
 			}
 		}
 		catTree.shift();
@@ -132,7 +133,17 @@ export class CategorizeStore {
 			.map(line => (line.split("#")[1] || "").trim())
 			.join("\n")
 			.trim();
-		return { headings: catTree, comment };
+		return {
+			headings: catTree.map(
+				(x, i) =>
+					catTree
+						.slice(0, i + 1)
+						.reduce((cum, n) => `${cum}${n.num}.`, "") +
+					" " +
+					x.str,
+			),
+			comment,
+		};
 	}
 }
 @mobxReact.observer

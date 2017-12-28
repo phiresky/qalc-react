@@ -41,7 +41,11 @@ export async function qalculate(
 	const scope = globalScope;
 	if (debug) return qalculateDebug(input);
 	const evaled = evaluate(
-		Tree.rpnToTree(parser.toRPN(parser.preprocess(parser.tokenize(input)))),
+		Tree.rpnToTree(
+			parser.toRPN(
+				parser.preprocess(parser.tokenize(stripCommentsTrim(input))),
+			),
+		),
 		scope,
 	);
 	if (evaled && evaled.value.id) return define(evaled, scope);

@@ -36,8 +36,9 @@ export class NumberNode {
 export class IdentifierNode {
 	constructor(public identifier: string) {}
 	toTaggedString(_parentPrecedence = Infinity) {
-		if (isEvaluated(this)) return (this as any).value.toTaggedString(); // todo: remove cast
-		return new TaggedString(this.identifier);
+		if (isEvaluated(this)) return new TaggedString(this.value);
+		// hack: unit may not exist
+		return new TaggedString(new UnitNumber(0, undefined, this.identifier));
 	}
 	toJSON() {
 		return { type: "IdenifierNode", identifier: this.identifier };

@@ -93,12 +93,10 @@ export function define(unit: EvaluatedNode, scope: Scope): TaggedString {
 	let infoText: TaggedString = t``;
 	if (info) {
 		infoText = t`
-Documentation:
-${info.comment ? "Comment: " + info.comment : ""}
+${info.comment ? info.comment : ""}
 ${
 			info.headings.length
-				? "Category: \n" +
-					info.headings.map(x => `"${x}"`).join("\n -> ")
+				? "\nCategory: " + info.headings.map(x => `${x}`).join("\n -> ")
 				: ""
 		}
 `;
@@ -109,6 +107,7 @@ ${
 	const inverse =
 		unit.value instanceof SpecialUnitNumber && unit.value.inverse.fnTree;
 	let inverseText = inverse ? t`Inverse:    ${inverse.toTaggedString()}` : "";
+	console.log(unit, "totagged");
 	const res = t`Definition: ${unit.toTaggedString()}.
 		${inverseText}
 		${canonicalText}
