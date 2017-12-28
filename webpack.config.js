@@ -53,7 +53,7 @@ if (production) {
 module.exports = {
 	entry: {
 		gui: "./src/gui",
-		categorizeHelper: ["./src/GnuUnitsCategorizeHelperMain"],
+		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
 	},
 	devtool: "cheap-module-eval-source-map",
 	output: {

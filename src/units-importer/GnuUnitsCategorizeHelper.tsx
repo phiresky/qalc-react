@@ -249,7 +249,15 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 					</p>
 					<p>
 						The data is saved to localStorage.executed as a list of
-						the executed commands
+						the executed commands.{" "}
+						<button
+							onClick={() => {
+								localStorage.clear();
+								location.reload();
+							}}
+						>
+							Clear
+						</button>
 					</p>
 				</div>
 				{boxes.map((box, i) => {
