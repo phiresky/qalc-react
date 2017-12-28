@@ -234,7 +234,7 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 		const { boxes, lines } = this.store;
 		let currentIndent = 0;
 		return (
-			<div className="container">
+			<div className="container gnu-units-categorize">
 				<div className="page-header">
 					<p>
 						Select boxes with the mouse. <br />
@@ -366,8 +366,9 @@ function autoparseText(lines: string[]) {
 		});
 	return boxes;
 }
-export function init(str: string) {
-	const actions = JSON.parse(localStorage.getItem("executed") || "[]");
+export function init(str: string, preloadSteps: any[]) {
+	const actions =
+		JSON.parse(localStorage.getItem("executed") || "null") || preloadSteps;
 	ReactDOM.render(
 		<div>
 			<HelperGui
@@ -376,6 +377,6 @@ export function init(str: string) {
 			/>
 			<DevTools />
 		</div>,
-		document.getElementById("root"),
+		document.getElementById("app"),
 	);
 }

@@ -5,28 +5,37 @@ const Html = require("html-webpack-plugin");
 const Template = require("html-webpack-template");
 
 const production = process.env.NODE_ENV == "production";
+const htmlCfg = {
+	inject: false,
+	// use more flexible html-webpack-template
+	// see https://github.com/jaketrent/html-webpack-template#basic-usage for more options
+	template: Template,
+	// add a div with this id in which we will mount our root react component
+	appMountId: "app",
+	// webpage title
+	title: "Qalc",
+	// set width=device-width header for mobile devices
+	mobile: true,
+	scripts: [],
+	chunks: ["gui"],
+	links: [],
+	// remove additional newlines from the template
+	// (https://github.com/jaketrent/html-webpack-template/issues/40)
+	minify: {
+		collapseWhitespace: true,
+		preserveLineBreaks: true,
+	},
+};
 const plugins = [
 	new webpack.DefinePlugin({}),
+	new Html({ ...htmlCfg, chunks: ["gui"] }),
 	new Html({
-		inject: false,
-		// use more flexible html-webpack-template
-		// see https://github.com/jaketrent/html-webpack-template#basic-usage for more options
-		template: Template,
-		// add a div with this id in which we will mount our root react component
-		appMountId: "app",
-		// webpage title
-		title: "Qalc",
-		// set width=device-width header for mobile devices
-		mobile: true,
-		scripts: [],
-		chunks: ["gui"],
-		links: [],
-		// remove additional newlines from the template
-		// (https://github.com/jaketrent/html-webpack-template/issues/40)
-		minify: {
-			collapseWhitespace: true,
-			preserveLineBreaks: true,
-		},
+		...htmlCfg,
+		chunks: ["categorizeHelper"],
+		filename: "GnuUnitsCategorizeHelper.html",
+		links: [
+			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
+		],
 	}),
 ];
 if (production) {

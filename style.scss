@@ -6,3 +6,9 @@
 .pull-right {
 	float: right;
 }
+
+.gnu-units-categorize {
+	::selection {
+		background-color: #cff;
+	}
+}
