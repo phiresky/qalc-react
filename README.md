@@ -1,3 +1,10 @@
+# Hosted Version
+
+* Calculator: https://phiresky.github.io/qalc-react/
+
+* Categorization Display: https://phiresky.github.io/qalc-react/gnuTest.html
+* Categorize Tool: https://phiresky.github.io/qalc-react/GnuUnitsCategorizeHelper.html
+
 # Development
 
 ## preparing
