@@ -50,7 +50,7 @@ class RenderBox extends React.Component<{ store: CategorizeStore; box: Box }> {
 
 		switch (box.type) {
 			case Type.Deleted: {
-				const text = store.getRawText(box).trim();
+				const text = store.getUncommentedText(box);
 				if (text.length === 0) return null;
 				return <p className="deleted-box">{text}</p>;
 			}
@@ -89,7 +89,8 @@ class RenderBox extends React.Component<{ store: CategorizeStore; box: Box }> {
 				const H = "h" + headingLevel;
 				return (
 					<H className="heading-box">
-						{headingsIndex.join(".")}. {store.getHeadingText(box)}
+						{headingsIndex.join(".")}.{" "}
+						{store.getUncommentedText(box)}
 					</H>
 				);
 			}

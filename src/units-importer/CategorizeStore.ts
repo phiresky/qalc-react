@@ -99,6 +99,10 @@ export default class CategorizeStore {
 			child: CatChild,
 			target: Category,
 		) {
+			if (typeof first !== "number") {
+				target.children.push(child);
+				return;
+			}
 			if (rest.length === 0) {
 				if (child.type === "category") {
 					if (target.catChildren[first]) {
@@ -107,7 +111,8 @@ export default class CategorizeStore {
 					target.catChildren[first] = child.category;
 					target.children.push(child);
 				} else {
-					if (!target.catChildren[first]) console.log(target, first);
+					if (!target.catChildren[first])
+						console.log("no place", target, first);
 					else target.catChildren[first].children.push(child);
 				}
 			} else {
@@ -120,13 +125,12 @@ export default class CategorizeStore {
 			const level = box.headingLevel || catTree.length - 1;
 			if (box.type === Type.Heading && level <= catTree.length) {
 				const [old = { str: "", num: -1 }] = catTree.splice(level);
-				const heading = this.getHeadingText(box);
+				const heading = this.getUncommentedText(box);
 				catTree.push({
 					num: old.num + 1,
 					str: heading,
 				});
 				const path = catTree.map(x => x.num).slice(1);
-				console.log("adding", path.join("."), heading);
 				addToRoot(
 					path,
 					{
@@ -161,7 +165,7 @@ export default class CategorizeStore {
 				const [old = { str: "", num: 0 }] = catTree.splice(level);
 				catTree.push({
 					num: old.num + 1,
-					str: this.getHeadingText(box),
+					str: this.getUncommentedText(box),
 				});
 			}
 		}
@@ -210,8 +214,7 @@ export default class CategorizeStore {
 	getRawText(box: Box) {
 		return this.getRawLines(box).join("\n");
 	}
-	getHeadingText(box: Box) {
-		if (box.type !== Type.Heading) throw Error("isnt heading");
+	getUncommentedText(box: Box) {
 		return this.getRawLines(box)
 			.map(line =>
 				line
