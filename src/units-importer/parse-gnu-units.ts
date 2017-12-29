@@ -5,7 +5,7 @@ if (!output) throw Error("specify output file");
 
 import * as fs from "fs";
 
-import { CategorizeStore } from "./GnuUnitsCategorizeHelper";
+import CategorizeStore from "./CategorizeStore";
 const vars: { [name: string]: any } = {};
 const ignoring: boolean[] = [];
 let lineCache = "";

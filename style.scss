@@ -12,3 +12,38 @@
 		background-color: #cff;
 	}
 }
+
+.gnu-rewrite-test {
+	white-space: pre;
+	.clickable {
+		cursor: pointer;
+	}
+	ul.table-of-contents {
+		list-style: none;
+		.toc-line {
+			text-indent: -2em;
+			padding-left: 2em;
+		}
+	}
+	.deleted-box {
+		font-style: italic;
+		color: gray;
+	}
+	.normal-box {
+		&.well {
+			margin-bottom: 0;
+		}
+		td {
+			padding: 8px;
+		}
+		display: inline-block;
+		.content,
+		.comment {
+			float: left;
+		}
+		.comment {
+			margin-left: 1em;
+			margin-bottom: 0;
+		}
+	}
+}

@@ -37,6 +37,14 @@ const plugins = [
 			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
 		],
 	}),
+	new Html({
+		...htmlCfg,
+		chunks: ["gnuTest"],
+		filename: "gnuTest.html",
+		links: [
+			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
+		],
+	}),
 ];
 if (production) {
 	plugins.push(
@@ -54,6 +62,7 @@ module.exports = {
 	entry: {
 		gui: "./src/gui",
 		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
+		gnuTest: ["./src/units-importer/rewrite-gnu-units"],
 	},
 	devtool: "cheap-module-eval-source-map",
 	output: {
