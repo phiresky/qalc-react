@@ -1,23 +1,38 @@
 import { UnitNumber, SpecialUnitNumber } from "../unitNumber";
 import * as Tree from "./Tree";
 import { QalcFunction } from "./functions";
-import { evaluate } from "./evaluator";
+import { evaluate, evaluationHasSideeffect } from "./evaluator";
 import Scope from "./scope";
 
-function makeFn(fn: (...args: UnitNumber[]) => UnitNumber): QalcFunction {
+function makeFn(
+	fn: (...args: UnitNumber[]) => UnitNumber,
+	hasSideEffects: (
+		node: Tree.FunctionCallNode,
+		scope: Scope,
+	) => boolean = () => false,
+): QalcFunction {
 	return {
 		apply: (node, scope) =>
 			fn(...node.operands.map(arg => evaluate(arg, scope).value)),
-		hasSideEffects: () => false,
+		hasSideEffects,
 	};
 }
 function memberAlias(
 	fnname: "mul" | "div" | "plus" | "pow" | "minus" | "convertTo",
 ): QalcFunction {
-	return makeFn((a, b) => {
-		const x: (other: UnitNumber) => UnitNumber = a[fnname];
-		return x.call(a, b);
-	});
+	return makeFn(
+		(a, b) => {
+			const x: (other: UnitNumber) => UnitNumber = a[fnname];
+			return x.call(a, b);
+		},
+		(node, scope) => {
+			if (node.operands.some(op => evaluationHasSideeffect(op, scope)))
+				return true;
+			const [op1, op2] = node.operands;
+			const [o1, o2] = [evaluate(op1, scope), evaluate(op2, scope)];
+			return o1.value.memberFunctionHasSideeffects(fnname, o2.value);
+		},
+	);
 }
 
 function makeRawFn(

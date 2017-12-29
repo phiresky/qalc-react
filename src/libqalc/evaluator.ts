@@ -107,7 +107,6 @@ ${
 	const inverse =
 		unit.value instanceof SpecialUnitNumber && unit.value.inverse.fnTree;
 	let inverseText = inverse ? t`Inverse:    ${inverse.toTaggedString()}` : "";
-	console.log(unit, "totagged");
 	const res = t`Definition: ${unit.toTaggedString()}.
 		${inverseText}
 		${canonicalText}

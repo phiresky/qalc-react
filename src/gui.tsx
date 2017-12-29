@@ -205,7 +205,7 @@ class UnitCompleteInput extends React.Component<
 		super(props);
 		this.state = {};
 	}
-	@observable cursorIndex = -1;
+	@observable cursorIndexChars: number | null = null;
 	inp: HTMLInputElement | null = null;
 	setInput = (u: HTMLInputElement | null) => (this.inp = u);
 	replaceCurrent = (u: string) => {
@@ -223,11 +223,11 @@ class UnitCompleteInput extends React.Component<
 	};
 	tokens() {
 		const tokens = [...tokenize(this.props.value)];
-		if (!this.inp) return { tokens, cursorIndex: null };
+		if (!this.cursorIndexChars) return { tokens, cursorIndex: null };
 		const cursorIndex = tokens.findIndex(
 			t =>
 				t.type !== TokenType.Whitespace &&
-				t.start + t.str.length >= this.cursorIndex,
+				t.start + t.str.length >= this.cursorIndexChars!,
 		);
 		return {
 			tokens,
@@ -237,7 +237,7 @@ class UnitCompleteInput extends React.Component<
 	onChange: React.ChangeEventHandler<HTMLInputElement> = e =>
 		this.props.onChange(e.currentTarget.value);
 	onSelect: React.ReactEventHandler<HTMLInputElement> = e =>
-		(this.cursorIndex = e.currentTarget.selectionStart);
+		(this.cursorIndexChars = e.currentTarget.selectionStart);
 	render() {
 		const { tokens, cursorIndex } = this.tokens();
 		const cursorToken = cursorIndex !== null ? tokens[cursorIndex] : null;
@@ -288,6 +288,8 @@ class UnitCompleteInput extends React.Component<
 					value={this.props.value}
 					onChange={this.onChange}
 					onSelect={this.onSelect}
+					onBlur={() => (this.cursorIndexChars = null)}
+					onFocus={this.onSelect}
 					ref={this.setInput}
 					size={this.props.value.length}
 					autoCorrect={"off"}
@@ -462,4 +464,4 @@ export class GUI extends React.Component<{}, GuiState> {
 }
 
 const gui = render(<GUI />, document.getElementById("app"));
-Object.assign(window, { gui });
+Object.assign(window, { gui, qalculationHasSideeffect, qalculate });

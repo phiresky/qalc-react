@@ -134,3 +134,4 @@ ${error ? "error = " + error : ""}`;
 }
 
 export { parseEvaluate } from "./evaluator";
+export { default as init } from "./init";

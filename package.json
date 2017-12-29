@@ -3,7 +3,8 @@
 		"build": "NODE_ENV=production webpack",
 		"dev": "webpack-dev-server",
 		"parse-gnu-units": "ts-node src/parse-gnu-units data/gnu-units.json",
-		"precommit": "lint-staged"
+		"precommit": "lint-staged",
+		"cli": "node src/cli"
 	},
 	"dependencies": {
 		"@types/lz-string": "^1.3.32",

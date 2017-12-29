@@ -64,6 +64,10 @@ export default class SpecialUnitNumber extends UnitNumber {
 		if (other.value.equals(-1)) return this.inverse;
 		throw Error(`can't pow ${this} with ${other}`);
 	}
+	memberFunctionHasSideeffects(member: string, _other: UnitNumber): boolean {
+		if (member === "mul" || member === "div") return this.hasSideEffects;
+		else return false;
+	}
 	/** TODO: replace this with normal assignment / replacement? */
 	assign(other: UnitNumber) {
 		if (other.isSpecial()) {

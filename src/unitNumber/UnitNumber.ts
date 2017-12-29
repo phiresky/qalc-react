@@ -76,6 +76,14 @@ export default class UnitNumber {
 	minus(other: UnitNumber) {
 		return this.plus(other, -1);
 	}
+	memberFunctionHasSideeffects<K extends keyof this>(
+		member: K,
+		other: UnitNumber,
+	): boolean {
+		if (other.isSpecial())
+			return other.memberFunctionHasSideeffects(member as any, this);
+		return false;
+	}
 	withIdentifier(id: string) {
 		return new UnitNumber(this.value, this.dimensions, id);
 	}
