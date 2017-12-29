@@ -139,11 +139,11 @@ export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 
 	"&&": makeRawFn(false, ({ operands: [a, b] }, scope) => {
 		const aEv = evaluate(a, scope).value;
-		return aEv.value.isZero() ? evaluate(b, scope).value : aEv;
+		return !aEv.value.isZero() ? evaluate(b, scope).value : aEv;
 	}),
 	"||": makeRawFn(false, ({ operands: [a, b] }, scope) => {
 		const aEv = evaluate(a, scope).value;
-		return !aEv.value.isZero() ? evaluate(b, scope).value : aEv;
+		return aEv.value.isZero() ? evaluate(b, scope).value : aEv;
 	}),
 
 	"·": memberAlias("mul"),

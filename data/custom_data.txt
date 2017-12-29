@@ -38,3 +38,14 @@ flops = flo/s
 bitcoin!
 BTC = bitcoin
 satoshi = (1/100million) bitcoin
+
+
+# logic
+
+ok = 1
+error = 0
+true = 1
+false = 0
+
+# buggy if a = 0
+if = bool => then => else => (bool && then || else)

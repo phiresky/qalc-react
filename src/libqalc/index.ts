@@ -21,6 +21,10 @@ function unitConvertedTaggedString(node: Tree.Node, scope: Scope) {
 	} else return evaluate(node, scope).value.toTaggedString();
 }
 
+function isDefinition(node: Tree.EvaluatedNode) {
+	if (node.value.id && node instanceof Tree.IdentifierNode) return true;
+}
+
 export async function qalculationHasSideeffect(
 	input: string,
 ): Promise<boolean> {
@@ -51,7 +55,7 @@ export async function qalculate(
 		),
 	);
 	const evaled = evaluate(inputTree, scope);
-	if (evaled && evaled.value.id)
+	if (isDefinition(evaled))
 		return {
 			input: inputTree.toTaggedString(),
 			output: define(evaled, scope),
@@ -113,7 +117,7 @@ export async function qalculateDebug(
 			error += pre(e);
 		}
 
-	if (evaled && evaled.value.id)
+	if (evaled && isDefinition(evaled))
 		return {
 			input: parsed!.toTaggedString(),
 			output: define(evaled, scope),

@@ -68,6 +68,7 @@ class TaggedStringDisplay extends React.Component<{
 				return (
 					<Tooltip
 						key={i}
+						placement="bottom"
 						overlay={() => (
 							<DefinitionOvelay
 								unit={x}
@@ -434,6 +435,7 @@ export class GUI extends React.Component<{}, GuiState> {
 						onClickRemove={() => this.removeLine(i)}
 					/>
 				))}
+
 				<footer>
 					<small>
 						<a
