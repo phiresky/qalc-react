@@ -222,6 +222,7 @@ class UnitCompleteInput extends React.Component<
 		this.state = {};
 	}
 	@observable cursorIndexChars: number | null = null;
+	@observable focused = false;
 	inp: HTMLInputElement | null = null;
 	setInput = (u: HTMLInputElement | null) => (this.inp = u);
 	replaceCurrent = (u: string) => {
@@ -252,13 +253,15 @@ class UnitCompleteInput extends React.Component<
 	}
 	onChange: React.ChangeEventHandler<HTMLInputElement> = e =>
 		this.props.onChange(e.currentTarget.value);
-	onSelect: React.ReactEventHandler<HTMLInputElement> = e =>
-		(this.cursorIndexChars = e.currentTarget.selectionStart);
+	onSelect: React.ReactEventHandler<HTMLInputElement> = e => (
+		(this.focused = true),
+		(this.cursorIndexChars = e.currentTarget.selectionStart)
+	);
 	render() {
 		const { tokens, cursorIndex } = this.tokens();
 		const cursorToken = cursorIndex !== null ? tokens[cursorIndex] : null;
 		const poss: string[] = [];
-		if (cursorToken) {
+		if (this.focused && cursorToken) {
 			if (
 				cursorIndex === tokens.length - 1 &&
 				cursorToken.str === "to "
@@ -304,7 +307,7 @@ class UnitCompleteInput extends React.Component<
 					value={this.props.value}
 					onChange={this.onChange}
 					onSelect={this.onSelect}
-					onBlur={() => (this.cursorIndexChars = null)}
+					onBlur={() => setTimeout(() => (this.focused = false), 500)}
 					onFocus={this.onSelect}
 					ref={this.setInput}
 					size={this.props.value.length}
