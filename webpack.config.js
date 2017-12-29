@@ -3,8 +3,10 @@ const webpack = require("webpack");
 const Copy = require("copy-webpack-plugin");
 const Html = require("html-webpack-plugin");
 const Template = require("html-webpack-template");
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 const production = process.env.NODE_ENV == "production";
+console.warn("building " + (production ? "prod" : "dev"));
 const htmlCfg = {
 	inject: false,
 	// use more flexible html-webpack-template
@@ -27,7 +29,6 @@ const htmlCfg = {
 	},
 };
 const plugins = [
-	new webpack.DefinePlugin({}),
 	new Html({ ...htmlCfg, chunks: ["gui"] }),
 	new Html({
 		...htmlCfg,
@@ -48,15 +49,13 @@ const plugins = [
 ];
 if (production) {
 	plugins.push(
-		new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false } }),
-	);
-	plugins.push(
 		new webpack.DefinePlugin({
 			"process.env": {
 				NODE_ENV: `"production"`,
 			},
 		}),
 	);
+	plugins.push(new UglifyJsPlugin({ sourceMap: true }));
 }
 module.exports = {
 	entry: {
@@ -64,7 +63,7 @@ module.exports = {
 		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
 		gnuTest: ["./src/units-importer/rewrite-gnu-units"],
 	},
-	devtool: "cheap-module-eval-source-map",
+	devtool: production ? "source-map" : "cheap-module-eval-source-map",
 	output: {
 		path: path.join(__dirname, "bin"),
 		filename: "[name].[hash].js",

@@ -5,28 +5,29 @@
 ```bash
 sudo npm -g install yarn
 yarn
+git checkout gh-pages && git checkout master
 git worktree add bin/ gh-pages
 ```
 
 ## to compile
 
 ```bash
-webpack --config webpack-node.config.js
-node bin/parseGnu.js data/gnu-units.json
-webpack
+yarn run parse-gnu-units
+yarn run build
 ```
 
 ## to develop
 
+Run webpack-dev-server using
+
 ```bash
-webpack-dev-server --content-base bin
-webpack --watch --config webpack-node.config.js
+yarn run dev
 ```
 
 ## to push
 
 ```bash
-webpack
+yarn run build
 cd bin
 git add -A
 git commit -m'update binaries'

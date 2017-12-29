@@ -1,5 +1,6 @@
 {
 	"scripts": {
+		"build": "NODE_ENV=production webpack",
 		"dev": "webpack-dev-server",
 		"parse-gnu-units": "ts-node src/parse-gnu-units data/gnu-units.json",
 		"precommit": "lint-staged"
@@ -35,6 +36,7 @@
 		"style-loader": "^0.19.1",
 		"ts-loader": "^3.2.0",
 		"ts-node": "^4.1.0",
+		"uglifyjs-webpack-plugin": "^1.1.5",
 		"webpack": "^3.10.0",
 		"webpack-dev-server": "^2.9.7",
 		"whatwg-fetch": "^2.0.3"
