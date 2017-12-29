@@ -6,6 +6,18 @@ import * as mobxReact from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import CategorizeStore, { Type } from "./CategorizeStore";
 
+function download(content: string, filename: string) {
+	var a = window.document.createElement("a");
+	a.href = window.URL.createObjectURL(
+		new Blob([content], { type: "text/plain" }),
+	);
+	a.download = filename;
+
+	// Append anchor to body.
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+}
 @mobxReact.observer
 class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 	pres: Map<Node, number> = new Map();
@@ -117,6 +129,20 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 							}}
 						>
 							Clear
+						</button>
+						<button
+							onClick={() =>
+								download(
+									JSON.stringify(
+										this.store.executed,
+										null,
+										"\t",
+									),
+									"executed.json",
+								)
+							}
+						>
+							Download
 						</button>
 					</p>
 				</div>
