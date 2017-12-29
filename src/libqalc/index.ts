@@ -34,10 +34,15 @@ export async function qalculationHasSideeffect(
 		return false;
 	}
 }
+export type QalculationResult = {
+	input: TaggedString;
+	output: TaggedString;
+	type: "error" | "result" | "definition";
+};
 export async function qalculate(
 	input: string,
 	debug = false,
-): Promise<{ input: TaggedString; output: TaggedString }> {
+): Promise<QalculationResult> {
 	const scope = globalScope;
 	if (debug) return qalculateDebug(input);
 	const inputTree = Tree.rpnToTree(
@@ -50,18 +55,24 @@ export async function qalculate(
 		return {
 			input: inputTree.toTaggedString(),
 			output: define(evaled, scope),
+			type: "definition",
 		};
 	return {
 		input: inputTree.toTaggedString(),
 		output: TaggedString.t`${unitConvertedTaggedString(evaled, scope)}`,
+		type: "result",
 	};
 }
 export async function qalculateDebug(
 	input: string,
-): Promise<{ input: TaggedString; output: TaggedString }> {
+): Promise<QalculationResult> {
 	const scope = globalScope;
 	if (input.trim().length === 0)
-		return { input: TaggedString.t``, output: TaggedString.t`` };
+		return {
+			input: TaggedString.t``,
+			output: TaggedString.t``,
+			type: "result",
+		};
 	input = stripCommentsTrim(input);
 	let error = "";
 	let tokens: AToken[] | null = null;
@@ -106,6 +117,7 @@ export async function qalculateDebug(
 		return {
 			input: parsed!.toTaggedString(),
 			output: define(evaled, scope),
+			type: "definition",
 		};
 	const output = TaggedString.t`
 res = ${
@@ -130,6 +142,7 @@ ${error ? "error = " + error : ""}`;
 	return {
 		input: parsed ? parsed.toTaggedString() : TaggedString.t``,
 		output,
+		type: "result",
 	};
 }
 

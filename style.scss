@@ -16,7 +16,7 @@
 			input {
 				font-family: monospace;
 				font-size: inherit;
-				border: 1px solid black;
+				border: 1px solid gray;
 				padding: $pad;
 			}
 			.prompt,
@@ -38,6 +38,7 @@
 				max-height: 300px;
 				background-color: white;
 				border: 1px solid black;
+				box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
 				overflow-y: auto;
 				border-radius: 5px;
 			}
@@ -47,6 +48,14 @@
 .tagged-string-display {
 	font-family: monospace;
 	white-space: pre-wrap;
+}
+a.unit-href {
+	&,
+	&:visited,
+	&:hover,
+	&:active {
+		color: rgb(0, 0, 238);
+	}
 }
 .gnu-units-categorize {
 	::selection {

@@ -1,6 +1,11 @@
 import * as React from "react";
 import lzString from "lz-string";
-import { qalculate, qalculationHasSideeffect, parseEvaluate } from "./libqalc";
+import {
+	qalculate,
+	qalculationHasSideeffect,
+	parseEvaluate,
+	QalculationResult,
+} from "./libqalc";
 import { UnitNumber } from "./unitNumber";
 import { TaggedString } from "./output";
 import * as queryString from "query-string";
@@ -72,6 +77,7 @@ class TaggedStringDisplay extends React.Component<{
 					>
 						<a
 							href="#"
+							className="unit-href"
 							onClick={e => {
 								this.props.onClickUnit(x);
 								e.preventDefault();
@@ -100,7 +106,7 @@ class TaggedStringDisplay extends React.Component<{
 class GuiLineElement {
 	public id: number;
 	private static idCounter = 0;
-	constructor(public input: TaggedString, public output: TaggedString) {
+	constructor(public data: QalculationResult) {
 		this.id = GuiLineElement.idCounter++;
 	}
 }
@@ -124,7 +130,9 @@ export class GUILine extends React.Component<
 		this.state = { displayDepth: 0 };
 	}
 	render() {
-		const [inp, comment] = [this.props.line.input, ""]; //this.props.line.input.split("#");
+		const data = this.props.line.data;
+		const [inp, comment] = [data.input, ""]; //this.props.line.input.split("#");
+		const isDefinition = data.type === "definition";
 		return (
 			<div className="gui-line">
 				{/*<b>{this.props.index}.</b>*/}{" "}
@@ -135,18 +143,24 @@ export class GUILine extends React.Component<
 				>
 					×
 				</button>
-				<div
-					style={{ cursor: "pointer" }}
-					onClick={() => this.props.onClickInput(this.props.line)}
-				>
-					<TaggedStringDisplay
-						text={inp}
-						onClickUnit={this.props.onClickUnit}
-					/>
-				</div>
+				{!isDefinition && (
+					<div
+						style={{ cursor: "pointer" }}
+						onClick={() => this.props.onClickInput(this.props.line)}
+					>
+						<TaggedStringDisplay
+							text={inp}
+							onClickUnit={this.props.onClickUnit}
+						/>
+					</div>
+				)}
 				<TaggedStringDisplay
 					className="block-response"
-					text={TaggedString.t` = ${this.props.line.output}`}
+					text={
+						isDefinition
+							? data.output
+							: TaggedString.t` = ${data.output}`
+					}
 					onClickUnit={this.props.onClickUnit}
 				/>
 				<hr />
@@ -180,13 +194,14 @@ async function loadPresetLines() {
 	const lines = await Promise.all(
 		presets.map(input =>
 			qalculate(input)
-				.then(({ input, output }) => new GuiLineElement(input, output))
+				.then(data => new GuiLineElement(data))
 				.catch(
 					error =>
-						new GuiLineElement(
-							TaggedString.t`${input}`,
-							new TaggedString("" + error),
-						),
+						new GuiLineElement({
+							input: TaggedString.t`${input}`,
+							output: new TaggedString("" + error),
+							type: "error",
+						}),
 				),
 		),
 	);
@@ -343,16 +358,15 @@ export class GUI extends React.Component<{}, GuiState> {
 		const input = this.state.currentInput;
 		if (input.trim().length > 0)
 			qalculate(input)
-				.then(({ input, output }) =>
-					this.addLine(new GuiLineElement(input, output)),
-				)
+				.then(data => this.addLine(new GuiLineElement(data)))
 				.catch(reason => {
 					console.error("could not qalc", input, reason);
 					this.addLine(
-						new GuiLineElement(
-							TaggedString.t`${input}`,
-							new TaggedString("" + reason),
-						),
+						new GuiLineElement({
+							input: TaggedString.t`${input}`,
+							output: new TaggedString("" + reason),
+							type: "error",
+						}),
 					);
 				});
 		this.setState({
@@ -414,7 +428,7 @@ export class GUI extends React.Component<{}, GuiState> {
 						index={i}
 						line={line}
 						onClickInput={() =>
-							this.setInput(line.input.toString())
+							this.setInput(line.data.input.toString())
 						}
 						onClickUnit={unit => this.showUnit(unit)}
 						onClickRemove={() => this.removeLine(i)}
@@ -458,7 +472,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	serialize() {
 		return lzString.compressToEncodedURIComponent(
-			JSON.stringify(this.state.lines.map(line => line.input)),
+			JSON.stringify(this.state.lines.map(line => line.data.input)),
 		);
 	}
 }
