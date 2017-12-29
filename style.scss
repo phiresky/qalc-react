@@ -7,6 +7,47 @@
 	float: right;
 }
 
+.calc-ui {
+	box-sizing: border-box;
+	.gui-line {
+		font-family: monospace;
+		&.unit-complete {
+			$pad: 4px;
+			input {
+				font-family: monospace;
+				font-size: inherit;
+				border: 1px solid black;
+				padding: $pad;
+			}
+			.prompt,
+			.inline-response {
+				padding-top: $pad;
+				padding-bottom: $pad;
+			}
+			.inline-query,
+			.inline-response {
+				display: inline-block;
+				vertical-align: text-top;
+			}
+			.dropdown-menu {
+				margin: 0;
+				list-style: none;
+				padding-left: 0;
+				padding: 1ex;
+				position: absolute;
+				max-height: 300px;
+				background-color: white;
+				border: 1px solid black;
+				overflow-y: auto;
+				border-radius: 5px;
+			}
+		}
+	}
+}
+.tagged-string-display {
+	font-family: monospace;
+	white-space: pre-wrap;
+}
 .gnu-units-categorize {
 	::selection {
 		background-color: #cff;

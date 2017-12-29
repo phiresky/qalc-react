@@ -24,7 +24,7 @@ class DefinitionOvelay extends React.Component<{
 	}
 	async load() {
 		try {
-			this.definition = await qalculate(this.props.unit.id!);
+			this.definition = (await qalculate(this.props.unit.id!)).output;
 		} catch (e) {
 			this.definition = new TaggedString(e.message);
 		}
@@ -42,6 +42,7 @@ class DefinitionOvelay extends React.Component<{
 	}
 }
 class TaggedStringDisplay extends React.Component<{
+	className?: string;
 	text: TaggedString;
 	ignore?: UnitNumber[];
 	onClickUnit: (u: UnitNumber) => void;
@@ -86,16 +87,19 @@ class TaggedStringDisplay extends React.Component<{
 	}
 	render() {
 		return (
-			<pre style={{ whiteSpace: "pre-wrap" }}>
+			<div
+				className={`tagged-string-display ${this.props.className ||
+					""}`}
+			>
 				{this.taggedStringToHtml(this.props.text)}
-			</pre>
+			</div>
 		);
 	}
 }
 class GuiLineElement {
 	public id: number;
 	private static idCounter = 0;
-	constructor(public input: string, public output: TaggedString) {
+	constructor(public input: TaggedString, public output: TaggedString) {
 		this.id = GuiLineElement.idCounter++;
 	}
 }
@@ -107,6 +111,7 @@ interface GuiState {
 export class GUILine extends React.Component<
 	{
 		line: GuiLineElement;
+		index: number;
 		onClickRemove: () => void;
 		onClickInput: (g: GuiLineElement) => void;
 		onClickUnit: (u: UnitNumber) => void;
@@ -118,24 +123,29 @@ export class GUILine extends React.Component<
 		this.state = { displayDepth: 0 };
 	}
 	render() {
-		const [inp, comment] = this.props.line.input.split("#");
+		const [inp, comment] = [this.props.line.input, ""]; //this.props.line.input.split("#");
 		return (
 			<div className="gui-line">
-				{comment ? <h4>{comment}</h4> : ""}
+				{/*<b>{this.props.index}.</b>*/}{" "}
+				{comment ? <h4 className="comment">{comment}</h4> : ""}
 				<button
 					className="btn pull-right close"
 					onClick={() => this.props.onClickRemove()}
 				>
 					×
 				</button>
-				<p
+				<div
 					style={{ cursor: "pointer" }}
 					onClick={() => this.props.onClickInput(this.props.line)}
 				>
-					> {inp}
-				</p>
+					<TaggedStringDisplay
+						text={inp}
+						onClickUnit={this.props.onClickUnit}
+					/>
+				</div>
 				<TaggedStringDisplay
-					text={this.props.line.output}
+					className="block-response"
+					text={TaggedString.t` = ${this.props.line.output}`}
 					onClickUnit={this.props.onClickUnit}
 				/>
 				<hr />
@@ -145,7 +155,7 @@ export class GUILine extends React.Component<
 }
 let guiInst: GUI;
 const presetLines = `
-sqrt(2 * (6 million tons * uranium_natural) / (100000 pounds + 0.7% * 6 million tons)) to c  # speed a rocket could get with all the uranium on earth (E=1/2 mv^2)
+sqrt(2 * ((100000 pound uranium_pure + 6 million tons * uranium_natural)) / (100000 pounds + 0.7% * 6 million tons)) to c   # speed a rocket could get with all the uranium on earth (E=1/2 mv^2 ⇒ v = sqrt(2Em))
 1 kg charcoal to liter gasoline
 solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of energy a square meter on earth can get from the sun
 5600 mAh * 11.7 V to Wh
@@ -169,10 +179,13 @@ async function loadPresetLines() {
 	const lines = await Promise.all(
 		presets.map(input =>
 			qalculate(input)
-				.then(output => new GuiLineElement(input, output))
+				.then(({ input, output }) => new GuiLineElement(input, output))
 				.catch(
 					error =>
-						new GuiLineElement(input, new TaggedString("" + error)),
+						new GuiLineElement(
+							TaggedString.t`${input}`,
+							new TaggedString("" + error),
+						),
 				),
 		),
 	);
@@ -223,31 +236,25 @@ class UnitCompleteInput extends React.Component<
 				poss.length > 0 ? poss.splice(0) : scope.getAllUnits();
 
 			for (const unitName of units) {
-				if (unitName.indexOf(last) >= 0) poss.push(unitName);
+				if (unitName.indexOf(last) >= 0 && unitName !== last)
+					poss.push(unitName);
 				if (poss.length > 30) break;
 			}
 		}
 		return (
-			<div className="dropdown">
+			<div className="unit-complete-input inline-query">
+				<span className="prompt">> </span>
 				<input
 					{...this.props}
 					ref="inp"
+					size={this.props.value.length}
 					autoCorrect={"off"}
 					autoComplete={"off"}
 					autoCapitalize={"none"}
-					className="form-control"
 					placeholder="enter formula"
 				/>
 				{poss.length > 0 ? (
-					<ul
-						className="dropdown-menu"
-						style={{
-							display: "block",
-							maxHeight: "200px",
-							overflowX: "hidden",
-							position: "inherit",
-						}}
-					>
+					<ul className="dropdown-menu">
 						{poss.map(unit => (
 							<li key={unit}>
 								<a href="#" onClick={() => this.setUnit(unit)}>
@@ -289,12 +296,14 @@ export class GUI extends React.Component<{}, GuiState> {
 		const input = this.state.currentInput;
 		if (input.trim().length > 0)
 			qalculate(input)
-				.then(output => this.addLine(new GuiLineElement(input, output)))
+				.then(({ input, output }) =>
+					this.addLine(new GuiLineElement(input, output)),
+				)
 				.catch(reason => {
 					console.error("could not qalc", input, reason);
 					this.addLine(
 						new GuiLineElement(
-							input,
+							TaggedString.t`${input}`,
 							new TaggedString("" + reason),
 						),
 					);
@@ -312,7 +321,7 @@ export class GUI extends React.Component<{}, GuiState> {
 			} as any);
 		else
 			qalculate(input)
-				.then(output => this.setState({ currentOutput: output } as any))
+				.then(({ output }) => this.setState({ currentOutput: output }))
 				.catch(reason =>
 					this.setState({
 						currentOutput: new TaggedString("" + reason),
@@ -329,32 +338,38 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	render() {
 		return (
-			<div className="container">
+			<div className="container calc-ui">
 				<div className="page-header">
 					<h1>Qalc</h1>
 				</div>
-				<div className="gui-line">
-					<form className="form" onSubmit={this.onSubmit.bind(this)}>
+				<div className="gui-line unit-complete">
+					<form onSubmit={this.onSubmit.bind(this)}>
 						<UnitCompleteInput
 							onChange={this.onChange.bind(this)}
 							value={this.state.currentInput}
 						/>
+						{this.state.currentOutput.vals.length > 0 ? (
+							<TaggedStringDisplay
+								className="inline-response"
+								text={TaggedString.t` = ${
+									this.state.currentOutput
+								}`}
+								onClickUnit={unit => this.showUnit(unit)}
+							/>
+						) : (
+							""
+						)}
 					</form>
-					{this.state.currentOutput.vals.length > 0 ? (
-						<TaggedStringDisplay
-							text={this.state.currentOutput}
-							onClickUnit={unit => this.showUnit(unit)}
-						/>
-					) : (
-						""
-					)}
 					<hr />
 				</div>
 				{this.state.lines.map((line, i) => (
 					<GUILine
 						key={line.id}
+						index={i}
 						line={line}
-						onClickInput={() => this.setInput(line.input)}
+						onClickInput={() =>
+							this.setInput(line.input.toString())
+						}
 						onClickUnit={unit => this.showUnit(unit)}
 						onClickRemove={() => this.removeLine(i)}
 					/>

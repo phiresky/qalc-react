@@ -29,7 +29,10 @@ const htmlCfg = {
 	},
 };
 const plugins = [
-	new Html({ ...htmlCfg, chunks: ["gui"] }),
+	new Html({
+		...htmlCfg,
+		chunks: ["gui"],
+	}),
 	new Html({
 		...htmlCfg,
 		chunks: ["categorizeHelper"],

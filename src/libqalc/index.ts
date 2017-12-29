@@ -37,26 +37,31 @@ export async function qalculationHasSideeffect(
 export async function qalculate(
 	input: string,
 	debug = false,
-): Promise<TaggedString> {
+): Promise<{ input: TaggedString; output: TaggedString }> {
 	const scope = globalScope;
 	if (debug) return qalculateDebug(input);
-	const evaled = evaluate(
-		Tree.rpnToTree(
-			parser.toRPN(
-				parser.preprocess(parser.tokenize(stripCommentsTrim(input))),
-			),
+	const inputTree = Tree.rpnToTree(
+		parser.toRPN(
+			parser.preprocess(parser.tokenize(stripCommentsTrim(input))),
 		),
-		scope,
 	);
-	if (evaled && evaled.value.id) return define(evaled, scope);
-	return TaggedString.t`${evaled.toTaggedString()} = ${unitConvertedTaggedString(
-		evaled,
-		scope,
-	)}`;
+	const evaled = evaluate(inputTree, scope);
+	if (evaled && evaled.value.id)
+		return {
+			input: inputTree.toTaggedString(),
+			output: define(evaled, scope),
+		};
+	return {
+		input: inputTree.toTaggedString(),
+		output: TaggedString.t`${unitConvertedTaggedString(evaled, scope)}`,
+	};
 }
-export async function qalculateDebug(input: string): Promise<TaggedString> {
+export async function qalculateDebug(
+	input: string,
+): Promise<{ input: TaggedString; output: TaggedString }> {
 	const scope = globalScope;
-	if (input.trim().length === 0) return new TaggedString();
+	if (input.trim().length === 0)
+		return { input: TaggedString.t``, output: TaggedString.t`` };
 	input = stripCommentsTrim(input);
 	let error = "";
 	let tokens: AToken[] | null = null;
@@ -97,8 +102,12 @@ export async function qalculateDebug(input: string): Promise<TaggedString> {
 			error += pre(e);
 		}
 
-	if (evaled && evaled.value.id) return define(evaled, scope);
-	return TaggedString.t`
+	if (evaled && evaled.value.id)
+		return {
+			input: parsed!.toTaggedString(),
+			output: define(evaled, scope),
+		};
+	const output = TaggedString.t`
 res = ${
 		evaled
 			? TaggedString.t`${evaled.toTaggedString()} = ${unitConvertedTaggedString(
@@ -118,6 +127,10 @@ preproc = ${
 rpn = ${rpn ? rpn.map(t => parser.tokenToDebugString(t)).join(" ") : "err"}
 parsed = ${parsed ? parsed.toDebugString() : "err"}
 ${error ? "error = " + error : ""}`;
+	return {
+		input: parsed ? parsed.toTaggedString() : TaggedString.t``,
+		output,
+	};
 }
 
 export { parseEvaluate } from "./evaluator";
