@@ -185,13 +185,19 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 	.map(line => line.trim())
 	.filter(line => line.length > 0)
 	.map(line => line.split("|")[0]);
+
+type Serialized = {
+	lines: string[];
+};
 async function loadPresetLines() {
 	let presets = presetLines;
 	let { state } = queryString.parse(location.hash);
-	if (state)
-		presets = JSON.parse(
+	if (state) {
+		const ser = JSON.parse(
 			lzString.decompressFromEncodedURIComponent(state as string),
-		);
+		) as Serialized;
+		presets = ser.lines;
+	}
 	const lines = await Promise.all(
 		presets.map(input =>
 			qalculate(input)
@@ -477,7 +483,11 @@ export class GUI extends React.Component<{}, GuiState> {
 	}
 	serialize() {
 		return lzString.compressToEncodedURIComponent(
-			JSON.stringify(this.state.lines.map(line => line.data.input)),
+			JSON.stringify({
+				lines: this.state.lines
+					.map(line => line.data.input.toString())
+					.reverse(),
+			} as Serialized),
 		);
 	}
 }
