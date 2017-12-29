@@ -151,10 +151,11 @@ export function rpnToTree(tokens: Iterable<RPNToken>): Node {
 			stack.push(new NumberNode(token.str));
 		} else throw Error("to tree: don't know token type " + token.type);
 	}
-	if (stack.length !== 1)
+	if (stack.length > 1)
 		throw Error(
 			"stack has more than one element left: " +
 				stack.map(x => x.toDebugString()),
 		);
+	else if (stack.length === 0) throw Error(`Empty`);
 	return stack[0];
 }

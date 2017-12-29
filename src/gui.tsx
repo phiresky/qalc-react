@@ -11,6 +11,7 @@ import { observable } from "mobx";
 import "../style.scss";
 import "rc-tooltip/assets/bootstrap_white.css";
 import { observer } from "mobx-react";
+import { tokenize, TokenType } from "./libqalc/parser";
 
 @observer
 class DefinitionOvelay extends React.Component<{
@@ -192,10 +193,11 @@ async function loadPresetLines() {
 	for (const line of lines) guiInst.addLine(line);
 }
 
+@observer
 class UnitCompleteInput extends React.Component<
 	{
 		value: string;
-		onChange: React.FormEventHandler<any>;
+		onChange: (value: string) => void;
 	},
 	{}
 > {
@@ -203,50 +205,90 @@ class UnitCompleteInput extends React.Component<
 		super(props);
 		this.state = {};
 	}
-	setUnit(unit: string) {
-		// hacky
-		const val = this.props.value.split(" ");
-		val.pop();
-		val.push(unit, "");
-		(this.refs["inp"] as HTMLInputElement).value = val.join(" ");
-		this.props.onChange({ target: this.refs["inp"] } as any);
-	}
-	render() {
-		const tokens = this.props.value.split(" "); // hacky (chrome bug when use tokenize)
-		const last = tokens.pop()!;
-		const poss: string[] = [];
-		if (tokens.pop() === "to") {
-			try {
-				const evaled = parseEvaluate(tokens.join(" "));
-				const val = evaled.value;
-				for (const name of scope.getAllUnits()) {
-					const unit = scope.getUnit(name)!.value;
-					if (
-						!unit.isSpecial() &&
-						unit.dimensions.equals(val.dimensions)
-					)
-						poss.push(name);
-				}
-			} catch (e) {
-				console.log(e);
-			}
+	@observable cursorIndex = -1;
+	inp: HTMLInputElement | null = null;
+	setInput = (u: HTMLInputElement | null) => (this.inp = u);
+	replaceCurrent = (u: string) => {
+		let { tokens, cursorIndex } = this.tokens();
+		if (cursorIndex !== null) {
+			const before = tokens[cursorIndex];
+			if (before.str === "to ") cursorIndex++;
+			tokens[cursorIndex] = {
+				str: u,
+				type: TokenType.Identifier,
+				start: 0,
+			};
 		}
-		if (/[a-z]/i.test(last)) {
-			const units =
-				poss.length > 0 ? poss.splice(0) : scope.getAllUnits();
+		this.props.onChange(tokens.map(x => x.str).join(""));
+	};
+	tokens() {
+		const tokens = [...tokenize(this.props.value)];
+		if (!this.inp) return { tokens, cursorIndex: null };
+		const cursorIndex = tokens.findIndex(
+			t =>
+				t.type !== TokenType.Whitespace &&
+				t.start + t.str.length >= this.cursorIndex,
+		);
+		return {
+			tokens,
+			cursorIndex: cursorIndex !== null ? cursorIndex : null,
+		};
+	}
+	onChange: React.ChangeEventHandler<HTMLInputElement> = e =>
+		this.props.onChange(e.currentTarget.value);
+	onSelect: React.ReactEventHandler<HTMLInputElement> = e =>
+		(this.cursorIndex = e.currentTarget.selectionStart);
+	render() {
+		const { tokens, cursorIndex } = this.tokens();
+		const cursorToken = cursorIndex !== null ? tokens[cursorIndex] : null;
+		const poss: string[] = [];
+		if (cursorToken) {
+			if (
+				cursorIndex === tokens.length - 1 &&
+				cursorToken.str === "to "
+			) {
+				try {
+					const evaled = parseEvaluate(
+						tokens
+							.slice(0, cursorIndex)
+							.map(x => x.str)
+							.join(""),
+					);
+					const val = evaled.value;
+					for (const name of scope.getAllUnits()) {
+						const unit = scope.getUnit(name)!.value;
+						if (
+							!unit.isSpecial() &&
+							unit.dimensions.equals(val.dimensions)
+						)
+							poss.push(name);
+					}
+				} catch (e) {
+					console.log(e);
+				}
+			}
+			if (cursorToken.type === TokenType.Identifier) {
+				const units =
+					poss.length > 0 ? poss.splice(0) : scope.getAllUnits();
 
-			for (const unitName of units) {
-				if (unitName.indexOf(last) >= 0 && unitName !== last)
-					poss.push(unitName);
-				if (poss.length > 30) break;
+				for (const unitName of units) {
+					if (
+						unitName.indexOf(cursorToken.str) >= 0 &&
+						unitName !== cursorToken.str
+					)
+						poss.push(unitName);
+					if (poss.length > 30) break;
+				}
 			}
 		}
 		return (
 			<div className="unit-complete-input inline-query">
 				<span className="prompt">> </span>
 				<input
-					{...this.props}
-					ref="inp"
+					value={this.props.value}
+					onChange={this.onChange}
+					onSelect={this.onSelect}
+					ref={this.setInput}
 					size={this.props.value.length}
 					autoCorrect={"off"}
 					autoComplete={"off"}
@@ -257,7 +299,10 @@ class UnitCompleteInput extends React.Component<
 					<ul className="dropdown-menu">
 						{poss.map(unit => (
 							<li key={unit}>
-								<a href="#" onClick={() => this.setUnit(unit)}>
+								<a
+									href="#"
+									onClick={() => this.replaceCurrent(unit)}
+								>
 									{unit}
 								</a>
 							</li>
@@ -291,7 +336,7 @@ export class GUI extends React.Component<{}, GuiState> {
 		lines.splice(index, 1);
 		this.setState({ lines: lines } as any);
 	}
-	onSubmit(evt: Event) {
+	onSubmit = (evt: React.FormEvent<HTMLFormElement>) => {
 		evt.preventDefault();
 		const input = this.state.currentInput;
 		if (input.trim().length > 0)
@@ -312,7 +357,7 @@ export class GUI extends React.Component<{}, GuiState> {
 			currentInput: "",
 			currentOutput: new TaggedString(),
 		} as any);
-	}
+	};
 	async setInput(input: string) {
 		this.setState({ currentInput: input } as any);
 		if (await qalculationHasSideeffect(input))
@@ -328,10 +373,9 @@ export class GUI extends React.Component<{}, GuiState> {
 					} as any),
 				);
 	}
-	onChange(evt: Event) {
-		const target = evt.target as HTMLInputElement;
-		this.setInput(target.value);
-	}
+	onChange = (v: string) => {
+		this.setInput(v);
+	};
 	showUnit(unit: UnitNumber) {
 		console.log("showing", unit);
 		this.setInput(unit.toString());
@@ -343,9 +387,9 @@ export class GUI extends React.Component<{}, GuiState> {
 					<h1>Qalc</h1>
 				</div>
 				<div className="gui-line unit-complete">
-					<form onSubmit={this.onSubmit.bind(this)}>
+					<form onSubmit={this.onSubmit}>
 						<UnitCompleteInput
-							onChange={this.onChange.bind(this)}
+							onChange={this.onChange}
 							value={this.state.currentInput}
 						/>
 						{this.state.currentOutput.vals.length > 0 ? (
