@@ -12,13 +12,16 @@ type EvaluatedNode = Tree.EvaluatedNode;
 import { QalcFunction } from "./functions";
 
 export function stripCommentsTrim(str: string) {
-	const commentStart = str.indexOf("#");
-	if (commentStart >= 0) str = str.substr(0, commentStart);
-	return str.trim();
+	const inx = str.indexOf("#");
+	if (inx < 0) return { code: str.trim() };
+	return {
+		code: str.substr(0, inx).trim(),
+		comment: str.substr(inx + 1).trim(),
+	};
 }
 
 export function parseEvaluate(str: string) {
-	return evaluate(parse(stripCommentsTrim(str)), globalScope);
+	return evaluate(parse(stripCommentsTrim(str).code), globalScope);
 }
 
 export function evaluationHasSideeffect(node: Tree.Node, scope: Scope) {

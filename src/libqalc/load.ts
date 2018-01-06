@@ -11,7 +11,7 @@ export function loadUnit(
 	data: { line: string; info: { comment: string; headings: string[] } },
 	postEvaluate: { push(p: PostEvaluation): void },
 ) {
-	const line = stripCommentsTrim(data.line);
+	const { code: line } = stripCommentsTrim(data.line);
 	if (line.length === 0) return;
 	//if (line.indexOf("=") >= 0 && line.split("=")[0].search(/[\(\[]/) >= 0)
 	//	return;

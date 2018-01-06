@@ -131,9 +131,8 @@ export class GUILine extends React.Component<
 		this.state = { displayDepth: 0 };
 	}
 	render() {
-		const data = this.props.line.data;
-		const [inp, comment] = [data.input, ""]; //this.props.line.input.split("#");
-		const isDefinition = data.type === "definition";
+		const { type, comment, input, output } = this.props.line.data;
+		const isDefinition = type === "definition";
 		return (
 			<div className="gui-line">
 				{/*<b>{this.props.index}.</b>*/}{" "}
@@ -150,18 +149,14 @@ export class GUILine extends React.Component<
 						onClick={() => this.props.onClickInput(this.props.line)}
 					>
 						<TaggedStringDisplay
-							text={inp}
+							text={input}
 							onClickUnit={this.props.onClickUnit}
 						/>
 					</div>
 				)}
 				<TaggedStringDisplay
 					className="block-response"
-					text={
-						isDefinition
-							? data.output
-							: TaggedString.t` = ${data.output}`
-					}
+					text={isDefinition ? output : TaggedString.t` = ${output}`}
 					onClickUnit={this.props.onClickUnit}
 				/>
 				<hr />
@@ -171,20 +166,18 @@ export class GUILine extends React.Component<
 }
 let guiInst: GUI;
 const presetLines = `
-sqrt(2 * ((100000 pound uranium_pure + 6 million tons * uranium_natural)) / (100000 pounds + 0.7% * 6 million tons)) to c   # speed a rocket could get with all the uranium on earth (E=1/2 mv^2 ⇒ v = sqrt(2Em))
-1 kg charcoal to liter gasoline
+sqrt(2 * ((100000 pound uranium_pure + 6 million tons * uranium_natural)) / (100000 pounds + 0.7% * 6 million tons)) to c   # speed a rocket could get with all the uranium on earth (E=1/2 mv^2 ⇒ v = sqrt(2E/m))
+1 kg charcoal to liter gasoline # energy density conversion
 solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of energy a square meter on earth can get from the sun
-5600 mAh * 11.7 V to Wh
-100W * 10 days * 0.25€/kWh to €
-7Mbit/s * 2h to Gbyte
-32bit/(0.2bit/s) to s
-88 mph to km/h|88 * mph = 0.03933952(km / s)
+3200 mAh * 3.7 V to Wh # energy in a phone battery
+100W * 10 days * 0.25€/kWh to € # cost of energy consumption of a 100W device over 10 days
+16Mbit/s * 2h to Gbyte # How much can you download in 2 hours with a 16Mbit connection?
+88 mph to km/h
 100°F to °C
 `
 	.split("\n")
 	.map(line => line.trim())
-	.filter(line => line.length > 0)
-	.map(line => line.split("|")[0]);
+	.filter(line => line.length > 0);
 
 type Serialized = {
 	lines: string[];

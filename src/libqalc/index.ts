@@ -41,18 +41,18 @@ export async function qalculationHasSideeffect(
 export type QalculationResult = {
 	input: TaggedString;
 	output: TaggedString;
+	comment?: string;
 	type: "error" | "result" | "definition";
 };
 export async function qalculate(
-	input: string,
+	_input: string,
 	debug = false,
 ): Promise<QalculationResult> {
 	const scope = globalScope;
-	if (debug) return qalculateDebug(input);
+	if (debug) return qalculateDebug(_input);
+	const { code, comment } = stripCommentsTrim(_input);
 	const inputTree = Tree.rpnToTree(
-		parser.toRPN(
-			parser.preprocess(parser.tokenize(stripCommentsTrim(input))),
-		),
+		parser.toRPN(parser.preprocess(parser.tokenize(code))),
 	);
 	const evaled = evaluate(inputTree, scope);
 	if (isDefinition(evaled))
@@ -60,28 +60,31 @@ export async function qalculate(
 			input: inputTree.toTaggedString(),
 			output: define(evaled, scope),
 			type: "definition",
+			comment,
 		};
 	return {
 		input: inputTree.toTaggedString(),
 		output: TaggedString.t`${unitConvertedTaggedString(evaled, scope)}`,
 		type: "result",
+		comment,
 	};
 }
 export async function qalculateDebug(
-	input: string,
+	_input: string,
 ): Promise<QalculationResult> {
 	const scope = globalScope;
-	if (input.trim().length === 0)
+	const { code, comment } = stripCommentsTrim(_input);
+	if (code.length === 0)
 		return {
 			input: TaggedString.t``,
 			output: TaggedString.t``,
 			type: "result",
+			comment,
 		};
-	input = stripCommentsTrim(input);
 	let error = "";
 	let tokens: AToken[] | null = null;
 	try {
-		tokens = [...parser.tokenize(input)];
+		tokens = [...parser.tokenize(code)];
 	} catch (e) {
 		console.error(e);
 		error += e + "\n";
@@ -122,6 +125,7 @@ export async function qalculateDebug(
 			input: parsed!.toTaggedString(),
 			output: define(evaled, scope),
 			type: "definition",
+			comment,
 		};
 	const output = TaggedString.t`
 res = ${
@@ -147,6 +151,7 @@ ${error ? "error = " + error : ""}`;
 		input: parsed ? parsed.toTaggedString() : TaggedString.t``,
 		output,
 		type: "result",
+		comment,
 	};
 }
 
