@@ -49,3 +49,20 @@ false = 0
 
 # buggy if a = 0
 if = bool => then => else => (bool && then || else)
+
+
+# screen ratio calculation, i.e. how wide is a 27" screen with a ratio of 16:9
+#
+# (1) width^2 + height^2 = (diagonal^2)
+# (2) width = ratio height
+# 
+# => w^2 + (w/ratio)^2 = d^2
+# => 1 w^2 + (1/ratio^2) w^2 = d^2
+# => (1 + 1/ratio^2) w^2 = d^2
+# => w = d / sqrt(1 + 1/ratio^2)
+# 
+# Example:
+# screenwidth (27inch) (16|9) to cm ≅ 60 cm
+
+screenwidth = diagonal => ratio => diagonal / sqrt (1 + 1 / ratio ^ 2)
+screenheight = diagonal => ratio => screenwidth diagonal (1/ratio)
