@@ -66,3 +66,9 @@ if = bool => then => else => (bool && then || else)
 
 screenwidth = diagonal => ratio => diagonal / sqrt (1 + 1 / ratio ^ 2)
 screenheight = diagonal => ratio => screenwidth diagonal (1/ratio)
+
+
+pixel!
+dpi = pixel/inch
+ppi = dpi
+ppcm = pixel/cm
