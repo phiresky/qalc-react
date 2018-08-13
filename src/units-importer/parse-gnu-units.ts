@@ -9,7 +9,7 @@ import CategorizeStore from "./CategorizeStore";
 const vars: { [name: string]: any } = {};
 const ignoring: boolean[] = [];
 let lineCache = "";
-import * as steps from "../data/gnu-units-categorize-steps.json";
+import * as steps from "../../data/gnu-units-categorize-steps.json";
 
 type Line = string;
 function parseLine(line: string): Line[] {
