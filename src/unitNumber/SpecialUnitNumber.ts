@@ -4,6 +4,12 @@ import Decimal from "decimal.js";
 import { TaggedString } from "../output";
 import * as Tree from "../libqalc/Tree";
 
+/**
+ * unit numbers that are actually functions that are applied using * operator
+ * e.g. 10 °C = 10 * °C actually means degC(10)
+ *
+ * https://i.imgur.com/PLP3ZrJ.jpg
+ */
 export default class SpecialUnitNumber extends UnitNumber {
 	get value(): Decimal {
 		throw Error("can't get function.value");
