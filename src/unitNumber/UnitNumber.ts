@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import DimensionMap from "./DimensionMap";
 import Dimension from "./Dimension";
 import SpecialUnitNumber from "./SpecialUnitNumber";
-import { TaggedString } from "../output";
+import { TaggedString } from "./output";
 
 function dimensionMismatch(
 	a: DimensionMap,

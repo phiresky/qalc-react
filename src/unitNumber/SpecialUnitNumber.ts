@@ -1,7 +1,7 @@
 import UnitNumber from "./UnitNumber";
 import DimensionMap from "./DimensionMap";
 import Decimal from "decimal.js";
-import { TaggedString } from "../output";
+import { TaggedString } from "./output";
 import * as Tree from "../libqalc/Tree";
 
 /**
@@ -23,11 +23,11 @@ export default class SpecialUnitNumber extends UnitNumber {
 	readonly inverse: SpecialUnitNumber;
 	constructor(meta: {
 		fnTree?: Tree.Node;
-		fn?: ((arg: UnitNumber, mode: "left" | "right") => UnitNumber);
+		fn?: (arg: UnitNumber, mode: "left" | "right") => UnitNumber;
 		inverse?: SpecialUnitNumber;
 		id?: string;
 		inverseFnTree?: Tree.Node;
-		inverseFn?: ((arg: UnitNumber, mode: "left" | "right") => UnitNumber);
+		inverseFn?: (arg: UnitNumber, mode: "left" | "right") => UnitNumber;
 		hasSideEffects: boolean;
 	}) {
 		super(null!, null!, meta.id);

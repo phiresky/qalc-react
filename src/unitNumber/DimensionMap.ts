@@ -1,5 +1,5 @@
 import Dimension, { DimensionId } from "./Dimension";
-import { TaggedString } from "../output";
+import { TaggedString } from "./output";
 
 /**
  * maps from dimension id to exponent

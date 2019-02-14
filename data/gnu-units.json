@@ -21696,6 +21696,2967 @@
 		}
 	},
 	{
+		"line": "icelandkróna = icelandkrona",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "polandzłoty = polandzloty",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "tongapa’anga = tongapa'anga",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "venezuelabolívar = venezuelabolivar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "vietnamđồng = vietnamdong",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AED = uaedirham",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AFN = afghanafghani",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ALL = albanialek",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AMD = armeniadram",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AOA = angolakwanza",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ARS = argentinapeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AUD = australiadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AWG = arubaflorin",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "AZN = azerbaijanmanat",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BAM = bosniaconvertiblemark",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BBD = barbadosdollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BDT = bangladeshtaka",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BGN = bulgarialev",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BHD = bahraindinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BIF = burundifranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BMD = bermudadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BND = bruneidollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BOB = boliviaboliviano",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BRL = brazilreal",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BSD = bahamasdollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BTN = bhutanngultrum",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BWP = botswanapula",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BYR = belarusruble",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "BZD = belizedollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CAD = canadadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CDF = drcfranccongolais",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CHF = swissfranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CLP = chilepeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CMG = sintmaartencaribbeanguilder",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CNY = chinayuan",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "COP = colombiapeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CRC = costaricacolon",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CUP = cubapeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CVE = capeverdeescudo",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "CZK = czechkoruna",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "DJF = djiboutifranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "DKK = denmarkkrona",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "DOP = dominicanrepublicpeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "DZD = algeriadinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "EGP = egyptpound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ERN = eritreanakfa",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ETB = ethiopianbirr",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "EUR = euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "FJD = fijidollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "FKP = falklandislandspound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GBP = ukpound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GEL = georgialari",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GGP = guernseypound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GHS = ghanacedi",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GIP = gibraltarpound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GMD = gambiadalasi",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GNF = guineafranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GTQ = guatemalaquetzal",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "GYD = guyanadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "HKD = hongkongdollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "HNL = honduraslempira",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "HRK = croatiakuna",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "HTG = haitigourde",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "HUF = hungariaforint",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "IDR = indonesiarupiah",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ILS = israelnewshekel",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "IMP = manxpound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "INR = indiarupee",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "IQD = iraqdinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "IRR = iranrial",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ISK = icelandkrona",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "JEP = jerseypound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "JMD = jamaicadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "JOD = jordandinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "JPY = japanyen",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KES = kenyaschilling",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KGS = kyrgyzstansom",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KHR = cambodiariel",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KMF = comorosfranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KPW = northkoreawon",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KRW = southkoreawon",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KWD = kuwaitdinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KYD = caymanislandsdollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "KZT = kazakhstantenge",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LAK = laokip",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LBP = lebanonpound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LKR = srilankanrupee",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LRD = liberiadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LTL = lithuanialita",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LVL = latvialat",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "LYD = libyadinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MAD = moroccodirham",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MDL = moldovaleu",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MGA = madagascarariary",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MKD = macedoniadenar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MMK = myanmarkyat",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MNT = mongoliatugrik",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MOP = macaupataca",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MRO = mauritaniaouguiya",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MUR = mauritiusrupee",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MVR = maldiverufiyaa",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MWK = malawikwacha",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MXN = mexicopeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MYR = malaysiaringgit",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "MZN = mozambicanmetical",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "NAD = namibiadollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "NGN = nigerianaira",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "NIO = nicaraguacordobaoro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "NOK = norwaykrone",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "NPR = nepalrupee",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "NZD = newzealanddollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "OMR = omanrial",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PAB = panamabalboa",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PEN = perunuevosol",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PGK = papuanewguineakina",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PHP = philippinepeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PKR = pakistanrupee",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PLN = polandzloty",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "PYG = paraguayguarani",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "QAR = qatarrial",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "RON = romanianewlei",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "RSD = serbiadinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "RUB = russiarouble",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "RWF = rwandafranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SAR = saudiarabiariyal",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SBD = solomonislandsdollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SCR = seychellesrupee",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SDG = sudanpound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SEK = swedenkrona",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SGD = singaporedollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SHP = sainthelenapound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SLL = sierraleoneleone",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SOS = somaliaschilling",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SRD = surinamedollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "STD = saotomeandprincipedobra",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SVC = elsalvadorcolon",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SYP = syriapound",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "SZL = swazilandlilangeni",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "THB = thailandbaht",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TJS = tajikistansomoni",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TMT = turkmenistanmanat",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TND = tunisiadinar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TOP = tongapa'anga",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TRY = turkeylira",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TTD = trinidadandtobagodollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TVD = tuvaludollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TWD = taiwandollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "TZS = tanzaniashilling",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "UAH = ukrainehryvnia",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "UGX = ugandaschilling",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "USD = usdollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "UYU = uruguaypeso",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "UZS = uzbekistansum",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "VEF = venezuelabolivar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "VND = vietnamdong",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "VUV = vanuatuvatu",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "WST = samoatala",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "XAF = centralafricancfafranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "XCD = eastcaribbeandollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "XDR = specialdrawingrights",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "XOF = westafricanfranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "XPF = cfpfranc",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "YER = yemenrial",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ZAR = southafricarand",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ZMW = zambiakwacha",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ZWL = zimbabwedollar",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "uaedirham = 1|4.175642287901 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "afghanafghani = 1|71.834 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "albanialek = 1|139.44 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "armeniadram = 1|539.16766610698 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "angolakwanza = 1|151.63 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "argentinapeso = 1|10.844411979547 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "australiadollar = 1|1.5722 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "arubaflorin = 1|2.04239 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "azerbaijanmanat = 1|1.1998964405441 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bosniaconvertiblemark = 1|1.95583 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "barbadosdollar = 1|2.282 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bangladeshtaka = 1|87.075 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bulgarialev = 1|1.9558 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bahraindinar = 1|0.429016 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "burundifranc = 1|1751.9 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bermudadollar = 1|1.1410 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bruneidollar = 1|1.5949 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "boliviaboliviano = 1|7.7365 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "brazilreal = 1|4.4198 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bahamasdollar = 1|1.1410 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "bhutanngultrum = 1|74.1465 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "botswanapula = 1|11.805 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "belarusruble = 1|19563.011314186 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "belizedollar = 1|2.282 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "canadadollar = 1|1.4816 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "drcfranccongolais = 1|1038.5 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "swissfranc = 1|1.0901 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "chilepeso = 1|779.31758530184 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "sintmaartencaribbeanguilder = 1|2.04239 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "chinayuan = 1|7.2435 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "colombiapeso = 1|3351.2415349887 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "costaricacolon = 1|598.07 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "cubapeso = 1|1.1203 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "capeverdeescudo = 1|110.265 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "czechkoruna = 1|27.113 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "djiboutifranc = 1|202.779661 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "denmarkkrona = 1|7.4612 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "dominicanrepublicpeso = 1|50.666 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "algeriadinar = 1|118.84 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "egyptpound = 1|8.9318551668023 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "eritreanakfa = 1|17.115 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ethiopianbirr = 1|23.439 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "euro = 1.1410 US$",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "fijidollar = 1|0.4076849051416 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "falklandislandspound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ukpound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "georgialari = 1|2.7114148200866 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "guernseypound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ghanacedi = 1|4.3690406121248 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "gibraltarpound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "gambiadalasi = 1|43.753 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "guineafranc = 1|8122.2 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "guatemalaquetzal = 1|8.9649758454106 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "guyanadollar = 1|232.13 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "hongkongdollar = 1|8.8429 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "honduraslempira = 1|25.137148662377 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "croatiakuna = 1|7.6280 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "haitigourde = 1|60.612 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "hungariaforint = 1|311.04 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "indonesiarupiah = 1|15534.04 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "israelnewshekel = 1|4.3949 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "manxpound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "indiarupee = 1|74.1465 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "iraqdinar = 1|1361.2 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "iranrial = 1|0.0229 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "icelandkrona = 1|141.94177822682 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "jerseypound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "jamaicadollar = 1|136.32690541781 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "jordandinar = 1|0.808969 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "japanyen = 1|136.48 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "kenyaschilling = 1|117.51 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "kyrgyzstansom = 1|78.121502797762 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "cambodiariel = 1|4566.3 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "comorosfranc = 1|491.96775 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "northkoreawon = 1|145.7 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "southkoreawon = 1|1308.96 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "kuwaitdinar = 1|0.34321648936739 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "caymanislandsdollar = 1|0.95083333333333 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "kazakhstantenge = 1|312.7142459655 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "laokip = 1|9131 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "lebanonpound = 1|1720.0575 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "srilankanrupee = 1|0.0062118176400539 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "liberiadollar = 1|97.466 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "lithuanialita = 1|3.45280 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "latvialat = 1|0.702804 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "libyadinar = 1|1.5236 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "moroccodirham = 1|10.972653362897 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "moldovaleu = 1|11.23895 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "madagascarariary = 1|3590.6 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "macedoniadenar = 1|61.538 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "myanmarkyat = 1|1469.900990099 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "mongoliatugrik = 1|0.0344 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "macaupataca = 1|9.108187 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "mauritaniaouguiya = 1|327.17 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "mauritiusrupee = 1|39.715 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "maldiverufiyaa = 1|17.241 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "malawikwacha = 1|622.16 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "mexicopeso = 1|18.8927 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "malaysiaringgit = 1|4.8055 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "mozambicanmetical = 1|47.523 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "namibiadollar = 1|15.3094 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "nigerianaira = 1|222.94 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "nicaraguacordobaoro = 1|30.781 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "norwaykrone = 1|9.2400 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "nepalrupee = 1|118.6344 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "newzealanddollar = 1|1.6938 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "omanrial = 1|0.43871116579514 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "panamabalboa = 1|1.1410 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "perunuevosol = 1|3.7050162216122 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "papuanewguineakina = 1|0.30504551766703 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "philippinepeso = 1|52.447 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "pakistanrupee = 1|0.0083800303495282 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "polandzloty = 1|4.2378 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "paraguayguarani = 1|6325.8 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "qatarrial = 1|4.15324 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "romanianewlei = 1|4.4145 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "serbiadinar = 1|119.86551198234 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "russiarouble = 1|71.9750 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "rwandafranc = 1|850.31 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "saudiarabiariyal = 1|4.27875 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "solomonislandsdollar = 1|0.10707708972739 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "seychellesrupee = 1|14.633 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "sudanpound = 1|7.0481 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "swedenkrona = 1|9.2716 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "singaporedollar = 1|1.5815 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "sainthelenapound = 1|0.74180 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "sierraleoneleone = 1|5395.9 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "somaliaschilling = 1|722.71 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "surinamedollar = 1|3.697 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "saotomeandprincipedobra = 1|24504 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "elsalvadorcolon = 1|9.8137 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "syriapound = 1|247.23 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "swazilandlilangeni = 1|15.3094 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "thailandbaht = 1|40.533 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "tajikistansomoni = 1|6.9076147042565 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "turkmenistanmanat = 1|3.9790232072366 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "tunisiadinar = 1|2.2257871064468 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "tongapa'anga = 1|0.40393652523326 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "turkeylira = 1|3.3500 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "trinidadandtobagodollar = 1|7.1318205 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "tuvaludollar = 1|1.5722 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "taiwandollar = 1|37.087184611541 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "tanzaniashilling = 1|2431.1 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ukrainehryvnia = 1|19.241014210086 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "ugandaschilling = 1|4136.7 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "uruguaypeso = 1|32.337 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "uzbekistansum = 1|3011.9120996918 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "venezuelabolivar = 1|7.2032993692382 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "vietnamdong = 1|25596.551724138 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "vanuatuvatu = 1|0.008155099515314 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "samoatala = 1|0.33965181537052 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "centralafricancfafranc = 1|655.957 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "eastcaribbeandollar = 1|3.0807 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "specialdrawingrights = 1|1.9241014210086 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "westafricanfranc = 1|655.957 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "cfpfranc = 1|119.33 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "yemenrial = 1|240.74 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "southafricarand = 1|15.3094 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "zambiakwacha = 1|13.544 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "zimbabwedollar = 1|353.62 euro",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "goldprice = 1184.00 US$/troyounce",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "platinumprice = 1002.00 US$/troyounce",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
+		"line": "silverprice = 16.15 US$/troyounce",
+		"info": {
+			"headingsIndex": [],
+			"headingLevel": 0,
+			"headings": [],
+			"comment": ""
+		}
+	},
+	{
 		"line": "olddollargold = 23.22 grains goldprice",
 		"info": {
 			"headingsIndex": [22, 2],

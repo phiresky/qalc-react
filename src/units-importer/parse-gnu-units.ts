@@ -12,7 +12,7 @@ let lineCache = "";
 import * as steps from "../../data/gnu-units-categorize-steps.json";
 
 type Line = string;
-function parseLine(line: string): Line[] {
+function parseLine(line: string): (Line | ELine)[] {
 	if (line.endsWith("\\")) {
 		lineCache += line.substr(0, line.length - 1);
 		return [];
@@ -36,10 +36,12 @@ function parseLine(line: string): Line[] {
 			.trim()
 			.split(/\s+/g);
 		if (!command.startsWith("end") && ignoring.some(v => v)) return [];
-		const commands: { [name: string]: (...args: any[]) => void } = {
+		const commands: {
+			[name: string]: (...args: any[]) => ELine[] | void;
+		} = {
 			include: fname => parseFile(dir + "/" + fname),
-			utf8: () => null,
-			endutf8: () => null,
+			utf8: () => {},
+			endutf8: () => {},
 			var: (variable, ...value) => {
 				ignoring.push(value.every(v => vars[variable] != v));
 			},
@@ -59,13 +61,13 @@ function parseLine(line: string): Line[] {
 			endlocale: () => {
 				ignoring.pop();
 			},
-			unitlist: () => null,
+			unitlist: () => {},
 		};
 		const cmd = commands[command];
 		//console.warn("executing", command, args);
 		if (!cmd) throw Error("unknown command " + command);
-		cmd(...args);
-		return [];
+
+		return cmd(...args) || [];
 	}
 	if (ignoring.some(v => v)) return [];
 	const firstSpace = line.search(/\s/);
@@ -106,8 +108,8 @@ function parseLine(line: string): Line[] {
 	return [variable + " = " + value];
 }
 type Info = { headings: string[]; comment: string };
-
-function parseFile(fname: string): { line: Line; info: Info }[] {
+type ELine = { line: Line; info: Info };
+function parseFile(fname: string): ELine[] {
 	const file = fs.readFileSync(fname, "utf-8");
 	const categoryStore = new CategorizeStore(
 		file,

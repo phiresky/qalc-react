@@ -1,22 +1,16 @@
-import * as React from "react";
 import lzString from "lz-string";
-import {
-	qalculate,
-	qalculationHasSideeffect,
-	parseEvaluate,
-	QalculationResult,
-} from "./libqalc";
-import { UnitNumber } from "./unitNumber";
-import { TaggedString } from "./output";
-import * as queryString from "query-string";
-import scope from "./libqalc/globalScope";
-import { render } from "react-dom";
-import Tooltip from "rc-tooltip";
 import { observable } from "mobx";
-import "../style.scss";
-import "rc-tooltip/assets/bootstrap_white.css";
 import { observer } from "mobx-react";
-import { tokenize, TokenType } from "./libqalc/parser";
+import * as queryString from "query-string";
+import Tooltip from "rc-tooltip";
+import "rc-tooltip/assets/bootstrap_white.css";
+import * as React from "react";
+import { render } from "react-dom";
+import { qalculate, qalculationHasSideeffect } from "../libqalc";
+import "../../style.scss";
+import { UnitNumber } from "../unitNumber";
+import { GuiLineElement, GuiState, UnitCompleter } from "./gui-store";
+import { TaggedString } from "../unitNumber/output";
 
 @observer
 class DefinitionOvelay extends React.Component<{
@@ -104,18 +98,6 @@ class TaggedStringDisplay extends React.Component<{
 		);
 	}
 }
-class GuiLineElement {
-	public id: number;
-	private static idCounter = 0;
-	constructor(public data: QalculationResult) {
-		this.id = GuiLineElement.idCounter++;
-	}
-}
-interface GuiState {
-	lines: GuiLineElement[];
-	currentInput: string;
-	currentOutput: TaggedString;
-}
 export class GUILine extends React.Component<
 	{
 		line: GuiLineElement;
@@ -191,125 +173,39 @@ async function loadPresetLines() {
 		) as Serialized;
 		presets = ser.lines;
 	}
-	const lines = await Promise.all(
-		presets.map(input =>
-			qalculate(input)
-				.then(data => new GuiLineElement(data))
-				.catch(
-					error =>
-						new GuiLineElement({
-							input: TaggedString.t`${input}`,
-							output: new TaggedString("" + error),
-							type: "error",
-						}),
-				),
-		),
-	);
-	for (const line of lines) guiInst.addLine(line);
+	guiInst.guist.loadPresets(presets);
 }
 
 @observer
-class UnitCompleteInput extends React.Component<
-	{
-		value: string;
-		onChange: (value: string) => void;
-	},
-	{}
-> {
-	constructor(props: any) {
-		super(props);
-		this.state = {};
-	}
-	@observable cursorIndexChars: number | null = null;
+class UnitCompleteInput extends React.Component<{
+	completer: UnitCompleter;
+}> {
 	@observable focused = false;
-	inp: HTMLInputElement | null = null;
-	setInput = (u: HTMLInputElement | null) => (this.inp = u);
-	replaceCurrent = (u: string) => {
-		let { tokens, cursorIndex } = this.tokens();
-		if (cursorIndex !== null) {
-			const before = tokens[cursorIndex];
-			if (before.str === "to ") cursorIndex++;
-			tokens[cursorIndex] = {
-				str: u,
-				type: TokenType.Identifier,
-				start: 0,
-			};
-		}
-		this.props.onChange(tokens.map(x => x.str).join(""));
-	};
-	tokens() {
-		const tokens = [...tokenize(this.props.value)];
-		if (!this.cursorIndexChars) return { tokens, cursorIndex: null };
-		const cursorIndex = tokens.findIndex(
-			t =>
-				t.type !== TokenType.Whitespace &&
-				t.start + t.str.length >= this.cursorIndexChars!,
-		);
-		return {
-			tokens,
-			cursorIndex: cursorIndex !== null ? cursorIndex : null,
-		};
-	}
-	onChange: React.ChangeEventHandler<HTMLInputElement> = e =>
-		this.props.onChange(e.currentTarget.value);
+	@observable inpRef = React.createRef<HTMLInputElement>();
+
 	onSelect: React.ReactEventHandler<HTMLInputElement> = e => (
 		(this.focused = true),
-		(this.cursorIndexChars = e.currentTarget.selectionStart)
+		(this.props.completer.cursorIndexChars = e.currentTarget.selectionStart)
 	);
 	render() {
-		const { tokens, cursorIndex } = this.tokens();
-		const cursorToken = cursorIndex !== null ? tokens[cursorIndex] : null;
-		const poss: string[] = [];
-		if (this.focused && cursorToken) {
-			if (
-				cursorIndex === tokens.length - 1 &&
-				cursorToken.str === "to "
-			) {
-				try {
-					const evaled = parseEvaluate(
-						tokens
-							.slice(0, cursorIndex)
-							.map(x => x.str)
-							.join(""),
-					);
-					const val = evaled.value;
-					for (const name of scope.getAllUnits()) {
-						const unit = scope.getUnit(name)!.value;
-						if (
-							!unit.isSpecial() &&
-							unit.dimensions.equals(val.dimensions)
-						)
-							poss.push(name);
-					}
-				} catch (e) {
-					console.log(e);
-				}
-			}
-			if (cursorToken.type === TokenType.Identifier) {
-				const units =
-					poss.length > 0 ? poss.splice(0) : scope.getAllUnits();
-
-				for (const unitName of units) {
-					if (
-						unitName.indexOf(cursorToken.str) >= 0 &&
-						unitName !== cursorToken.str
-					)
-						poss.push(unitName);
-					if (poss.length > 30) break;
-				}
-			}
-		}
+		const poss = this.focused
+			? this.props.completer.getPossibleUnits()
+			: [];
 		return (
 			<div className="unit-complete-input inline-query">
 				<span className="prompt">> </span>
 				<input
-					value={this.props.value}
-					onChange={this.onChange}
+					value={this.props.completer.target.currentInput}
+					onChange={e =>
+						this.props.completer.target.setInput(
+							e.currentTarget.value,
+						)
+					}
 					onSelect={this.onSelect}
 					onBlur={() => setTimeout(() => (this.focused = false), 500)}
 					onFocus={this.onSelect}
-					ref={this.setInput}
-					size={this.props.value.length}
+					ref={this.inpRef}
+					size={this.props.completer.target.currentInput.length}
 					autoCorrect={"off"}
 					autoComplete={"off"}
 					autoCapitalize={"none"}
@@ -321,7 +217,11 @@ class UnitCompleteInput extends React.Component<
 							<li key={unit}>
 								<a
 									href="#"
-									onClick={() => this.replaceCurrent(unit)}
+									onClick={() =>
+										this.props.completer.replaceCurrent(
+											unit,
+										)
+									}
 								>
 									{unit}
 								</a>
@@ -335,69 +235,29 @@ class UnitCompleteInput extends React.Component<
 		);
 	}
 }
-export class GUI extends React.Component<{}, GuiState> {
+@observer
+export class GUI extends React.Component {
+	@observable guist = new GuiState();
+	@observable completer = new UnitCompleter(this.guist);
+
 	constructor(props: {}) {
 		super(props);
 		guiInst = this;
-		this.state = {
-			lines: [],
-			currentInput: "",
-			currentOutput: new TaggedString(),
-		};
+
 		loadPresetLines();
 	}
-	addLine(line: GuiLineElement) {
-		const lines = this.state.lines.slice();
-		lines.unshift(line);
-		this.setState({ lines } as any);
-	}
-	removeLine(index: number) {
-		const lines = this.state.lines.slice();
-		lines.splice(index, 1);
-		this.setState({ lines: lines } as any);
-	}
+
 	onSubmit = (evt: React.FormEvent<HTMLFormElement>) => {
 		evt.preventDefault();
-		const input = this.state.currentInput;
-		if (input.trim().length > 0)
-			qalculate(input)
-				.then(data => this.addLine(new GuiLineElement(data)))
-				.catch(reason => {
-					console.error("could not qalc", input, reason);
-					this.addLine(
-						new GuiLineElement({
-							input: TaggedString.t`${input}`,
-							output: new TaggedString("" + reason),
-							type: "error",
-						}),
-					);
-				});
-		this.setState({
-			currentInput: "",
-			currentOutput: new TaggedString(),
-		} as any);
+		this.guist.submit();
 	};
-	async setInput(input: string) {
-		this.setState({ currentInput: input } as any);
-		if (await qalculationHasSideeffect(input))
-			this.setState({
-				currentOutput: new TaggedString("press enter to execute"),
-			} as any);
-		else
-			qalculate(input)
-				.then(({ output }) => this.setState({ currentOutput: output }))
-				.catch(reason =>
-					this.setState({
-						currentOutput: new TaggedString("" + reason),
-					} as any),
-				);
-	}
+
 	onChange = (v: string) => {
-		this.setInput(v);
+		this.guist.setInput(v);
 	};
 	showUnit(unit: UnitNumber) {
 		console.log("showing", unit);
-		this.setInput(unit.toString());
+		this.guist.setInput(unit.toString());
 	}
 	render() {
 		return (
@@ -407,15 +267,12 @@ export class GUI extends React.Component<{}, GuiState> {
 				</div>
 				<div className="gui-line unit-complete">
 					<form onSubmit={this.onSubmit}>
-						<UnitCompleteInput
-							onChange={this.onChange}
-							value={this.state.currentInput}
-						/>
-						{this.state.currentOutput.vals.length > 0 ? (
+						<UnitCompleteInput completer={this.completer} />
+						{this.guist.currentOutput.vals.length > 0 ? (
 							<TaggedStringDisplay
 								className="inline-response"
 								text={TaggedString.t` = ${
-									this.state.currentOutput
+									this.guist.currentOutput
 								}`}
 								onClickUnit={unit => this.showUnit(unit)}
 							/>
@@ -425,16 +282,16 @@ export class GUI extends React.Component<{}, GuiState> {
 					</form>
 					<hr />
 				</div>
-				{this.state.lines.map((line, i) => (
+				{this.guist.lines.map((line, i) => (
 					<GUILine
 						key={line.id}
 						index={i}
 						line={line}
 						onClickInput={() =>
-							this.setInput(line.data.input.toString())
+							this.guist.setInput(line.data.input.toString())
 						}
 						onClickUnit={unit => this.showUnit(unit)}
-						onClickRemove={() => this.removeLine(i)}
+						onClickRemove={() => this.guist.removeLine(i)}
 					/>
 				))}
 
@@ -458,15 +315,6 @@ export class GUI extends React.Component<{}, GuiState> {
 			</div>
 		);
 	}
-	componentDidUpdate(_prevProps: any, prevState: GuiState) {
-		if (prevState.lines !== this.state.lines) {
-			history.replaceState(
-				{},
-				"",
-				window.location.pathname + window.location.search,
-			);
-		}
-	}
 	exportToUrl() {
 		history.replaceState(
 			{},
@@ -477,7 +325,7 @@ export class GUI extends React.Component<{}, GuiState> {
 	serialize() {
 		return lzString.compressToEncodedURIComponent(
 			JSON.stringify({
-				lines: this.state.lines
+				lines: this.guist.lines
 					.map(line => line.data.input.toString())
 					.reverse(),
 			} as Serialized),

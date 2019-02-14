@@ -1,7 +1,7 @@
 import { UnitNumber, SpecialUnitNumber } from "../unitNumber";
 import { parse } from "./parser";
 import Scope from "./scope";
-import { TaggedString } from "../output";
+import { TaggedString } from "../unitNumber/output";
 import * as Tree from "./Tree";
 import * as operators from "./operators";
 import globalScope from "./globalScope";
@@ -90,7 +90,7 @@ export function define(unit: EvaluatedNode, scope: Scope): TaggedString {
 			? TaggedString.t`Aliases: ${TaggedString.join(
 					aliases.map(a => a.value),
 					", ",
-				)}`
+			  )}`
 			: "";
 	const info = scope.docMap.get(unit.value.id!);
 	let infoText: TaggedString = t``;
@@ -98,10 +98,10 @@ export function define(unit: EvaluatedNode, scope: Scope): TaggedString {
 		infoText = t`
 ${info.comment ? info.comment : ""}
 ${
-			info.headings.length
-				? "\nCategory: " + info.headings.map(x => `${x}`).join("\n -> ")
-				: ""
-		}
+	info.headings.length
+		? "\nCategory: " + info.headings.map(x => `${x}`).join("\n -> ")
+		: ""
+}
 `;
 	}
 	unit = [...aliases, unit].find(
@@ -118,8 +118,8 @@ ${
 
 		${infoText}`;
 	res.flatten();
-	res.vals = res.vals.map(
-		x => (typeof x === "string" ? x.replace(/\n\s*/g, "\n") : x),
+	res.vals = res.vals.map(x =>
+		typeof x === "string" ? x.replace(/\n\s*/g, "\n") : x,
 	);
 	return res;
 }

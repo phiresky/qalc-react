@@ -1,4 +1,4 @@
-import { TaggedString } from "../output";
+import { TaggedString } from "../unitNumber/output";
 import * as Tree from "./Tree";
 import { UnitNumber } from "../unitNumber";
 import {

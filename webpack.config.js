@@ -53,7 +53,7 @@ const plugins = [
 module.exports = {
 	mode: production ? "production" : "development",
 	entry: {
-		gui: "./src/gui",
+		gui: "./src/ui/gui",
 		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
 		gnuTest: ["./src/units-importer/rewrite-gnu-units"],
 	},

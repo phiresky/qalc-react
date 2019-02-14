@@ -1,6 +1,6 @@
 import { RPNToken, AToken } from "./parser";
 import Scope from "./scope";
-import { TaggedString } from "../output";
+import { TaggedString } from "../unitNumber/output";
 import * as Tree from "./Tree";
 import * as parser from "./parser";
 import globalScope from "./globalScope";
@@ -133,7 +133,7 @@ res = ${
 			? TaggedString.t`${evaled.toTaggedString()} = ${unitConvertedTaggedString(
 					evaled,
 					scope,
-				)}`
+			  )}`
 			: "err"
 	}
 tokens = ${

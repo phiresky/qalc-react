@@ -1,4 +1,4 @@
-import { UnitNumber } from "./unitNumber";
+import { UnitNumber } from ".";
 
 export class TaggedString {
 	vals: TaggedStringEle[];
