@@ -7,7 +7,8 @@ import {
 } from "../libqalc";
 import { TaggedString } from "../unitNumber/output";
 import { observable, computed } from "mobx";
-import { tokenize, TokenType } from "../libqalc/parser";
+import { tokenize } from "../libqalc/parser";
+import * as TokenType from "../libqalc/TokenType";
 
 export class GuiLineElement {
 	public id: number;
@@ -68,13 +69,14 @@ export class GuiState {
 		this.currentInput = input;
 		if (await qalculationHasSideeffect(input))
 			this.currentOutput = new TaggedString("press enter to execute");
-		else
-			qalculate(input)
-				.then(({ output }) => (this.currentOutput = output))
-				.catch(
-					reason =>
-						(this.currentOutput = new TaggedString("" + reason)),
-				);
+		else {
+			this.currentOutput = await this.calcToString(input);
+		}
+	}
+	async calcToString(input: string) {
+		return qalculate(input)
+			.then(({ output }) => output)
+			.catch(reason => new TaggedString("" + reason));
 	}
 }
 

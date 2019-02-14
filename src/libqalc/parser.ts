@@ -1,46 +1,14 @@
 import { rpnToTree } from "./Tree";
-export namespace TokenType {
-	export const Identifier = "Identifier";
-	export type Identifier = typeof Identifier;
-	export const Number = "Number";
-	export type Number = typeof Number;
-	export const LParen = "LParen";
-	export type LParen = typeof LParen;
-	export const RParen = "RParen";
-	export type RParen = typeof RParen;
-	export const Operator = "Operator";
-	export type Operator = typeof Operator;
-	export const Whitespace = "Whitespace";
-	export type Whitespace = typeof Whitespace;
-	export const Unknown = "Unknown";
-	export type Unknown = typeof Unknown;
-}
+import * as RPNTokenType from "./RPNTokenType";
+import * as TokenType from "./TokenType";
 export type TokenType =
-	| TokenType.Identifier
+	| TokenType.IdentifierT
 	| TokenType.Number
 	| TokenType.LParen
 	| TokenType.RParen
 	| TokenType.Operator
 	| TokenType.Whitespace
 	| TokenType.Unknown;
-export namespace RPNTokenType {
-	export const Identifier = "Identifier";
-	export type Identifier = typeof Identifier;
-	export const Number = "Number";
-	export type Number = typeof Number;
-	export const LParen = "LParen";
-	export type LParen = typeof LParen;
-	export const RParen = "RParen";
-	export type RParen = typeof RParen;
-	export const UnaryOperator = "UnaryOperator";
-	export type UnaryOperator = typeof UnaryOperator;
-	export const InfixOperator = "InfixOperator";
-	export type InfixOperator = typeof InfixOperator;
-	export const Whitespace = "Whitespace";
-	export type Whitespace = typeof Whitespace;
-	export const Unknown = "Unknown";
-	export type Unknown = typeof Unknown;
-}
 export type RPNTokenType =
 	| RPNTokenType.Identifier
 	| RPNTokenType.Number

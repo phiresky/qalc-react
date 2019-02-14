@@ -2,13 +2,13 @@ import { TaggedString } from "../unitNumber/output";
 import * as Tree from "./Tree";
 import { UnitNumber } from "../unitNumber";
 import {
-	TokenType,
 	RPNToken,
-	RPNTokenType,
 	infixOperators,
 	Associativity,
 	unaryOperators,
 } from "./parser";
+import * as TokenType from "./TokenType";
+import * as RPNTokenType from "./RPNTokenType";
 
 export type Node = NumberNode | IdentifierNode | FunctionCallNode;
 

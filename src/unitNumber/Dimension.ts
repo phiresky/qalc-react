@@ -22,11 +22,8 @@ export default class Dimension {
 }
 
 // <hack href="https://github.com/Microsoft/TypeScript/issues/202">
-namespace AsDimensionId {
-	export const enum Brand {}
-}
 interface AsDimensionId {
-	"": AsDimensionId.Brand;
+	"": "_AsDimensionIdBrand";
 }
 export type DimensionId = number & AsDimensionId;
 // </hack>
