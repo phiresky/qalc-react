@@ -76,7 +76,7 @@ export default class UnitNumber {
 	minus(other: UnitNumber) {
 		return this.plus(other, -1);
 	}
-	memberFunctionHasSideeffects<K extends keyof this>(
+	memberFunctionHasSideeffects<K extends Extract<keyof this, string>>(
 		member: K,
 		other: UnitNumber,
 	): boolean {

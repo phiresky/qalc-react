@@ -27,13 +27,15 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 		this.store = this.props.store;
 		document.addEventListener(
 			"selectionchange",
-			_ => this.getSelection(document.getSelection()),
+			_ => this.getSelection(document.getSelection()!),
 			false,
 		);
 		document.addEventListener("keyup", e =>
 			this.commandKey(e, String.fromCharCode(e.keyCode)),
 		);
-		mobx.autorun("consistency check", () => this.checkConsistency());
+		mobx.autorun(() => this.checkConsistency(), {
+			name: "consistency check",
+		});
 		mobx.reaction(
 			() => JSON.stringify(this.store.executed),
 			data => {

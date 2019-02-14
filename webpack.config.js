@@ -50,17 +50,8 @@ const plugins = [
 		],
 	}),
 ];
-if (production) {
-	plugins.push(
-		new webpack.DefinePlugin({
-			"process.env": {
-				NODE_ENV: `"production"`,
-			},
-		}),
-	);
-	plugins.push(new UglifyJsPlugin({ sourceMap: true }));
-}
 module.exports = {
+	mode: production ? "production" : "development",
 	entry: {
 		gui: "./src/gui",
 		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
@@ -75,7 +66,7 @@ module.exports = {
 		fs: "empty",
 	},
 	module: {
-		loaders: [
+		rules: [
 			/*{
 				test: /\.js$/,
 				exclude: /(node_modules|bower_components)/,
@@ -108,7 +99,6 @@ module.exports = {
 			},
 			{ test: /\.css$/, loader: "style-loader!css-loader" },
 			{ test: /\.scss$/, loader: "style-loader!css-loader!sass-loader" },
-			{ test: /\.json$/, loader: "json-loader" },
 			{ test: /\.(txt|units)$/, loader: "raw-loader" },
 		],
 	},

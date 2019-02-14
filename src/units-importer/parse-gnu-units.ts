@@ -64,7 +64,8 @@ function parseLine(line: string): Line[] {
 		const cmd = commands[command];
 		//console.warn("executing", command, args);
 		if (!cmd) throw Error("unknown command " + command);
-		return cmd(...args) || [];
+		cmd(...args);
+		return [];
 	}
 	if (ignoring.some(v => v)) return [];
 	const firstSpace = line.search(/\s/);

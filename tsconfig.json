@@ -10,6 +10,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"allowSyntheticDefaultImports": true,
 		"sourceMap": true,
-		"jsx": "react"
+		"jsx": "react",
+		"resolveJsonModule": true
 	}
 }

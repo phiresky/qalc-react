@@ -86,7 +86,7 @@ class RenderBox extends React.Component<{ store: CategorizeStore; box: Box }> {
 				const { headingsIndex, headingLevel } = store.categoryTreeOf(
 					box.start,
 				);
-				const H = "h" + headingLevel;
+				const H: "h1" = ("h" + headingLevel) as any;
 				return (
 					<H className="heading-box">
 						{headingsIndex.join(".")}.{" "}
