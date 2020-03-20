@@ -62,6 +62,9 @@ module.exports = {
 		path: path.join(__dirname, "bin"),
 		filename: "[name].[hash].js",
 	},
+	optimization: {
+		minimize: false,
+	},
 	node: {
 		fs: "empty",
 	},
