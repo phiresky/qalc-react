@@ -14,3 +14,13 @@ export const Whitespace = "Whitespace";
 export type Whitespace = typeof Whitespace;
 export const Unknown = "Unknown";
 export type Unknown = typeof Unknown;
+
+export type RPNTokenType =
+	| Identifier
+	| Number
+	| LParen
+	| RParen
+	| UnaryOperator
+	| InfixOperator
+	| Whitespace
+	| Unknown;

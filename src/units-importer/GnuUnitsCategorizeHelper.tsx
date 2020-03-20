@@ -86,12 +86,14 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 	@mobx.action
 	getSelection(s: Selection) {
 		// const [boxes, lines] = [this.store.boxes, this.store.lines];
-		let boxStartI =
-			this.pres.get(s.anchorNode) ||
-			this.pres.get(s.anchorNode.parentElement!);
-		let boxEndI =
-			this.pres.get(s.focusNode) ||
-			this.pres.get(s.focusNode.parentNode!);
+		let boxStartI = s.anchorNode
+			? this.pres.get(s.anchorNode) ||
+			  this.pres.get(s.anchorNode.parentElement!)
+			: undefined;
+		let boxEndI = s.focusNode
+			? this.pres.get(s.focusNode) ||
+			  this.pres.get(s.focusNode.parentNode!)
+			: undefined;
 		if (boxStartI === undefined || boxEndI === undefined) {
 			boxStartI = -1;
 			boxEndI = -1;

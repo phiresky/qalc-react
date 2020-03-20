@@ -1,23 +1,9 @@
 import { rpnToTree } from "./Tree";
 import * as RPNTokenType from "./RPNTokenType";
 import * as TokenType from "./TokenType";
-export type TokenType =
-	| TokenType.IdentifierT
-	| TokenType.Number
-	| TokenType.LParen
-	| TokenType.RParen
-	| TokenType.Operator
-	| TokenType.Whitespace
-	| TokenType.Unknown;
-export type RPNTokenType =
-	| RPNTokenType.Identifier
-	| RPNTokenType.Number
-	| RPNTokenType.LParen
-	| RPNTokenType.RParen
-	| RPNTokenType.UnaryOperator
-	| RPNTokenType.InfixOperator
-	| RPNTokenType.Whitespace
-	| RPNTokenType.Unknown;
+
+type TokenType = TokenType.TokenType;
+type RPNTokenType = RPNTokenType.RPNTokenType;
 
 const TokenTypeRegex: [RegExp, TokenType][] = [
 	[/^\s+/, TokenType.Whitespace],

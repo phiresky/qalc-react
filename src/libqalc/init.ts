@@ -8,29 +8,34 @@ export default function init() {
 	if (inited) return;
 	inited = true;
 	console.log("TOF", typeof navigator);
+	let customData;
+	let gnuUnitsData;
 	if (
 		typeof navigator !== "undefined" &&
 		navigator.product === "ReactNative"
 	) {
-		var gnuUnitsData = require("../../data/gnu-units.json");
-		var customData = require("../../data/custom_data.txt.json").text; // todo
-	} /*else if (typeof window === "undefined") {
+		console.log("react native");
+		gnuUnitsData = require("../../data/gnu-units.json");
+		customData = require("../../data/custom_data.txt.json").text; // todo
+	} else if (typeof window === "undefined") {
 		// running in node
-		
+		console.log("node");
 		const fs = require("fs");
-		var gnuUnitsData = JSON.parse(
+		gnuUnitsData = JSON.parse(
 			fs.readFileSync(__dirname + "/../../data/gnu-units.json", "utf8"),
 		);
-		var customData = fs.readFileSync(
+		customData = fs.readFileSync(
 			__dirname + "/../../data/custom_data.txt",
 			"utf8",
 		) as string;
 	} else {
+		console.log("webpack");
 		// running in webpack
-		var gnuUnitsData = require("../../data/gnu-units.json");
-		var customData = require("../../data/custom_data.txt") as string;
-	}*/
+		gnuUnitsData = require("../../data/gnu-units.json");
+		customData = require("../../data/custom_data.txt").default as string;
+	}
 
+	console.log(customData);
 	scope.addFunctions(...internalFunctions);
 	load.loadUnitsJson(scope, "units.json", gnuUnitsData);
 	load.loadUnitsTxt(scope, "custom_data.txt", customData, true);

@@ -12,3 +12,12 @@ export const Whitespace = "Whitespace";
 export type Whitespace = typeof Whitespace;
 export const Unknown = "Unknown";
 export type Unknown = typeof Unknown;
+
+export type TokenType =
+	| IdentifierT
+	| Number
+	| LParen
+	| RParen
+	| Operator
+	| Whitespace
+	| Unknown;
