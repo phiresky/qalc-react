@@ -6,7 +6,7 @@ import {
 	parseEvaluate,
 } from "../libqalc";
 import { TaggedString } from "../unitNumber/output";
-import { observable, computed } from "mobx";
+import { observable, computed, makeObservable } from "mobx";
 import { tokenize } from "../libqalc/parser";
 import * as TokenType from "../libqalc/TokenType";
 
@@ -18,12 +18,18 @@ export class GuiLineElement {
 	}
 }
 export class GuiState {
-	@observable
 	lines: GuiLineElement[] = [];
-	@observable
 	currentInput = "";
-	@observable
 	currentOutput = new TaggedString();
+
+	constructor() {
+		makeObservable(this, {
+			lines: observable,
+			currentInput: observable,
+			currentOutput: observable,
+		});
+	}
+
 	addLine(line: GuiLineElement) {
 		this.lines.unshift(line);
 	}
@@ -34,8 +40,8 @@ export class GuiState {
 		const input = this.currentInput;
 		if (input.trim().length > 0)
 			qalculate(input)
-				.then(data => this.addLine(new GuiLineElement(data)))
-				.catch(reason => {
+				.then((data) => this.addLine(new GuiLineElement(data)))
+				.catch((reason) => {
 					console.error("could not qalc", input, reason);
 					this.addLine(
 						new GuiLineElement({
@@ -50,11 +56,11 @@ export class GuiState {
 	}
 	async loadPresets(presets: string[]) {
 		const lines = await Promise.all(
-			presets.map(input =>
+			presets.map((input) =>
 				qalculate(input)
-					.then(data => new GuiLineElement(data))
+					.then((data) => new GuiLineElement(data))
 					.catch(
-						error =>
+						(error) =>
 							new GuiLineElement({
 								input: TaggedString.t`${input}`,
 								output: new TaggedString("" + error),
@@ -76,19 +82,23 @@ export class GuiState {
 	async calcToString(input: string) {
 		return qalculate(input)
 			.then(({ output }) => output)
-			.catch(reason => new TaggedString("" + reason));
+			.catch((reason) => new TaggedString("" + reason));
 	}
 }
 
 export class UnitCompleter {
-	constructor(public target: GuiState) {}
-	@observable
+	constructor(public target: GuiState) {
+		makeObservable(this, {
+			cursorIndexChars: observable,
+			tokens: computed,
+		});
+	}
 	cursorIndexChars: number | null = null;
-	@computed get tokens() {
+	get tokens() {
 		const tokens = [...tokenize(this.target.currentInput)];
 		if (!this.cursorIndexChars) return { tokens, cursorIndex: null };
 		const cursorIndex = tokens.findIndex(
-			t =>
+			(t) =>
 				t.type !== TokenType.Whitespace &&
 				t.start + t.str.length >= this.cursorIndexChars!,
 		);
@@ -108,7 +118,7 @@ export class UnitCompleter {
 				start: 0,
 			};
 		}
-		this.target.currentInput = tokens.map(x => x.str).join("");
+		this.target.currentInput = tokens.map((x) => x.str).join("");
 	};
 	getPossibleUnits() {
 		const { tokens, cursorIndex } = this.tokens;
@@ -123,7 +133,7 @@ export class UnitCompleter {
 					const evaled = parseEvaluate(
 						tokens
 							.slice(0, cursorIndex)
-							.map(x => x.str)
+							.map((x) => x.str)
 							.join(""),
 					);
 					const val = evaled.value;
