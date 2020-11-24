@@ -127,7 +127,8 @@ export class GUI extends React.Component {
 							}}
 						>
 							Export to URL
-						</a>{" "}
+						</a>
+						{" | "}
 						<a
 							href="#"
 							onClick={(e) => {
@@ -136,8 +137,8 @@ export class GUI extends React.Component {
 							}}
 						>
 							Clear History
-						</a>{" "}
-						|{" "}
+						</a>
+						{" | "}
 						<a href="https://github.com/phiresky/qalc-react">
 							Source code on GitHub
 						</a>
