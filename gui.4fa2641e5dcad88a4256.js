@@ -20879,7 +20879,24 @@ GUI = GUI_decorate([
 ], GUI);
 
 
+;// CONCATENATED MODULE: ./src/ui/util.tsx
+function getAppDiv() {
+    const div = document.createElement("div");
+    div.classList.add("app");
+    document.body.appendChild(div);
+    return div;
+}
+function addBootstrapCss() {
+    const link = document.createElement("link");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    link.href =
+        "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
+    document.head.appendChild(link);
+}
+
 ;// CONCATENATED MODULE: ./src/ui/gui.tsx
+
 
 
 
@@ -20900,14 +20917,11 @@ window.addEventListener("load", () => {
         console.log("SW registration failed: ", registrationError);
     });
 });
-const div = document.createElement("div");
-div.classList.add("app");
-document.body.appendChild(div);
-const gui = (0,react_dom.render)(react.createElement(GUI, null), div);
+const gui = (0,react_dom.render)(react.createElement(GUI, null), getAppDiv());
 Object.assign(window, { gui, qalculationHasSideeffect: qalculationHasSideeffect, qalculate: qalculate });
 
 })();
 
 /******/ })()
 ;
-//# sourceMappingURL=gui.10efa01e4d678b023fa5.js.map
+//# sourceMappingURL=gui.4fa2641e5dcad88a4256.js.map
