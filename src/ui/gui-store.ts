@@ -1,3 +1,4 @@
+import lzString from "lz-string";
 import {
 	action,
 	computed,
@@ -16,6 +17,9 @@ import { tokenize } from "../libqalc/parser";
 import * as TokenType from "../libqalc/TokenType";
 import { TaggedString } from "../unitNumber/output";
 
+type Serialized = {
+	lines: string[];
+};
 export class GuiLineElement {
 	public id: number;
 	private static idCounter = 0;
@@ -43,7 +47,9 @@ export class GuiState {
 	}
 	removeLine(index: number): void {
 		this.lines.splice(index, 1);
+		setTimeout(() => this.exportToHistory(), 1000);
 	}
+
 	submit(): void {
 		const input = this.currentInput;
 		if (input.trim().length > 0)
@@ -96,6 +102,36 @@ export class GuiState {
 		return qalculate(input)
 			.then(({ output }) => output)
 			.catch((reason) => new TaggedString("" + reason));
+	}
+
+	exportToUrl(): void {
+		history.replaceState(
+			{},
+			"",
+			"#" +
+				new URLSearchParams({
+					state: lzString.compressToEncodedURIComponent(
+						this.serialize(),
+					),
+				}).toString(),
+		);
+	}
+	serialize(): string {
+		return JSON.stringify({
+			lines: this.lines
+				.map((line) => line.data.input.toString())
+				.reverse(),
+		} as Serialized);
+	}
+	exportToHistory(): void {
+		localStorage.setItem(
+			"qalc-history",
+			lzString.compressToUTF16(this.serialize()),
+		);
+	}
+	clearHistory(): void {
+		localStorage.clear();
+		location.reload();
 	}
 }
 

@@ -25,9 +25,6 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 	.map((line) => line.trim())
 	.filter((line) => line.length > 0);
 
-type Serialized = {
-	lines: string[];
-};
 async function loadPresetLines() {
 	let presets = presetLines;
 	const state = new URLSearchParams(location.hash.substr(1)).get("state");
@@ -73,7 +70,7 @@ export class GUI extends React.Component {
 	onSubmit = (evt: React.FormEvent<HTMLFormElement>): void => {
 		evt.preventDefault();
 		this.guist.submit();
-		setTimeout(() => this.exportToHistory(), 1000);
+		setTimeout(() => this.guist.exportToHistory(), 1000);
 	};
 
 	onChange = (v: string): void => {
@@ -123,7 +120,7 @@ export class GUI extends React.Component {
 							href="#"
 							onClick={(e) => {
 								e.preventDefault();
-								this.exportToUrl();
+								this.guist.exportToUrl();
 							}}
 						>
 							Export to URL
@@ -133,7 +130,7 @@ export class GUI extends React.Component {
 							href="#"
 							onClick={(e) => {
 								e.preventDefault();
-								this.clearHistory();
+								this.guist.clearHistory();
 							}}
 						>
 							Clear History
@@ -146,34 +143,5 @@ export class GUI extends React.Component {
 				</footer>
 			</div>
 		);
-	}
-	exportToUrl(): void {
-		history.replaceState(
-			{},
-			"",
-			"#" +
-				new URLSearchParams({
-					state: lzString.compressToEncodedURIComponent(
-						this.serialize(),
-					),
-				}).toString(),
-		);
-	}
-	serialize(): string {
-		return JSON.stringify({
-			lines: this.guist.lines
-				.map((line) => line.data.input.toString())
-				.reverse(),
-		} as Serialized);
-	}
-	exportToHistory(): void {
-		localStorage.setItem(
-			"qalc-history",
-			lzString.compressToUTF16(this.serialize()),
-		);
-	}
-	clearHistory(): void {
-		localStorage.clear();
-		location.reload();
 	}
 }
