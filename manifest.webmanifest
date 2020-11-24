@@ -1,0 +1,8 @@
+{
+    "short_name": "Unit Calc",
+    "name": "Qalc React Unit Calculator",
+    "description": "A simple but powerful calculator that can handle all physical units",
+    "start_url": ".",
+    "icons": [{"src": "icon.png", "type": "image/png", "sizes": "360x360"}],
+    "display": "standalone"
+}
