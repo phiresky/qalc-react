@@ -20842,14 +20842,12 @@ let GUI = class GUI extends react.Component {
                             e.preventDefault();
                             this.exportToUrl();
                         } }, "Export to URL"),
-                    " ",
+                    " | ",
                     react.createElement("a", { href: "#", onClick: (e) => {
                             e.preventDefault();
                             this.clearHistory();
                         } }, "Clear History"),
-                    " ",
-                    "|",
-                    " ",
+                    " | ",
                     react.createElement("a", { href: "https://github.com/phiresky/qalc-react" }, "Source code on GitHub")))));
     }
     exportToUrl() {
@@ -20909,4 +20907,4 @@ Object.assign(window, { gui, qalculationHasSideeffect: qalculationHasSideeffect,
 
 /******/ })()
 ;
-//# sourceMappingURL=gui.891715a4f5788f2aaad7.js.map
+//# sourceMappingURL=gui.d7f349e822528b8223da.js.map
