@@ -4,6 +4,7 @@ import { render } from "react-dom";
 import "../../style.scss";
 import { qalculate, qalculationHasSideeffect } from "../libqalc";
 import { GUI } from "./components/GUI";
+import { getAppDiv } from "./util";
 
 window.addEventListener("load", () => {
 	if (!navigator.serviceWorker) {
@@ -19,9 +20,7 @@ window.addEventListener("load", () => {
 			console.log("SW registration failed: ", registrationError);
 		});
 });
-const div = document.createElement("div");
-div.classList.add("app");
-document.body.appendChild(div);
-const gui = render(<GUI />, div);
+
+const gui = render(<GUI />, getAppDiv());
 
 Object.assign(window, { gui, qalculationHasSideeffect, qalculate });

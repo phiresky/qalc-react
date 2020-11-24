@@ -1,9 +1,9 @@
 import * as mobx from "mobx";
 import * as mobxReact from "mobx-react";
-import DevTools from "mobx-react-devtools";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import "whatwg-fetch";
+import { addBootstrapCss, getAppDiv } from "../ui/util";
 import CategorizeStore, { Type } from "./CategorizeStore";
 
 function download(content: string, filename: string) {
@@ -215,6 +215,7 @@ const typeStyles: { [t in Type]: React.CSSProperties } = {
 };
 
 export function init(str: string, preloadSteps: any[]) {
+	addBootstrapCss();
 	const actions =
 		JSON.parse(localStorage.getItem("executed") || "null") || preloadSteps;
 	ReactDOM.render(
@@ -223,8 +224,7 @@ export function init(str: string, preloadSteps: any[]) {
 				store={new CategorizeStore(str, actions)}
 				ref={(guiInst) => Object.assign(window, { guiInst })}
 			/>
-			<DevTools />
 		</div>,
-		document.getElementById("app"),
+		getAppDiv(),
 	);
 }

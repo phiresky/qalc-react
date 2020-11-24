@@ -1,22 +1,23 @@
-import CategorizeStore, {
-	Type,
-	Box,
-	Category,
-	CatChild,
-	splitOnce,
-} from "./CategorizeStore";
-import gnuDefs from "../../units-2.12/definitions.units";
-import steps from "../../data/gnu-units-categorize-steps.json";
-import { render } from "react-dom";
-import * as React from "react";
-import "../../style.scss";
+import { makeObservable, observable } from "mobx";
 import { observer } from "mobx-react";
-import { observable, makeObservable } from "mobx";
+import * as React from "react";
+import { render } from "react-dom";
+import steps from "../../data/gnu-units-categorize-steps.json";
+import "../../style.scss";
+import gnuDefs from "../../units-2.12/definitions.units";
+import { addBootstrapCss, getAppDiv } from "../ui/util";
+import CategorizeStore, {
+	Box,
+	CatChild,
+	Category,
+	splitOnce,
+	Type,
+} from "./CategorizeStore";
 
 function FullInfo({ store, box }: { store: CategorizeStore; box: Box }) {
 	const info = store.categoryTreeOf(box.start);
 	return (
-		<div>
+		<div className="full-info">
 			<p>Fully parsed info:</p>
 			<pre>
 				<p>{info.comment}</p>
@@ -182,6 +183,8 @@ const Toc = observer(
 	},
 );
 
+addBootstrapCss();
+
 function All() {
 	const store = new CategorizeStore(gnuDefs, steps);
 	const toc = store.getTableOfContents();
@@ -195,4 +198,4 @@ function All() {
 	);
 }
 
-render(<All />, document.getElementById("app"));
+render(<All />, getAppDiv());

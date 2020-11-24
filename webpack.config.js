@@ -36,19 +36,13 @@ const plugins = [
 	}),
 	new Html({
 		...htmlCfg,
-		chunks: ["categorizeHelper"],
+		chunks: ["GnuUnitsCategorizeHelper"],
 		filename: "GnuUnitsCategorizeHelper.html",
-		links: [
-			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
-		],
 	}),
 	new Html({
 		...htmlCfg,
-		chunks: ["gnuTest"],
-		filename: "gnuTest.html",
-		links: [
-			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
-		],
+		chunks: ["ShowGnuUnitsTree"],
+		filename: "ShowGnuUnitsTree.html",
 	}),
 	new WorkboxPlugin.GenerateSW({
 		// these options encourage the ServiceWorkers to get in there fast
@@ -62,15 +56,17 @@ const plugins = [
 				revision: Math.random().toString(), // todo: smarter
 			},
 		],
-		excludeChunks: ["gnuTest", "categorizeHelper"],
+		excludeChunks: ["ShowGnuUnitsTree", "GnuUnitsCategorizeHelper"],
 	}),
 ];
 module.exports = {
 	mode: production ? "production" : "development",
 	entry: {
 		gui: "./src/ui/gui",
-		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
-		gnuTest: ["./src/units-importer/rewrite-gnu-units"],
+		GnuUnitsCategorizeHelper: [
+			"./src/units-importer/GnuUnitsCategorizeHelperMain",
+		],
+		ShowGnuUnitsTree: ["./src/units-importer/ShowGnuUnitsTree"],
 	},
 	devtool: production ? "source-map" : "eval-cheap-module-source-map",
 	output: {

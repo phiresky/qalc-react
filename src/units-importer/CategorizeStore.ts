@@ -22,34 +22,31 @@ export type Category = {
 };
 
 export default class CategorizeStore {
-	@mobx.observable executed: any[][] = [];
-	@mobx.observable boxes: Box[] = [];
-	@mobx.observable selectionStart = -1;
-	@mobx.observable selectionEnd = -1;
+	executed: any[][] = [];
+	boxes: Box[] = [];
+	selectionStart = -1;
+	selectionEnd = -1;
 	readonly lines: string[];
 	constructor(data: string, changes: any[][] = []) {
+		mobx.makeAutoObservable(this);
 		this.lines = data.split("\n");
 		this.lines.unshift(""); // pretend it's one indexed
 		this.boxes = autoparseText(this.lines);
 		this.executeAll(changes);
 	}
-	@mobx.action
 	executeAll(changes: any[][]) {
 		for (const change of changes) this.execute(change);
 	}
-	@mobx.action
 	execute(cmd: any[]) {
 		console.log("run: ", ...cmd);
 		this.executed.push(cmd);
 		const [command, ...args] = cmd;
 		(this as any)[command](...args);
 	}
-	@mobx.action
 	markSelection(a: number, b: number, type: Type) {
 		const [startI, endI] = this.findBounds(this.boxes, a, b);
 		for (let i = startI; i <= endI; i++) this.boxes[i].type = type;
 	}
-	@mobx.action
 	unifySelection(a: number, b: number) {
 		const [startI, endI] = this.findBounds(this.boxes, a, b);
 		const type = this.boxes[startI].type;
@@ -61,7 +58,6 @@ export default class CategorizeStore {
 		this.selectionStart = -1;
 		this.selectionEnd = -1;
 	}
-	@mobx.action
 	splitSelection(a: number, b: number) {
 		const [startI, endI] = this.findBounds(this.boxes, a, b);
 		const newBs = [] as Box[];
@@ -73,7 +69,6 @@ export default class CategorizeStore {
 		this.selectionStart = -1;
 		this.selectionEnd = -1;
 	}
-	@mobx.action
 	setHeadingDepth(a: number, b: number, headingLevel: number) {
 		const [startI, endI] = this.findBounds(this.boxes, a, b);
 		for (let i = startI; i <= endI; i++)
