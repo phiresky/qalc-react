@@ -1,12 +1,12 @@
 const path = require("path");
 const Html = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const WorkboxPlugin = require("workbox-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 const production = process.env.NODE_ENV == "production";
 console.warn("building " + (production ? "prod" : "dev"));
 const htmlCfg = {
-	// add a div with this id in which we will mount our root react component
-	appMountId: "app",
 	// webpage title
 	title: "Qalc",
 	// set width=device-width header for mobile devices
@@ -16,9 +16,23 @@ const htmlCfg = {
 	links: [],
 };
 const plugins = [
-	new MiniCssExtractPlugin({ filename: "[name].[hash].css" }),
+	new CopyPlugin({ patterns: [{ from: "pwa", to: "." }] }),
+	new MiniCssExtractPlugin({ filename: "[name].[contenthash].css" }),
 	new Html({
 		...htmlCfg,
+		templateContent: `
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="utf-8">
+	<title>Qalc</title>
+	<link rel="manifest" href="manifest.webmanifest">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+	<body>
+	</body>
+</html>
+`,
 	}),
 	new Html({
 		...htmlCfg,
@@ -36,6 +50,20 @@ const plugins = [
 			"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
 		],
 	}),
+	new WorkboxPlugin.GenerateSW({
+		// these options encourage the ServiceWorkers to get in there fast
+		// and not allow any straggling "old" SWs to hang around
+		clientsClaim: true,
+		skipWaiting: true,
+		maximumFileSizeToCacheInBytes: 10e6,
+		additionalManifestEntries: [
+			{
+				url: "index.html",
+				revision: Math.random().toString(), // todo: smarter
+			},
+		],
+		excludeChunks: ["gnuTest", "categorizeHelper"],
+	}),
 ];
 module.exports = {
 	mode: production ? "production" : "development",
@@ -47,7 +75,7 @@ module.exports = {
 	devtool: production ? "source-map" : "eval-cheap-module-source-map",
 	output: {
 		path: path.join(__dirname, "bin"),
-		filename: "[name].[hash].js",
+		filename: "[name].[contenthash].js",
 	},
 	optimization: {
 		minimize: false,

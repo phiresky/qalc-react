@@ -28,8 +28,6 @@ export default async function init(): Promise<void> {
 		customData = (await import("../../data/custom_data.txt"))
 			.default as string;
 	}
-
-	console.log(customData);
 	scope.addFunctions(...internalFunctions);
 	load.loadUnitsJson(scope, "units.json", gnuUnitsData);
 	load.loadUnitsTxt(scope, "custom_data.txt", customData, true);

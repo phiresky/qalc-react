@@ -1,4 +1,4 @@
-import { makeObservable, observable } from "mobx";
+import { action, makeObservable, observable } from "mobx";
 import { observer } from "mobx-react";
 import * as React from "react";
 import { qalculate } from "../../libqalc";
@@ -21,14 +21,20 @@ export class DefinitionOverlay extends React.Component<{
 
 		void this.load();
 	}
+
+	@action
+	private setDefinition(d: TaggedString | null) {
+		this.definition = d;
+	}
+
 	async load(): Promise<void> {
 		try {
-			this.definition = (await qalculate(this.props.unit.id!)).output;
+			this.setDefinition((await qalculate(this.props.unit.id!)).output);
 		} catch (e: any) {
-			this.definition = new TaggedString(e.message);
+			this.setDefinition(new TaggedString(e.message));
 		}
 	}
-	render() {
+	render(): React.ReactNode {
 		if (this.definition)
 			return (
 				<TaggedStringDisplay

@@ -1,4 +1,10 @@
-import { computed, makeObservable, observable } from "mobx";
+import {
+	action,
+	computed,
+	makeObservable,
+	observable,
+	runInAction,
+} from "mobx";
 import {
 	parseEvaluate,
 	qalculate,
@@ -27,13 +33,15 @@ export class GuiState {
 			lines: observable,
 			currentInput: observable,
 			currentOutput: observable,
+			addLine: action,
+			removeLine: action,
 		});
 	}
 
-	addLine(line: GuiLineElement) {
+	addLine(line: GuiLineElement): void {
 		this.lines.unshift(line);
 	}
-	removeLine(index: number) {
+	removeLine(index: number): void {
 		this.lines.splice(index, 1);
 	}
 	submit(): void {
@@ -54,7 +62,7 @@ export class GuiState {
 		this.currentInput = "";
 		this.currentOutput = new TaggedString();
 	}
-	async loadPresets(presets: string[]) {
+	async loadPresets(presets: string[]): Promise<void> {
 		const lines = await Promise.all(
 			presets.map((input) =>
 				qalculate(input)
@@ -71,15 +79,20 @@ export class GuiState {
 		);
 		for (const line of lines) this.addLine(line);
 	}
-	async setInput(input: string) {
+	async setInput(input: string): Promise<void> {
 		this.currentInput = input;
-		if (await qalculationHasSideeffect(input))
-			this.currentOutput = new TaggedString("press enter to execute");
-		else {
-			this.currentOutput = await this.calcToString(input);
+		if (await qalculationHasSideeffect(input)) {
+			runInAction(() => {
+				this.currentOutput = new TaggedString("press enter to execute");
+			});
+		} else {
+			const res = await this.calcToString(input);
+			runInAction(() => {
+				this.currentOutput = res;
+			});
 		}
 	}
-	async calcToString(input: string) {
+	async calcToString(input: string): Promise<TaggedString> {
 		return qalculate(input)
 			.then(({ output }) => output)
 			.catch((reason) => new TaggedString("" + reason));

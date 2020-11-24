@@ -14,6 +14,8 @@
 		"@types/rc-tooltip": "^3.7.2",
 		"@types/react": "^17.0.0",
 		"@types/react-dom": "^17.0.0",
+		"@typescript-eslint/eslint-plugin": "^4.8.2",
+		"@typescript-eslint/parser": "^4.8.2",
 		"babel-core": "^6.26.0",
 		"babel-loader": "^8.0.6",
 		"babel-preset-env": "^1.6.1",
@@ -28,12 +30,15 @@
 		"eslint-plugin-prettier": "^3.1.4",
 		"eslint-plugin-react": "^7.21.5",
 		"html-webpack-plugin": "^4.5.0",
+		"husky": ">=4",
 		"json-loader": "^0.5.7",
+		"lint-staged": ">=10",
 		"lz-string": "^1.4.4",
 		"mini-css-extract-plugin": "^1.3.1",
 		"mobx": "^6.0.4",
 		"mobx-react": "^7.0.5",
 		"mobx-react-devtools": "^6.0.3",
+		"prettier": "^2.2.0",
 		"raw-loader": "^4.0.0",
 		"rc-tooltip": "^5.0.1",
 		"react": "^17.0.1",
@@ -43,24 +48,14 @@
 		"style-loader": "^2.0.0",
 		"ts-loader": "^8.0.11",
 		"ts-node": "^9.0.0",
+		"typescript": "^4.1.2",
 		"uglifyjs-webpack-plugin": "^2.1.1",
 		"webpack": "^5.6.0",
 		"webpack-cli": "^4.2.0",
 		"webpack-dev-server": "^3.1.14",
-		"whatwg-fetch": "^3.0.0"
+		"whatwg-fetch": "^3.0.0",
+		"workbox-webpack-plugin": "^6.0.0-rc.0"
 	},
-	"devDependencies": {
-		"@typescript-eslint/eslint-plugin": "^4.8.2",
-		"@typescript-eslint/parser": "^4.8.2",
-		"husky": ">=4",
-		"lint-staged": ">=10",
-		"prettier": "^2.2.0",
-		"typescript": "^4.1.2"
-	},
-	"workspacesold": [
-		".",
-		"native2"
-	],
 	"files": [
 		"src"
 	],
