@@ -8660,6 +8660,7 @@ ${error ? "error = " + error : ""}`;
 
 // EXTERNAL MODULE: ./node_modules/lz-string/libs/lz-string.js
 var lz_string = __webpack_require__(961);
+var lz_string_default = /*#__PURE__*/__webpack_require__.n(lz_string);
 ;// CONCATENATED MODULE: ./node_modules/mobx/dist/mobx.esm.js
 var niceErrors = {
   0: "Invalid value for configuration 'enforceActions', expected 'never', 'always' or 'observed'",
@@ -14917,6 +14918,7 @@ var gui_store_awaiter = (undefined && undefined.__awaiter) || function (thisArg,
 
 
 
+
 class GuiLineElement {
     constructor(data) {
         Object.defineProperty(this, "data", {
@@ -14973,6 +14975,7 @@ class GuiState {
     }
     removeLine(index) {
         this.lines.splice(index, 1);
+        setTimeout(() => this.exportToHistory(), 1000);
     }
     submit() {
         const input = this.currentInput;
@@ -15025,6 +15028,26 @@ class GuiState {
                 .then(({ output }) => output)
                 .catch((reason) => new TaggedString("" + reason));
         });
+    }
+    exportToUrl() {
+        history.replaceState({}, "", "#" +
+            new URLSearchParams({
+                state: lz_string_default().compressToEncodedURIComponent(this.serialize()),
+            }).toString());
+    }
+    serialize() {
+        return JSON.stringify({
+            lines: this.lines
+                .map((line) => line.data.input.toString())
+                .reverse(),
+        });
+    }
+    exportToHistory() {
+        localStorage.setItem("qalc-history", lz_string_default().compressToUTF16(this.serialize()));
+    }
+    clearHistory() {
+        localStorage.clear();
+        location.reload();
     }
 }
 class UnitCompleter {
@@ -20798,7 +20821,7 @@ let GUI = class GUI extends react.Component {
             value: (evt) => {
                 evt.preventDefault();
                 this.guist.submit();
-                setTimeout(() => this.exportToHistory(), 1000);
+                setTimeout(() => this.guist.exportToHistory(), 1000);
             }
         });
         Object.defineProperty(this, "onChange", {
@@ -20840,35 +20863,15 @@ let GUI = class GUI extends react.Component {
                 react.createElement("small", null,
                     react.createElement("a", { href: "#", onClick: (e) => {
                             e.preventDefault();
-                            this.exportToUrl();
+                            this.guist.exportToUrl();
                         } }, "Export to URL"),
                     " | ",
                     react.createElement("a", { href: "#", onClick: (e) => {
                             e.preventDefault();
-                            this.clearHistory();
+                            this.guist.clearHistory();
                         } }, "Clear History"),
                     " | ",
                     react.createElement("a", { href: "https://github.com/phiresky/qalc-react" }, "Source code on GitHub")))));
-    }
-    exportToUrl() {
-        history.replaceState({}, "", "#" +
-            new URLSearchParams({
-                state: lz_string.compressToEncodedURIComponent(this.serialize()),
-            }).toString());
-    }
-    serialize() {
-        return JSON.stringify({
-            lines: this.guist.lines
-                .map((line) => line.data.input.toString())
-                .reverse(),
-        });
-    }
-    exportToHistory() {
-        localStorage.setItem("qalc-history", lz_string.compressToUTF16(this.serialize()));
-    }
-    clearHistory() {
-        localStorage.clear();
-        location.reload();
     }
 };
 GUI = GUI_decorate([
@@ -20907,4 +20910,4 @@ Object.assign(window, { gui, qalculationHasSideeffect: qalculationHasSideeffect,
 
 /******/ })()
 ;
-//# sourceMappingURL=gui.d7f349e822528b8223da.js.map
+//# sourceMappingURL=gui.10efa01e4d678b023fa5.js.map
