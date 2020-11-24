@@ -6,7 +6,7 @@
 		"dev": "webpack serve",
 		"parse-gnu-units": "ts-node src/units-importer/parse-gnu-units data/gnu-units.json",
 		"cli": "node src/cli",
-		"gh": "yarn run build && cd bin && git add -A && git commit -m'update binaries' && git push"
+		"gh": "rm -r bin/* && yarn run build && cd bin && git add -A && git commit -m'update binaries' && git push"
 	},
 	"dependencies": {
 		"@types/lz-string": "^1.3.32",
