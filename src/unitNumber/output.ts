@@ -27,7 +27,7 @@ export class TaggedString {
 		literals: TemplateStringsArray,
 		...placeholders: TaggedStringEle[]
 	): TaggedString {
-		let result: TaggedStringEle[] = [];
+		const result: TaggedStringEle[] = [];
 		for (let i = 0; i < placeholders.length; i++) {
 			if (literals[i].length > 0) result.push(literals[i]);
 			result.push(placeholders[i]);

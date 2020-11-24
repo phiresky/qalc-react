@@ -1,6 +1,6 @@
-import { rpnToTree } from "./Tree";
 import * as RPNTokenType from "./RPNTokenType";
 import * as TokenType from "./TokenType";
+import { rpnToTree } from "./Tree";
 
 type TokenType = TokenType.TokenType;
 type RPNTokenType = RPNTokenType.RPNTokenType;
@@ -38,7 +38,7 @@ export function* tokenize(str: string): IterableIterator<AToken> {
 		for (const [regex, type] of TokenTypeRegex) {
 			const match = regex.exec(str.substr(i));
 			if (match) {
-				let str = match[0];
+				const str = match[0];
 				yield { type, str, start: i };
 				i += str.length;
 				break;
@@ -154,8 +154,8 @@ export const unaryOperators: { [n: string]: OperatorInfo<1> } = {
 };
 function operator(token: RPNToken) {
 	const op = token.str.trim();
-	if (token.type === RPNTokenType.InfixOperator)
-		var c: OperatorInfo<1 | 2> = infixOperators[op];
+	let c: OperatorInfo<1 | 2>;
+	if (token.type === RPNTokenType.InfixOperator) c = infixOperators[op];
 	else if (token.type === RPNTokenType.UnaryOperator) c = unaryOperators[op];
 	else return null;
 	if (!c) throw Error(`unknown ${token.type}: '${op}'`);
@@ -194,7 +194,7 @@ export function* toRPN(tokens: Iterable<AToken>): IterableIterator<RPNToken> {
 				yield { ...token, type: token.type };
 				infix_mode = "infix";
 				break;
-			case TokenType.Operator:
+			case TokenType.Operator: {
 				const convToken = yieldOperator(token);
 				const o1 = operator(convToken)!;
 				let token2: RPNToken, o2: OperatorInfo<1 | 2> | null;
@@ -212,11 +212,12 @@ export function* toRPN(tokens: Iterable<AToken>): IterableIterator<RPNToken> {
 				stack.push(convToken);
 				infix_mode = "unary";
 				break;
+			}
 			case TokenType.LParen:
 				stack.push({ ...token, type: token.type });
 				infix_mode = "unary";
 				break;
-			case TokenType.RParen:
+			case TokenType.RParen: {
 				while (top(stack) && top(stack).type !== TokenType.LParen)
 					yield stack.pop()!;
 				if (stack.length === 0)
@@ -224,6 +225,7 @@ export function* toRPN(tokens: Iterable<AToken>): IterableIterator<RPNToken> {
 				stack.pop();
 				infix_mode = "infix";
 				break;
+			}
 			default: {
 				console.error("unknown token ", token);
 				throw Error("what is " + tokenToDebugString(token));

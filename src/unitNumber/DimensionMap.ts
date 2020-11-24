@@ -7,12 +7,12 @@ import { TaggedString } from "./output";
  */
 export default class DimensionMap extends Map<DimensionId, number> {
 	private static unicodePow = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-	static toUnicodePow(x: number) {
+	static toUnicodePow(x: number): string {
 		if (x === 1) return "";
 		return x
 			.toString()
 			.split("")
-			.map(x => (x === "." ? "⋅" : DimensionMap.unicodePow[+x]))
+			.map((x) => (x === "." ? "⋅" : DimensionMap.unicodePow[+x]))
 			.join("");
 	}
 	static listToUnicodePow(entries: [DimensionId, number][]): TaggedString {
@@ -27,24 +27,29 @@ export default class DimensionMap extends Map<DimensionId, number> {
 		);
 	}
 	toString(): string {
-		return this.toTaggedString() + "";
+		return this.toTaggedString().toString();
 	}
 	toTaggedString(): TaggedString {
 		const { pos, neg } = this.splitPosNeg();
-		let str = DimensionMap.listToUnicodePow(pos);
+		const str = DimensionMap.listToUnicodePow(pos);
 		if (neg.length > 0) {
 			str.vals.push(" / ");
 			str.append(DimensionMap.listToUnicodePow(neg));
 		}
 		return str;
 	}
-	splitPosNeg() {
-		const pos = [...this].filter(([_id, exp]) => exp > 0);
-		const neg = [...this].filter(([_id, exp]) => exp < 0);
-		neg.forEach(x => (x[1] *= -1));
+	splitPosNeg(): {
+		neg: [DimensionId, number][];
+		pos: [DimensionId, number][];
+	} {
+		const pos = [...this].filter(([, exp]) => exp > 0);
+		const neg = [...this].filter(([, exp]) => exp < 0);
+		neg.forEach((x) => (x[1] *= -1));
 		return { pos, neg };
 	}
-	static join(...list: { dimensions: DimensionMap; factor: number }[]) {
+	static join(
+		...list: { dimensions: DimensionMap; factor: number }[]
+	): DimensionMap {
 		const map: DimensionMap = new DimensionMap();
 		for (const { dimensions, factor } of list) {
 			for (const [dimension, exponent] of dimensions) {
@@ -55,27 +60,27 @@ export default class DimensionMap extends Map<DimensionId, number> {
 		}
 		return map;
 	}
-	assertEmpty(str = "") {
+	assertEmpty(str = ""): void {
 		if (this.size > 0) throw Error(str + " must be dimensionless");
 	}
-	equals(d: DimensionMap) {
+	equals(d: DimensionMap): boolean {
 		const diff = DimensionMap.join(
 			{ dimensions: this, factor: 1 },
 			{ dimensions: d, factor: -1 },
 		);
 		return diff.size === 0;
 	}
-	assertEqual(d: DimensionMap) {
+	assertEqual(d: DimensionMap): void {
 		if (!this.equals(d)) throw Error("dimensions must be the same");
 	}
-	toMismatchString() {
+	toMismatchString(): string {
 		const { pos: tooMuch, neg: notEnough } = this.splitPosNeg();
 		if (tooMuch.length === 0)
-			return "missing " + new DimensionMap(notEnough);
+			return "missing " + new DimensionMap(notEnough).toString();
 		if (notEnough.length === 0)
-			return "don't want " + new DimensionMap(tooMuch);
-		return `have ${new DimensionMap(tooMuch)}, want ${new DimensionMap(
-			notEnough,
-		)}`;
+			return "don't want " + new DimensionMap(tooMuch).toString();
+		return `have ${new DimensionMap(
+			tooMuch,
+		).toString()}, want ${new DimensionMap(notEnough).toString()}`;
 	}
 }

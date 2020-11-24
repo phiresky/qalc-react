@@ -58,7 +58,7 @@ function resolveFunction(
 export function evaluate(node: Tree.Node, scope: Scope): EvaluatedNode {
 	init();
 	if (Tree.isEvaluated(node)) return node;
-	let evNode = node as EvaluatedNode;
+	const evNode = node as EvaluatedNode;
 	if (node instanceof Tree.NumberNode) {
 		evNode.value = new UnitNumber(node.number);
 	} else if (node instanceof Tree.IdentifierNode) {
@@ -88,7 +88,7 @@ export function define(unit: EvaluatedNode, scope: Scope): TaggedString {
 	const aliasesText =
 		aliases && aliases.length > 0
 			? TaggedString.t`Aliases: ${TaggedString.join(
-					aliases.map(a => a.value),
+					aliases.map((a) => a.value),
 					", ",
 			  )}`
 			: "";
@@ -99,17 +99,19 @@ export function define(unit: EvaluatedNode, scope: Scope): TaggedString {
 ${info.comment ? info.comment : ""}
 ${
 	info.headings.length
-		? "\nCategory: " + info.headings.map(x => `${x}`).join("\n -> ")
+		? "\nCategory: " + info.headings.map((x) => `${x}`).join("\n -> ")
 		: ""
 }
 `;
 	}
 	unit = [...aliases, unit].find(
-		alternative => alternative.value.id === unit.value.id,
+		(alternative) => alternative.value.id === unit.value.id,
 	)!;
 	const inverse =
 		unit.value instanceof SpecialUnitNumber && unit.value.inverse.fnTree;
-	let inverseText = inverse ? t`Inverse:    ${inverse.toTaggedString()}` : "";
+	const inverseText = inverse
+		? t`Inverse:    ${inverse.toTaggedString()}`
+		: "";
 	const res = t`Definition: ${unit.toTaggedString()}.
 		${inverseText}
 		${canonicalText}
@@ -118,7 +120,7 @@ ${
 
 		${infoText}`;
 	res.flatten();
-	res.vals = res.vals.map(x =>
+	res.vals = res.vals.map((x) =>
 		typeof x === "string" ? x.replace(/\n\s*/g, "\n") : x,
 	);
 	return res;

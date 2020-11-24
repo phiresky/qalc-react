@@ -35,7 +35,7 @@ export class NumberNode {
 }
 export class IdentifierNode {
 	constructor(public identifier: string) {}
-	toTaggedString(_parentPrecedence = Infinity) {
+	toTaggedString(_parentPrecedence = Infinity): TaggedString {
 		if (isEvaluated(this)) return new TaggedString(this.value);
 		// hack: unit may not exist
 		return new TaggedString(new UnitNumber(0, undefined, this.identifier));
@@ -54,7 +54,7 @@ export abstract class FunctionCallNode {
 	constructor(public fnname: string, public operands: Node[]) {}
 	toTaggedString(parentPrecedence = Infinity): TaggedString {
 		return TaggedString.t`${this.fnname}(${TaggedString.join(
-			this.operands.map(x => x.toTaggedString(parentPrecedence)),
+			this.operands.map((x) => x.toTaggedString(parentPrecedence)),
 			", ",
 		)})`;
 	}
@@ -62,14 +62,14 @@ export abstract class FunctionCallNode {
 		return {
 			type: this.constructor.name,
 			fnname: this.fnname,
-			operands: this.operands.map(x => x.toJSON()),
+			operands: this.operands.map((x) => x.toJSON()),
 		};
 	}
 	abstract toDebugString(): string;
 	clone(): FunctionCallNode {
 		return new (this.constructor as any)(
 			this.fnname,
-			this.operands.map(o => o.clone()),
+			this.operands.map((o) => o.clone()),
 		);
 	}
 }
@@ -154,7 +154,7 @@ export function rpnToTree(tokens: Iterable<RPNToken>): Node {
 	if (stack.length > 1)
 		throw Error(
 			"stack has more than one element left: " +
-				stack.map(x => x.toDebugString()),
+				stack.map((x) => x.toDebugString()),
 		);
 	else if (stack.length === 0) throw Error(`Empty`);
 	return stack[0];

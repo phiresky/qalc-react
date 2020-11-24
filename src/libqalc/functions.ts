@@ -21,17 +21,17 @@ export interface FunctionDefinition {
 	mode?: "leftOnly" | "rightOnly" | "leftAndRight";
 }
 export const internalFunctions: FunctionDefinition[] = [
-	{ name: "sqrt", fn: num => num.pow(0.5) },
+	{ name: "sqrt", fn: (num) => num.pow(0.5) },
 	{
 		name: "ln",
-		fn: num => {
+		fn: (num) => {
 			num.dimensions.assertEmpty("argument of ln()");
 			return new UnitNumber(num.value.ln());
 		},
 	},
 	{
 		name: "delete",
-		fn: num => {
+		fn: (num) => {
 			if (!num.id) throw Error("has no ID");
 			return scope.deleteUnit(num.id) ? UnitNumber.one : UnitNumber.zero;
 		},
@@ -39,26 +39,26 @@ export const internalFunctions: FunctionDefinition[] = [
 	},
 	{
 		name: "log2",
-		fn: num => (
+		fn: (num) => (
 			num.dimensions.assertEmpty(), new UnitNumber(num.value.logarithm(2))
 		),
 	},
 	{
 		name: "exp",
-		fn: num => (
+		fn: (num) => (
 			num.dimensions.assertEmpty(), new UnitNumber(num.value.exp())
 		),
 	},
 	{
 		name: "tan",
-		fn: num => (
+		fn: (num) => (
 			num.dimensions.assertEmpty(),
 			new UnitNumber(Math.tan(num.value.toNumber()))
 		),
 	},
 	{
 		name: "log",
-		fn: num => (
+		fn: (num) => (
 			num.dimensions.assertEmpty(),
 			new UnitNumber(num.value.logarithm(10))
 		),

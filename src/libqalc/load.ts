@@ -59,7 +59,7 @@ export function loadUnitsJson(
 				push(x: PostEvaluation) {
 					applyPostEvaluate(scope, x);
 				},
-			}
+		  }
 		: ([] as PostEvaluation[]);
 	for (let i = 0; i < data.length; i++) {
 		try {
@@ -85,7 +85,7 @@ export const loadUnitsTxt = (
 		filename,
 		data
 			.split("\n")
-			.map(line => ({ line, info: { comment: "", headings: [] } })),
+			.map((line) => ({ line, info: { comment: "", headings: [] } })),
 		immediately,
 	);
 };

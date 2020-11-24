@@ -13,7 +13,7 @@ function makeFn(
 ): QalcFunction {
 	return {
 		apply: (node, scope) =>
-			fn(...node.operands.map(arg => evaluate(arg, scope).value)),
+			fn(...node.operands.map((arg) => evaluate(arg, scope).value)),
 		hasSideEffects,
 	};
 }
@@ -26,7 +26,7 @@ function memberAlias(
 			return x.call(a, b);
 		},
 		(node, scope) => {
-			if (node.operands.some(op => evaluationHasSideeffect(op, scope)))
+			if (node.operands.some((op) => evaluationHasSideeffect(op, scope)))
 				return true;
 			const [op1, op2] = node.operands;
 			const [o1, o2] = [evaluate(op1, scope), evaluate(op2, scope)];
@@ -51,8 +51,8 @@ function makeRawFn(
 const yes = UnitNumber.one;
 const no = UnitNumber.zero;
 export const unaryOperators: { [name: string]: QalcFunction } = {
-	"-": makeFn(l => l.mul(UnitNumber.minusOne)),
-	"/": makeFn(l => UnitNumber.one.div(l)),
+	"-": makeFn((l) => l.mul(UnitNumber.minusOne)),
+	"/": makeFn((l) => UnitNumber.one.div(l)),
 };
 const assignment = makeRawFn(true, (node, scope) => {
 	const [name, val] = node.operands;
@@ -86,7 +86,7 @@ export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 			const argName = argNameNode.identifier;
 			return new SpecialUnitNumber({
 				fnTree: val,
-				fn: arg => {
+				fn: (arg) => {
 					const argval = new Tree.IdentifierNode(
 						argName,
 					) as Tree.EvaluatedNode;
@@ -124,11 +124,8 @@ export const infixOperators: { [name: string]: QalcFunction | undefined } = {
 			a.value.lessThanOrEqualTo(b.value) ? yes : no
 		),
 	),
-	"==": makeFn(
-		(a, b) =>
-			a.value.equals(b.value) && a.dimensions.equals(b.dimensions)
-				? yes
-				: no,
+	"==": makeFn((a, b) =>
+		a.value.equals(b.value) && a.dimensions.equals(b.dimensions) ? yes : no,
 	),
 	"!=": makeFn(
 		(a, b) => (

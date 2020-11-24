@@ -1,14 +1,14 @@
-import scope from "../libqalc/globalScope";
+import { computed, makeObservable, observable } from "mobx";
 import {
-	QalculationResult,
+	parseEvaluate,
 	qalculate,
 	qalculationHasSideeffect,
-	parseEvaluate,
+	QalculationResult,
 } from "../libqalc";
-import { TaggedString } from "../unitNumber/output";
-import { observable, computed, makeObservable } from "mobx";
+import scope from "../libqalc/globalScope";
 import { tokenize } from "../libqalc/parser";
 import * as TokenType from "../libqalc/TokenType";
+import { TaggedString } from "../unitNumber/output";
 
 export class GuiLineElement {
 	public id: number;
@@ -36,7 +36,7 @@ export class GuiState {
 	removeLine(index: number) {
 		this.lines.splice(index, 1);
 	}
-	submit() {
+	submit(): void {
 		const input = this.currentInput;
 		if (input.trim().length > 0)
 			qalculate(input)
@@ -46,7 +46,7 @@ export class GuiState {
 					this.addLine(
 						new GuiLineElement({
 							input: TaggedString.t`${input}`,
-							output: new TaggedString("" + reason),
+							output: new TaggedString(`${reason}`),
 							type: "error",
 						}),
 					);
@@ -108,7 +108,8 @@ export class UnitCompleter {
 		};
 	}
 	replaceCurrent = (u: string) => {
-		let { tokens, cursorIndex } = this.tokens;
+		const { tokens } = this.tokens;
+		let { cursorIndex } = this.tokens;
 		if (cursorIndex !== null) {
 			const before = tokens[cursorIndex];
 			if (before.str === "to ") cursorIndex++;
@@ -120,7 +121,7 @@ export class UnitCompleter {
 		}
 		this.target.currentInput = tokens.map((x) => x.str).join("");
 	};
-	getPossibleUnits() {
+	getPossibleUnits(): string[] {
 		const { tokens, cursorIndex } = this.tokens;
 		const cursorToken = cursorIndex !== null ? tokens[cursorIndex] : null;
 		const poss: string[] = [];

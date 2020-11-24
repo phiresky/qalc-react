@@ -115,7 +115,7 @@ export async function qalculateDebug(
 	let evaled: Tree.EvaluatedNode | null = null;
 	if (parsed)
 		try {
-			evaled = evaluate(parsed!, scope);
+			evaled = evaluate(parsed, scope);
 		} catch (e) {
 			error += pre(e);
 		}
@@ -137,14 +137,16 @@ res = ${
 			: "err"
 	}
 tokens = ${
-		tokens ? tokens.map(t => parser.tokenToDebugString(t)).join(" ") : "err"
+		tokens
+			? tokens.map((t) => parser.tokenToDebugString(t)).join(" ")
+			: "err"
 	}
 preproc = ${
 		preproc
-			? preproc.map(t => parser.tokenToDebugString(t)).join(" ")
+			? preproc.map((t) => parser.tokenToDebugString(t)).join(" ")
 			: "err"
 	}
-rpn = ${rpn ? rpn.map(t => parser.tokenToDebugString(t)).join(" ") : "err"}
+rpn = ${rpn ? rpn.map((t) => parser.tokenToDebugString(t)).join(" ") : "err"}
 parsed = ${parsed ? parsed.toDebugString() : "err"}
 ${error ? "error = " + error : ""}`;
 	return {

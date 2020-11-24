@@ -4,12 +4,12 @@ const output = process.argv[2];
 if (!output) throw Error("specify output file");
 
 import * as fs from "fs";
-
+import * as steps from "../../data/gnu-units-categorize-steps.json";
 import CategorizeStore from "./CategorizeStore";
+
 const vars: { [name: string]: any } = {};
 const ignoring: boolean[] = [];
 let lineCache = "";
-import * as steps from "../../data/gnu-units-categorize-steps.json";
 
 type Line = string;
 function parseLine(line: string): (Line | ELine)[] {
@@ -31,22 +31,23 @@ function parseLine(line: string): (Line | ELine)[] {
 	line = line.replace("saotome&", "saotomeand");
 
 	if (line.startsWith("!")) {
-		const [command, ...args] = line
-			.substr(1)
-			.trim()
-			.split(/\s+/g);
-		if (!command.startsWith("end") && ignoring.some(v => v)) return [];
+		const [command, ...args] = line.substr(1).trim().split(/\s+/g);
+		if (!command.startsWith("end") && ignoring.some((v) => v)) return [];
 		const commands: {
 			[name: string]: (...args: any[]) => ELine[] | void;
 		} = {
-			include: fname => parseFile(dir + "/" + fname),
-			utf8: () => {},
-			endutf8: () => {},
+			include: (fname) => parseFile(dir + "/" + fname),
+			utf8: () => {
+				/** noop */
+			},
+			endutf8: () => {
+				/** noop */
+			},
 			var: (variable, ...value) => {
-				ignoring.push(value.every(v => vars[variable] != v));
+				ignoring.push(value.every((v) => vars[variable] != v));
 			},
 			varnot: (variable, ...value) => {
-				ignoring.push(value.some(v => vars[variable] == v));
+				ignoring.push(value.some((v) => vars[variable] == v));
 			},
 			endvar: () => {
 				ignoring.pop();
@@ -55,13 +56,15 @@ function parseLine(line: string): (Line | ELine)[] {
 			set: (variable, value) => {
 				vars[variable] = value;
 			},
-			locale: locale => {
+			locale: (locale) => {
 				ignoring.push(locale !== "en_US");
 			},
 			endlocale: () => {
 				ignoring.pop();
 			},
-			unitlist: () => {},
+			unitlist: () => {
+				/** noop */
+			},
 		};
 		const cmd = commands[command];
 		//console.warn("executing", command, args);
@@ -69,7 +72,7 @@ function parseLine(line: string): (Line | ELine)[] {
 
 		return cmd(...args) || [];
 	}
-	if (ignoring.some(v => v)) return [];
+	if (ignoring.some((v) => v)) return [];
 	const firstSpace = line.search(/\s/);
 	let [variable, value] = [
 		line.substr(0, firstSpace),
@@ -81,7 +84,7 @@ function parseLine(line: string): (Line | ELine)[] {
 		else throw Error("invalid value: " + value);
 	}
 	// ignore mapped functions
-	if (variable.search(/[\[]/) >= 0) return [];
+	if (variable.search(/[[]/) >= 0) return [];
 	if (variable.endsWith("-")) variable = variable.replace(/-$/, "_");
 	if (variable === "to" || value.match(/\bto\b/)) {
 		console.warn("skipping", line);

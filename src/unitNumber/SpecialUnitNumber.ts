@@ -1,6 +1,4 @@
 import UnitNumber from "./UnitNumber";
-import DimensionMap from "./DimensionMap";
-import Decimal from "decimal.js";
 import { TaggedString } from "./output";
 import * as Tree from "../libqalc/Tree";
 
@@ -11,12 +9,12 @@ import * as Tree from "../libqalc/Tree";
  * https://i.imgur.com/PLP3ZrJ.jpg
  */
 export default class SpecialUnitNumber extends UnitNumber {
-	get value(): Decimal {
+	/*get value(): Decimal {
 		throw Error("can't get function.value");
 	}
 	get dimensions(): DimensionMap {
 		throw Error("can't get function.dimensions");
-	}
+	}*/
 	fn: ((arg: UnitNumber, mode: "left" | "right") => UnitNumber) | null;
 	fnTree: Tree.Node | null;
 	hasSideEffects: boolean;

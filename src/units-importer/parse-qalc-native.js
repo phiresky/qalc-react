@@ -35,7 +35,7 @@ function addStuff(stuff) {
 		delete stuff.unit;
 	}
 	if (stuff.builtin_variable) {
-		maybeMultiple(v => {
+		maybeMultiple((v) => {
 			v.value = [builtinValue[parseName(v.names[0], false)[0]]];
 			if (v.value[0] === undefined)
 				throw Error("don't know " + v.names[0]);
@@ -89,7 +89,7 @@ function parseBase(base) {
 }
 
 function parseName(name, join = true) {
-	const list = name.split(",").map(n => {
+	const list = name.split(",").map((n) => {
 		if (n.indexOf(":") >= 0) {
 			let [attributes, name] = n.split(":");
 			attributes = attributes.replace(/[^Ä]/g, ""); // (/[^c]/g, "");
@@ -156,7 +156,7 @@ function addUnit(unit) {
 			output(
 				0,
 				`${parseName(unit.names[0])} = ${unit.part
-					.map(part => `${parsePart(part)}`)
+					.map((part) => `${parsePart(part)}`)
 					.join(" ")}${comment(parseTitle(unit.title[0]))}`,
 			);
 			break;
@@ -186,24 +186,26 @@ function addPrefix(prefix) {
 	console.log(`${prefix.name[0]}_ = ${base}^${prefix.exponent[0]}`);
 	console.log(`${prefix.abbreviation[0]}_ = ${base}^${prefix.exponent[0]}`);
 }
-xml2js.parseString(fs.readFileSync(dir + "/units.xml"), function(err, result) {
+xml2js.parseString(fs.readFileSync(dir + "/units.xml"), function (err, result) {
 	if (err) error(err);
 	addStuff(result.QALCULATE);
-	xml2js.parseString(fs.readFileSync(dir + "/variables.xml"), function(
-		err,
-		result,
-	) {
-		if (err) error(err);
-		addStuff(result.QALCULATE);
-		xml2js.parseString(fs.readFileSync(dir + "/prefixes.xml"), function(
-			err,
-			result,
-		) {
+	xml2js.parseString(
+		fs.readFileSync(dir + "/variables.xml"),
+		function (err, result) {
 			if (err) error(err);
 			addStuff(result.QALCULATE);
-			_output
-				.sort((a, b) => b.priority - a.priority || a.pos - b.pos)
-				.forEach(({ str }) => console.log(str));
-		});
-	});
+			xml2js.parseString(
+				fs.readFileSync(dir + "/prefixes.xml"),
+				function (err, result) {
+					if (err) error(err);
+					addStuff(result.QALCULATE);
+					_output
+						.sort(
+							(a, b) => b.priority - a.priority || a.pos - b.pos,
+						)
+						.forEach(({ str }) => console.log(str));
+				},
+			);
+		},
+	);
 });

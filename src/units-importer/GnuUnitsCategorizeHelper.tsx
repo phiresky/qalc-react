@@ -1,13 +1,13 @@
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import "whatwg-fetch";
 import * as mobx from "mobx";
 import * as mobxReact from "mobx-react";
 import DevTools from "mobx-react-devtools";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import "whatwg-fetch";
 import CategorizeStore, { Type } from "./CategorizeStore";
 
 function download(content: string, filename: string) {
-	var a = window.document.createElement("a");
+	const a = window.document.createElement("a");
 	a.href = window.URL.createObjectURL(
 		new Blob([content], { type: "text/plain" }),
 	);
@@ -19,7 +19,7 @@ function download(content: string, filename: string) {
 	document.body.removeChild(a);
 }
 @mobxReact.observer
-class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
+class HelperGui extends React.Component<{ store: CategorizeStore }> {
 	pres: Map<Node, number> = new Map();
 	store: CategorizeStore;
 	constructor(props: { store: CategorizeStore }) {
@@ -27,10 +27,10 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 		this.store = this.props.store;
 		document.addEventListener(
 			"selectionchange",
-			_ => this.getSelection(document.getSelection()!),
+			(_) => this.getSelection(document.getSelection()!),
 			false,
 		);
-		document.addEventListener("keyup", e =>
+		document.addEventListener("keyup", (e) =>
 			this.commandKey(e, String.fromCharCode(e.keyCode)),
 		);
 		mobx.autorun(() => this.checkConsistency(), {
@@ -38,7 +38,7 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 		});
 		mobx.reaction(
 			() => JSON.stringify(this.store.executed),
-			data => {
+			(data) => {
 				console.log("set localStorage");
 				localStorage.setItem("executed", data);
 			},
@@ -63,7 +63,7 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 			console.log(
 				this.store.lines
 					.slice(sel[0], sel[1] + 1)
-					.map(x => x.replace(/^\s*#/g, ""))
+					.map((x) => x.replace(/^\s*#/g, ""))
 					.join("\n"),
 			);
 		}
@@ -166,7 +166,7 @@ class HelperGui extends React.Component<{ store: CategorizeStore }, {}> {
 									: ""
 							}
 							key={box.start + "," + box.end}
-							ref={e => this.pres.set(e!, i)}
+							ref={(e) => this.pres.set(e!, i)}
 						>
 							{this.store.getRawText(box)}
 						</pre>
@@ -203,7 +203,7 @@ const styles = {
 		maxHeight: "300px",
 	},
 };
-const typeStyles = {
+const typeStyles: { [t in Type]: React.CSSProperties } = {
 	[Type.Deleted]: Object.assign({}, styles.box, {
 		color: "lightgray",
 	}),
@@ -211,7 +211,7 @@ const typeStyles = {
 	[Type.Heading]: Object.assign({}, styles.box, {
 		fontWeight: "bold",
 		fontSize: "120%",
-	}),
+	} as React.CSSProperties),
 };
 
 export function init(str: string, preloadSteps: any[]) {
@@ -221,7 +221,7 @@ export function init(str: string, preloadSteps: any[]) {
 		<div>
 			<HelperGui
 				store={new CategorizeStore(str, actions)}
-				ref={guiInst => Object.assign(window, { guiInst })}
+				ref={(guiInst) => Object.assign(window, { guiInst })}
 			/>
 			<DevTools />
 		</div>,

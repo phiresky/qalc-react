@@ -31,20 +31,23 @@ export default class Scope {
 			const builtin = new Tree.IdentifierNode(
 				"[builtin]",
 			) as Tree.EvaluatedNode;
-			function apply(a: UnitNumber, modeB: "left" | "right"): UnitNumber {
-				if (modeB === "left" && mode === "rightOnly")
-					throw Error(
-						`${name} must be invoked as "x ${name}" not "${name} x"`,
-					);
-				if (modeB === "right" && mode === "leftOnly")
-					throw Error(
-						`${name} must be invoked as "${name} x" not "x ${name}"`,
-					);
-				return fn(a);
-			}
+
 			builtin.value = new SpecialUnitNumber({
 				fnTree: new Tree.NumberNode("[built in]"),
-				fn: apply,
+				fn: function apply(
+					a: UnitNumber,
+					modeB: "left" | "right",
+				): UnitNumber {
+					if (modeB === "left" && mode === "rightOnly")
+						throw Error(
+							`${name} must be invoked as "x ${name}" not "${name} x"`,
+						);
+					if (modeB === "right" && mode === "leftOnly")
+						throw Error(
+							`${name} must be invoked as "${name} x" not "x ${name}"`,
+						);
+					return fn(a);
+				},
 				hasSideEffects,
 			});
 			evaluate(
@@ -60,9 +63,9 @@ export default class Scope {
 	setUnit(name: string, val: Tree.Node) {
 		if (this.globalScope.has(name))
 			throw Error(
-				`Unit ${name} already exists.\nUse delete(${name}) to remove it. (${this.globalScope.get(
-					name,
-				)!.toDebugString()})`,
+				`Unit ${name} already exists.\nUse delete(${name}) to remove it. (${this.globalScope
+					.get(name)!
+					.toDebugString()})`,
 			);
 		this.globalScope.set(name, val);
 	}
@@ -108,7 +111,7 @@ export default class Scope {
 	): Tree.EvaluatedNode | null {
 		if (name.endsWith("_"))
 			return this.getPrefix(name.substr(0, name.length - 1));
-		const foundScope = this.scopes.find(map => map.has(name));
+		const foundScope = this.scopes.find((map) => map.has(name));
 		if (!foundScope) {
 			if (withPrefix)
 				for (const prefix of this.prefixMap.keys()) {
@@ -150,7 +153,7 @@ export default class Scope {
 			if (throwOnError) throw Error("unknown unit: " + name);
 			else return null;
 		}
-		let res = foundScope.get(name)!;
+		const res = foundScope.get(name)!;
 		if (!Tree.isEvaluated(res)) {
 			foundScope.delete(name);
 			return evaluate(res, this);
@@ -172,7 +175,7 @@ export default class Scope {
 		}
 		if (!can2 && can1) {
 			this.canonicalMap.set(unit2.value, can1);
-			this.aliasMap.get(can1!)!.add(unit2);
+			this.aliasMap.get(can1)!.add(unit2);
 			return;
 		}
 		if (!can1 && can2) {
@@ -192,8 +195,9 @@ export default class Scope {
 		);
 	}
 	getCanonical(u: UnitNumber) {
+		// eslint-disable-next-line no-constant-condition
 		while (true) {
-			let u2 = this.canonicalMap.get(u);
+			const u2 = this.canonicalMap.get(u);
 			if (!u2) return u2;
 			if (u2 === u) return u;
 			u = u2;
@@ -201,11 +205,11 @@ export default class Scope {
 	}
 	getAliases(u: UnitNumber) {
 		return [...(this.aliasMap.get(this.getCanonical(u)!) || [])].filter(
-			x => !!x.value.id,
+			(x) => !!x.value.id,
 		);
 	}
 	getPrefix(name: string): Tree.EvaluatedNode {
-		let res = this.prefixMap.get(name);
+		const res = this.prefixMap.get(name);
 		if (!res) throw Error("unknown prefix: " + name);
 		if (!Tree.isEvaluated(res)) {
 			this.prefixMap.delete(name);

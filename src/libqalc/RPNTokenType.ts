@@ -1,7 +1,7 @@
 export const Identifier2 = "Identifier";
 export type Identifier = typeof Identifier2;
 export const Number = "Number";
-export type Number = typeof Number;
+export type TNumber = typeof Number;
 export const LParen = "LParen";
 export type LParen = typeof LParen;
 export const RParen = "RParen";
@@ -17,7 +17,7 @@ export type Unknown = typeof Unknown;
 
 export type RPNTokenType =
 	| Identifier
-	| Number
+	| TNumber
 	| LParen
 	| RParen
 	| UnaryOperator

@@ -10,7 +10,7 @@ console.log("Unit Calculator");
 function prompt() {
 	process.stdout.write("\n> ");
 }
-rl.on("line", async line => {
+rl.on("line", async (line) => {
 	try {
 		var { input, output } = await qalculate(line);
 	} catch (e) {

@@ -1,17 +1,10 @@
 const path = require("path");
-const webpack = require("webpack");
-const Copy = require("copy-webpack-plugin");
 const Html = require("html-webpack-plugin");
-const Template = require("html-webpack-template");
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const production = process.env.NODE_ENV == "production";
 console.warn("building " + (production ? "prod" : "dev"));
 const htmlCfg = {
-	inject: false,
-	// use more flexible html-webpack-template
-	// see https://github.com/jaketrent/html-webpack-template#basic-usage for more options
-	template: Template,
 	// add a div with this id in which we will mount our root react component
 	appMountId: "app",
 	// webpage title
@@ -21,17 +14,11 @@ const htmlCfg = {
 	scripts: [],
 	chunks: ["gui"],
 	links: [],
-	// remove additional newlines from the template
-	// (https://github.com/jaketrent/html-webpack-template/issues/40)
-	minify: {
-		collapseWhitespace: true,
-		preserveLineBreaks: true,
-	},
 };
 const plugins = [
+	new MiniCssExtractPlugin({ filename: "[name].[hash].css" }),
 	new Html({
 		...htmlCfg,
-		chunks: ["gui"],
 	}),
 	new Html({
 		...htmlCfg,
@@ -57,7 +44,7 @@ module.exports = {
 		categorizeHelper: ["./src/units-importer/GnuUnitsCategorizeHelperMain"],
 		gnuTest: ["./src/units-importer/rewrite-gnu-units"],
 	},
-	devtool: production ? "source-map" : "cheap-module-eval-source-map",
+	devtool: production ? "source-map" : "eval-cheap-module-source-map",
 	output: {
 		path: path.join(__dirname, "bin"),
 		filename: "[name].[hash].js",
@@ -65,43 +52,37 @@ module.exports = {
 	optimization: {
 		minimize: false,
 	},
-	node: {
-		fs: "empty",
-	},
+	node: false,
 	module: {
 		rules: [
-			/*{
-				test: /\.js$/,
-				exclude: /(node_modules|bower_components)/,
-				loader: 'babel-loader',
-				query: {
-					presets: [
-						[
-							"env",
-							{
-								targets: {
-									browsers: "> 1%, last 2 versions"
-								},
-								modules: false
-							}
-						],
-						"react"
-					],
-
-				}
-			},*/
-			// all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
 			{
 				test: /\.tsx?$/,
 				loader: "ts-loader",
 				options: {
+					transpileOnly: true,
 					compilerOptions: {
 						module: "esnext",
 					},
 				},
 			},
-			{ test: /\.css$/, loader: "style-loader!css-loader" },
-			{ test: /\.scss$/, loader: "style-loader!css-loader!sass-loader" },
+			{
+				test: /\.css$/,
+				use: [
+					MiniCssExtractPlugin.loader,
+					// Translates CSS into CommonJS
+					"css-loader",
+				],
+			},
+			{
+				test: /\.scss$/,
+				use: [
+					MiniCssExtractPlugin.loader,
+					// Translates CSS into CommonJS
+					"css-loader",
+					// Compiles Sass to CSS
+					"sass-loader",
+				],
+			},
 			{ test: /\.(txt|units)$/, loader: "raw-loader" },
 		],
 	},

@@ -1,8 +1,8 @@
 import Decimal from "decimal.js";
-import DimensionMap from "./DimensionMap";
 import Dimension from "./Dimension";
-import SpecialUnitNumber from "./SpecialUnitNumber";
+import DimensionMap from "./DimensionMap";
 import { TaggedString } from "./output";
+import SpecialUnitNumber from "./SpecialUnitNumber";
 
 function dimensionMismatch(
 	a: DimensionMap,
@@ -19,10 +19,8 @@ export default class UnitNumber {
 	static zero = new UnitNumber(0);
 	static one = new UnitNumber(1);
 	static minusOne = new UnitNumber(-1);
-	// @ts-ignore
-	readonly value: Decimal;
-	// @ts-ignore
-	readonly dimensions: DimensionMap;
+	readonly value!: Decimal;
+	readonly dimensions!: DimensionMap;
 	readonly id: string | null;
 	constructor(
 		value: Decimal | number | string,
@@ -47,7 +45,7 @@ export default class UnitNumber {
 	}
 	div(other: UnitNumber): UnitNumber {
 		if (other.isSpecial()) return other.div(this, true);
-		let name: string | null = null;
+		const name: string | null = null;
 		//if (this.dimensions.size == 0 && other.dimensions.size == 0)
 		//	name = this.value.toString() + "|" + other.value.toString();
 		return new UnitNumber(

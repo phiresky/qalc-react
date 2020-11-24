@@ -82,8 +82,8 @@ export default class CategorizeStore {
 	}
 	findBounds(boxes: Box[], l: number, r: number): [number, number] {
 		return [
-			binarySearchIndex(boxes, x => x.start, l),
-			binarySearchIndex(boxes, x => x.end, r),
+			binarySearchIndex(boxes, (x) => x.start, l),
+			binarySearchIndex(boxes, (x) => x.end, r),
 		];
 	}
 	getTableOfContents() {
@@ -130,7 +130,7 @@ export default class CategorizeStore {
 					num: old.num + 1,
 					str: heading,
 				});
-				const path = catTree.map(x => x.num).slice(1);
+				const path = catTree.map((x) => x.num).slice(1);
 				addToRoot(
 					path,
 					{
@@ -145,7 +145,7 @@ export default class CategorizeStore {
 					root,
 				);
 			} else {
-				const path = catTree.map(x => x.num).slice(1);
+				const path = catTree.map((x) => x.num).slice(1);
 				addToRoot(path, { type: "box", box }, root);
 			}
 		}
@@ -154,8 +154,8 @@ export default class CategorizeStore {
 	}
 	categoryTreeOf(line: number) {
 		const boxI = Math.min(
-			binarySearchIndex(this.boxes, x => x.start, line, false),
-			binarySearchIndex(this.boxes, x => x.end, line, false),
+			binarySearchIndex(this.boxes, (x) => x.start, line, false),
+			binarySearchIndex(this.boxes, (x) => x.end, line, false),
 		);
 		const catTree = [{ str: "", num: 0 }] as { str: string; num: number }[];
 		for (let i = 0; i <= boxI; i++) {
@@ -172,11 +172,11 @@ export default class CategorizeStore {
 		catTree.shift();
 		const box = this.boxes[boxI];
 		const comment = this.getRawLines(box)
-			.map(line => (line.split("#")[1] || "").trim())
+			.map((line) => (line.split("#")[1] || "").trim())
 			.join("\n")
 			.trim();
 		return {
-			headingsIndex: catTree.map(x => x.num),
+			headingsIndex: catTree.map((x) => x.num),
 			headingLevel: catTree.length,
 			headings: catTree.map(
 				(x, i) =>
@@ -191,7 +191,7 @@ export default class CategorizeStore {
 	}
 	getBoxContent(box: Box) {
 		if (box.type === Type.Heading) throw Error("is heading");
-		const split = this.getRawLines(box).map(line => {
+		const split = this.getRawLines(box).map((line) => {
 			const [content, comment] = splitOnce(/#/, line, true);
 			return {
 				content,
@@ -216,12 +216,7 @@ export default class CategorizeStore {
 	}
 	getUncommentedText(box: Box) {
 		return this.getRawLines(box)
-			.map(line =>
-				line
-					.replace(/\s+/g, " ")
-					.replace(/#/g, "")
-					.trim(),
-			)
+			.map((line) => line.replace(/\s+/g, " ").replace(/#/g, "").trim())
 			.join("\n")
 			.trim();
 	}
@@ -233,8 +228,8 @@ function autoparseText(lines: string[]) {
 	let currentAliases: string[] = [];
 	let lastHadBackslash = false;
 	for (let i = 0; i < lines.length; i++) {
-		let [line, comment] = splitOnce(/#/, lines[i], true);
-		let [variable, value] = splitOnce(/\s/, line, true);
+		const [line, comment] = splitOnce(/#/, lines[i], true);
+		const [variable, value] = splitOnce(/\s/, line, true);
 
 		if (lastHadBackslash) {
 			lastHadBackslash = line.endsWith("\\");
@@ -258,10 +253,12 @@ function autoparseText(lines: string[]) {
 				type:
 					currentAliases.length > 0
 						? Type.Normal
-						: i - 1 - boxStart == 0 ? Type.Deleted : Type.Heading,
+						: i - 1 - boxStart == 0
+						? Type.Deleted
+						: Type.Heading,
 			});
 		boxStart = i;
-		currentAliases = [variable, value].filter(x => x.length > 0);
+		currentAliases = [variable, value].filter((x) => x.length > 0);
 	}
 	if (boxStart < lines.length)
 		boxes.push({
