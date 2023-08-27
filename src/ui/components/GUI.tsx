@@ -31,17 +31,16 @@ export class GUI extends React.Component<{
 	external: boolean;
 	hideInputUntilClick?: boolean;
 }> {
+	@observable
 	guist = new GuiState();
+	@observable
 	completer = new UnitCompleter(this.guist);
 	@observable showInput = !this.props.hideInputUntilClick;
 
 	constructor(props: GUI["props"]) {
 		super(props);
 
-		makeObservable(this, {
-			guist: observable,
-			completer: observable,
-		});
+		makeObservable(this);
 
 		void this.init();
 	}
