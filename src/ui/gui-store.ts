@@ -28,23 +28,21 @@ export class GuiLineElement {
 	}
 }
 export class GuiState {
+	@observable
 	lines: GuiLineElement[] = [];
+	@observable
 	currentInput = "";
+	@observable
 	currentOutput = new TaggedString();
 
 	constructor() {
-		makeObservable(this, {
-			lines: observable,
-			currentInput: observable,
-			currentOutput: observable,
-			addLine: action,
-			removeLine: action,
-		});
+		makeObservable(this);
 	}
-
+	@action
 	addLine(line: GuiLineElement): void {
 		this.lines.unshift(line);
 	}
+	@action
 	removeLine(index: number): void {
 		this.lines.splice(index, 1);
 		setTimeout(() => this.exportToHistory(), 1000);
