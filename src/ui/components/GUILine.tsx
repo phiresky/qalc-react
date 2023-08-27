@@ -1,4 +1,4 @@
-import "rc-tooltip/assets/bootstrap_white.css";
+// import "rc-tooltip/assets/bootstrap_white.css";
 import * as React from "react";
 import { UnitNumber } from "../../unitNumber";
 import { TaggedString } from "../../unitNumber/output";

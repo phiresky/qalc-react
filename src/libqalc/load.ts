@@ -1,7 +1,7 @@
-import Scope from "./scope";
-import { stripCommentsTrim, evaluate } from "./evaluator";
-import { parse } from "./parser";
 import * as Tree from "./Tree";
+import { evaluate, stripCommentsTrim } from "./evaluator";
+import { parse } from "./parser";
+import Scope from "./scope";
 type PostEvaluation = {
 	reevaluateUnit?: string;
 	evaluateNode?: Tree.Node;

@@ -24,9 +24,9 @@ export default async function init(): Promise<void> {
 	} else {
 		console.log("webpack");
 		// running in webpack
-		gnuUnitsData = await import("../../data/gnu-units.json");
-		customData = (await import("../../data/custom_data.txt"))
-			.default as string;
+		gnuUnitsData = (await import("../../data/gnu-units.json")).default;
+		const res = (await import("../../data/custom_data.txt.json")).default;
+		customData = res.text;
 	}
 	scope.addFunctions(...internalFunctions);
 	load.loadUnitsJson(scope, "units.json", gnuUnitsData);

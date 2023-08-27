@@ -5,7 +5,7 @@ import * as React from "react";
 import { init } from "../../libqalc";
 import { UnitNumber } from "../../unitNumber";
 import { TaggedString } from "../../unitNumber/output";
-import { GuiState, UnitCompleter } from "../gui-store";
+import { GuiState, Serialized, UnitCompleter } from "../gui-store";
 import { GUILine } from "./GUILine";
 import { TaggedStringDisplay } from "./TaggedStringDisplay";
 import { UnitCompleteInput } from "./UnitCompleteInput";
@@ -25,29 +25,8 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 	.map((line) => line.trim())
 	.filter((line) => line.length > 0);
 
-async function loadPresetLines() {
-	let presets = presetLines;
-	const state = new URLSearchParams(location.hash.substr(1)).get("state");
-	if (state) {
-		const str = lzString.decompressFromEncodedURIComponent(state as string);
-		if (str) {
-			const ser = JSON.parse(str) as Serialized;
-			presets = ser.lines;
-		}
-	}
-	const savedHistory = localStorage.getItem("qalc-history");
-	if (savedHistory) {
-		const str = lzString.decompressFromUTF16(savedHistory);
-		if (str) {
-			const ser = JSON.parse(str) as Serialized;
-			presets = ser.lines;
-		}
-	}
-	await guiInst.guist.loadPresets(presets);
-}
-
 @observer
-export class GUI extends React.Component {
+export class GUI extends React.Component<{ presetLines?: string[] }> {
 	guist = new GuiState();
 	completer = new UnitCompleter(this.guist);
 
@@ -64,7 +43,29 @@ export class GUI extends React.Component {
 	}
 	async init(): Promise<void> {
 		await init();
-		await loadPresetLines();
+		await this.loadPresetLines();
+	}
+	async loadPresetLines() {
+		let presets = this.props.presetLines ?? presetLines;
+		const state = new URLSearchParams(location.hash.substr(1)).get("state");
+		if (state) {
+			const str = lzString.decompressFromEncodedURIComponent(
+				state as string,
+			);
+			if (str) {
+				const ser = JSON.parse(str) as Serialized;
+				presets = ser.lines;
+			}
+		}
+		const savedHistory = localStorage.getItem("qalc-history");
+		if (savedHistory) {
+			const str = lzString.decompressFromUTF16(savedHistory);
+			if (str) {
+				const ser = JSON.parse(str) as Serialized;
+				presets = ser.lines;
+			}
+		}
+		await guiInst.guist.loadPresets(presets);
 	}
 
 	onSubmit = (evt: React.FormEvent<HTMLFormElement>): void => {

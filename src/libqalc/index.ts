@@ -92,7 +92,7 @@ export async function qalculateDebug(
 	if (tokens)
 		try {
 			preproc = [...parser.preprocess(tokens)];
-		} catch (e) {
+		} catch (e: any) {
 			console.error(e);
 			error += pre(e);
 		}
@@ -100,21 +100,21 @@ export async function qalculateDebug(
 	if (preproc)
 		try {
 			rpn = [...parser.toRPN(preproc)];
-		} catch (e) {
+		} catch (e: any) {
 			error += pre(e);
 		}
 	let parsed: Tree.Node | null = null;
 	if (rpn)
 		try {
 			parsed = Tree.rpnToTree(rpn);
-		} catch (e) {
+		} catch (e: any) {
 			error += pre(e);
 		}
 	let evaled: Tree.EvaluatedNode | null = null;
 	if (parsed)
 		try {
 			evaled = evaluate(parsed, scope);
-		} catch (e) {
+		} catch (e: any) {
 			error += pre(e);
 		}
 

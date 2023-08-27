@@ -4,20 +4,20 @@ import {
 	computed,
 	makeObservable,
 	observable,
-	runInAction,
+	runInAction
 } from "mobx";
 import {
 	parseEvaluate,
 	qalculate,
 	qalculationHasSideeffect,
-	QalculationResult,
+	QalculationResult
 } from "../libqalc";
 import scope from "../libqalc/globalScope";
 import { tokenize } from "../libqalc/parser";
 import * as TokenType from "../libqalc/TokenType";
 import { TaggedString } from "../unitNumber/output";
 
-type Serialized = {
+export type Serialized = {
 	lines: string[];
 };
 export class GuiLineElement {

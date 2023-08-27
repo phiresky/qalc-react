@@ -6,7 +6,8 @@
 		"dev": "webpack serve",
 		"parse-gnu-units": "ts-node src/units-importer/parse-gnu-units data/gnu-units.json",
 		"cli": "node src/cli",
-		"gh": "rm -r bin/* && yarn run build && cd bin && git add -A && git commit -m'update binaries' && git push"
+		"gh": "rm -r bin/* && yarn run build && cd bin && git add -A && git commit -m'update binaries' && git push",
+		"preinstall": "tsc"
 	},
 	"dependencies": {
 		"@types/lz-string": "^1.5.0",
@@ -56,8 +57,10 @@
 		"whatwg-fetch": "^3.6.17",
 		"workbox-webpack-plugin": "^7.0.0"
 	},
+	"type": "module",
+	"types": "dist/",
 	"files": [
-		"src"
+		"dist"
 	],
 	"husky": {
 		"hooks": {

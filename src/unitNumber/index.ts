@@ -1,2 +1,3 @@
-export { default as UnitNumber } from "./UnitNumber";
-export { default as SpecialUnitNumber } from "./SpecialUnitNumber";
+export { default as SpecialUnitNumber } from "./SpecialUnitNumber.js";
+export { default as UnitNumber } from "./UnitNumber.js";
+

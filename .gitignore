@@ -3,3 +3,4 @@ bin/
 qalc_data.txt
 units_data.txt
 units-2.*/
+dist/
