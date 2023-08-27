@@ -7,7 +7,8 @@
 		"parse-gnu-units": "ts-node src/units-importer/parse-gnu-units data/gnu-units.json",
 		"cli": "node src/cli",
 		"gh": "rm -r bin/* && yarn run build && cd bin && git add -A && git commit -m'update binaries' && git push",
-		"preinstall": "tsc"
+		"tsc": "tsc",
+		"postinstall": "npm run tsc"
 	},
 	"dependencies": {
 		"@types/node": "^20.5.6",
