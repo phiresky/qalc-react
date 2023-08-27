@@ -67,5 +67,6 @@
 	"lint-staged": {
 		"*.{css,less,scss,js,ts,tsx,json}": "prettier --write",
 		"*.{ts,tsx}": "eslint"
-	}
+	},
+	"packageManager": "yarn@4.0.0-rc.50"
 }
