@@ -10,7 +10,6 @@ import { GUILine } from "./GUILine";
 import { TaggedStringDisplay } from "./TaggedStringDisplay";
 import { UnitCompleteInput } from "./UnitCompleteInput";
 
-let guiInst: GUI;
 const presetLines = `
 sqrt(2 * ((100000 pound uranium_pure + 6 million tons * uranium_natural)) / (100000 pounds + 0.7% * 6 million tons)) to c   # speed a rocket could get with all the uranium on earth (E=1/2 mv^2 ⇒ v = sqrt(2E/m))
 1 kg charcoal to liter gasoline # energy density conversion
@@ -26,11 +25,17 @@ solarluminosity / spheresurface(astronomicalunit) to kW/m^2 # maximum amount of 
 	.filter((line) => line.length > 0);
 
 @observer
-export class GUI extends React.Component<{ presetLines?: string[] }> {
+export class GUI extends React.Component<{
+	presetLines?: string[];
+	header: boolean;
+	external: boolean;
+	hideInputUntilClick?: boolean;
+}> {
 	guist = new GuiState();
 	completer = new UnitCompleter(this.guist);
+	@observable showInput = !this.props.hideInputUntilClick;
 
-	constructor(props: Record<string, never>) {
+	constructor(props: GUI["props"]) {
 		super(props);
 
 		makeObservable(this, {
@@ -38,7 +43,6 @@ export class GUI extends React.Component<{ presetLines?: string[] }> {
 			completer: observable,
 		});
 
-		guiInst = this;
 		void this.init();
 	}
 	async init(): Promise<void> {
@@ -65,7 +69,7 @@ export class GUI extends React.Component<{ presetLines?: string[] }> {
 				presets = ser.lines;
 			}
 		}
-		await guiInst.guist.loadPresets(presets);
+		await this.guist.loadPresets(presets);
 	}
 
 	onSubmit = (evt: React.FormEvent<HTMLFormElement>): void => {
@@ -79,68 +83,90 @@ export class GUI extends React.Component<{ presetLines?: string[] }> {
 	};
 	showUnit(unit: UnitNumber): void {
 		console.log("showing", unit);
+		this.showInput = true;
 		void this.guist.setInput(unit.toString());
 	}
 	render(): React.ReactNode {
 		return (
 			<div className="container calc-ui">
-				<div className="page-header">
-					<h1>Qalc</h1>
-				</div>
-				<div className="gui-line unit-complete">
-					<form onSubmit={this.onSubmit}>
-						<UnitCompleteInput completer={this.completer} />
-						{this.guist.currentOutput.vals.length > 0 ? (
-							<TaggedStringDisplay
-								className="inline-response"
-								text={TaggedString.t` = ${this.guist.currentOutput}`}
-								onClickUnit={(unit) => this.showUnit(unit)}
-							/>
-						) : (
-							""
-						)}
-					</form>
-					<hr />
-				</div>
+				{this.props.header && (
+					<div className="page-header">
+						<h1>Qalc</h1>
+					</div>
+				)}
+				{this.showInput && (
+					<div className="gui-line unit-complete">
+						<form onSubmit={this.onSubmit}>
+							<UnitCompleteInput completer={this.completer} />
+							{this.guist.currentOutput.vals.length > 0 ? (
+								<TaggedStringDisplay
+									className="inline-response"
+									text={TaggedString.t` = ${this.guist.currentOutput}`}
+									onClickUnit={(unit) => this.showUnit(unit)}
+								/>
+							) : (
+								""
+							)}
+						</form>
+						<hr />
+					</div>
+				)}
 				{this.guist.lines.map((line, i) => (
 					<GUILine
 						key={line.id}
 						index={i}
 						line={line}
-						onClickInput={() =>
-							this.guist.setInput(line.data.input.toString())
-						}
+						onClickInput={() => {
+							this.showInput = true;
+							this.guist.setInput(line.data.input.toString());
+						}}
 						onClickUnit={(unit) => this.showUnit(unit)}
 						onClickRemove={() => this.guist.removeLine(i)}
 					/>
 				))}
 
 				<footer>
-					<small>
-						<a
-							href="#"
-							onClick={(e) => {
-								e.preventDefault();
-								this.guist.exportToUrl();
-							}}
-						>
-							Export to URL
-						</a>
-						{" | "}
-						<a
-							href="#"
-							onClick={(e) => {
-								e.preventDefault();
-								this.guist.clearHistory();
-							}}
-						>
-							Clear History
-						</a>
-						{" | "}
-						<a href="https://github.com/phiresky/qalc-react">
-							Source code on GitHub
-						</a>
-					</small>
+					{this.props.external ? (
+						<small>
+							<a
+								href="#"
+								onClick={(e) => {
+									e.preventDefault();
+									location.href =
+										"https://phiresky.github.io/qalc-react/" +
+										this.guist.getUrlHash();
+								}}
+							>
+								Get permalink
+							</a>
+						</small>
+					) : (
+						<small>
+							<a
+								href="#"
+								onClick={(e) => {
+									e.preventDefault();
+									this.guist.exportToUrl();
+								}}
+							>
+								Export to URL
+							</a>
+							{" | "}
+							<a
+								href="#"
+								onClick={(e) => {
+									e.preventDefault();
+									this.guist.clearHistory();
+								}}
+							>
+								Clear History
+							</a>
+							{" | "}
+							<a href="https://github.com/phiresky/qalc-react">
+								Source code on GitHub
+							</a>
+						</small>
+					)}
 				</footer>
 			</div>
 		);

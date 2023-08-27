@@ -4,17 +4,17 @@ import {
 	computed,
 	makeObservable,
 	observable,
-	runInAction
+	runInAction,
 } from "mobx";
 import {
+	QalculationResult,
 	parseEvaluate,
 	qalculate,
 	qalculationHasSideeffect,
-	QalculationResult
 } from "../libqalc";
+import * as TokenType from "../libqalc/TokenType";
 import scope from "../libqalc/globalScope";
 import { tokenize } from "../libqalc/parser";
-import * as TokenType from "../libqalc/TokenType";
 import { TaggedString } from "../unitNumber/output";
 
 export type Serialized = {
@@ -104,17 +104,16 @@ export class GuiState {
 			.catch((reason) => new TaggedString("" + reason));
 	}
 
-	exportToUrl(): void {
-		history.replaceState(
-			{},
-			"",
+	getUrlHash() {
+		return (
 			"#" +
-				new URLSearchParams({
-					state: lzString.compressToEncodedURIComponent(
-						this.serialize(),
-					),
-				}).toString(),
+			new URLSearchParams({
+				state: lzString.compressToEncodedURIComponent(this.serialize()),
+			}).toString()
 		);
+	}
+	exportToUrl(): void {
+		history.replaceState({}, "", this.getUrlHash());
 	}
 	serialize(): string {
 		return JSON.stringify({

@@ -1,11 +1,11 @@
-import { UnitNumber, SpecialUnitNumber } from "../unitNumber";
-import { parse } from "./parser";
-import Scope from "./scope";
+import { SpecialUnitNumber, UnitNumber } from "../unitNumber";
 import { TaggedString } from "../unitNumber/output";
 import * as Tree from "./Tree";
-import * as operators from "./operators";
 import globalScope from "./globalScope";
 import init from "./init";
+import * as operators from "./operators";
+import { parse } from "./parser";
+import Scope from "./scope";
 
 type EvaluatedNode = Tree.EvaluatedNode;
 
@@ -92,7 +92,13 @@ export function define(unit: EvaluatedNode, scope: Scope): TaggedString {
 					", ",
 			  )}`
 			: "";
-	const info = scope.docMap.get(unit.value.id!);
+	let info = scope.docMap.get(unit.value.id!);
+	if (!info) {
+		for (const alias of aliases) {
+			info = scope.docMap.get(alias.value.id!);
+			if (info) break;
+		}
+	}
 	let infoText: TaggedString = t``;
 	if (info) {
 		infoText = t`

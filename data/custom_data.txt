@@ -75,4 +75,4 @@ ppcm = pixel/cm
 screendensity = width => height => diagonal => (width pixel / screenwidth diagonal (width / height))
 
 
-Byte = B
+Byte = byte

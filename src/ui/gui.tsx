@@ -21,6 +21,6 @@ window.addEventListener("load", () => {
 		});
 });
 
-const gui = render(<GUI />, getAppDiv());
+const gui = render(<GUI header />, getAppDiv());
 
 Object.assign(window, { gui, qalculationHasSideeffect, qalculate });

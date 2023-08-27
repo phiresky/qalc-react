@@ -3,11 +3,11 @@
 	margin: 0 auto;
 }
 
-.pull-right {
-	float: right;
-}
-
 .calc-ui {
+	.pull-right {
+		float: right;
+	}
+
 	box-sizing: border-box;
 	.gui-line {
 		font-family: monospace;
@@ -44,17 +44,18 @@
 			}
 		}
 	}
-}
-.tagged-string-display {
-	font-family: monospace;
-	white-space: pre-wrap;
-}
-a.unit-href {
-	&,
-	&:visited,
-	&:hover,
-	&:active {
-		color: rgb(0, 0, 238);
+
+	.tagged-string-display {
+		font-family: monospace;
+		white-space: pre-wrap;
+	}
+	a.unit-href {
+		&,
+		&:visited,
+		&:hover,
+		&:active {
+			color: rgb(0, 0, 238);
+		}
 	}
 }
 .gnu-units-categorize {
