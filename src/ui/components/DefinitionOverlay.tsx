@@ -1,4 +1,4 @@
-import { action, makeObservable, observable } from "mobx";
+import { action, makeObservable } from "mobx";
 import { observer } from "mobx-react";
 import * as React from "react";
 import { qalculate } from "../../libqalc";
@@ -15,9 +15,7 @@ export class DefinitionOverlay extends React.Component<{
 	constructor(p: DefinitionOverlay["props"]) {
 		super(p);
 
-		makeObservable(this, {
-			definition: observable,
-		});
+		makeObservable(this);
 
 		void this.load();
 	}

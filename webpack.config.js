@@ -86,6 +86,7 @@ module.exports = {
 					transpileOnly: true,
 					compilerOptions: {
 						module: "esnext",
+						experimentalDecorators: true
 					},
 				},
 			},

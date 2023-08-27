@@ -26,6 +26,8 @@ git worktree add bin/ gh-pages
 ## to compile
 
 ```bash
+wget https://ftp.gnu.org/gnu/units/units-2.12.tar.gz
+tar xvf units-2.12.tar.gz
 yarn run parse-gnu-units
 yarn run build
 ```

@@ -1,15 +1,13 @@
-import { RPNToken, AToken } from "./parser";
-import Scope from "./scope";
 import { TaggedString } from "../unitNumber/output";
-import * as Tree from "./Tree";
-import * as parser from "./parser";
-import globalScope from "./globalScope";
 import {
-	evaluationHasSideeffect,
-	stripCommentsTrim,
-	evaluate,
-	define,
+	define, evaluate, evaluationHasSideeffect,
+	stripCommentsTrim
 } from "./evaluator";
+import globalScope from "./globalScope";
+import * as parser from "./parser";
+import { AToken, RPNToken } from "./parser";
+import Scope from "./scope";
+import * as Tree from "./Tree";
 
 function unitConvertedTaggedString(node: Tree.Node, scope: Scope) {
 	if (node instanceof Tree.FunctionCallNode && node.fnname === "to") {
@@ -159,3 +157,4 @@ ${error ? "error = " + error : ""}`;
 
 export { parseEvaluate } from "./evaluator";
 export { default as init } from "./init";
+
